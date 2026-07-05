@@ -2,6 +2,10 @@ import base64
 
 from pyrogram import Client, filters
 
+from SharingX import bot
+
+DATABASE_CHANNEL = 
+
 @Client.on_message(filters.command("start"))
 async def start(client, message):
     if len(message.command) < 2:
@@ -52,7 +56,8 @@ async def store_file(client, message):
         data = f"get-{db_msg.id}"
         token = base64.urlsafe_b64encode(data.encode()).decode()
 
-        link = f"https://t.me/{BOT_USERNAME}?start={token}"
+        username = (await bot.get_me()).username
+        link = f"https://t.me/{username}?start={token}"
 
         await message.reply_text(
             f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}"

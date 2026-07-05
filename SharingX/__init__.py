@@ -38,5 +38,3 @@ class Bot(Client):
             sys.exit()
             
 bot = Bot()
-
-SUDOERS = SUDOERS

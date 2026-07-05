@@ -7,7 +7,7 @@ from pyromod import listen
 from pyrogram import Client
 from pyrogram import __version__
 
-from SharingX.config import API_HASH, API_ID, BOT_TOKEN
+from SharingX.config import API_HASH, API_ID, BOT_TOKEN, LOGGER
 
 class Bot(Client):
     def __init__(self):

@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 
 load_dotenv(".env")
 
-BOT_TOKEN = getenv("BOT_TOKEN", "")
+BOT_TOKEN = getenv("BOT_TOKEN", "8960778927:AAEqBA9jvqu11YH8jWYCMoUhhuxEFPQ5eaA")
 
 API_ID = getenv("API_ID", "20211998")
 

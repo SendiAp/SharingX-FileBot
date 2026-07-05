@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 
 from SharingX import bot
 
-DATABASE_CHANNEL = 
+DATABASE_CHANNEL = -1004437744973
 
 @Client.on_message(filters.command("start"))
 async def start(client, message):

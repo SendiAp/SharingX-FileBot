@@ -22,22 +22,43 @@ async def start(client, message):
             message_id=msg_id
         )
 
-    except Exception:
-        await message.reply_text("❌ Link tidak valid atau file tidak ditemukan.")
+    except Exception as e:
+        await message.reply_text(
+            f"<b>Terjadi Kesalahan:</b> `{str(e)}`"
+        )
 
-@Client.on_message(filters.private & ~filters.command("start"))
+@Client.on_message(
+    filters.private
+    & ~filters.command("start")
+    & (
+        filters.photo
+        | filters.video
+        | filters.document
+        | filters.audio
+        | filters.voice
+        | filters.video_note
+        | filters.animation
+        | filters.sticker
+    )
+)
 async def store_file(client, message):
-    db_msg = await client.copy_message(
-        chat_id=DATABASE_CHANNEL,
-        from_chat_id=message.chat.id,
-        message_id=message.id
-    )
+    try:
+        db_msg = await client.copy_message(
+            chat_id=DATABASE_CHANNEL,
+            from_chat_id=message.chat.id,
+            message_id=message.id
+        )
 
-    data = f"get-{db_msg.id}"
-    token = base64.urlsafe_b64encode(data.encode()).decode()
+        data = f"get-{db_msg.id}"
+        token = base64.urlsafe_b64encode(data.encode()).decode()
 
-    link = f"https://t.me/{BOT_USERNAME}?start={token}"
+        link = f"https://t.me/{BOT_USERNAME}?start={token}"
 
-    await message.reply_text(
-        f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}"
-    )
+        await message.reply_text(
+            f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}"
+        )
+
+    except Exception as e:
+        await message.reply_text(
+            f"<b>Terjadi Kesalahan:</b> `{str(e)}`"
+        )

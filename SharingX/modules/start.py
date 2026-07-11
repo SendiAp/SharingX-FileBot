@@ -1,6 +1,7 @@
 import base64
 
 from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from SharingX import bot
 

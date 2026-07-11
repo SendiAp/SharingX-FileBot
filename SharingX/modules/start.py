@@ -57,14 +57,24 @@ async def store_file(client, message):
         data = f"get-{db_msg.id}"
         token = base64.urlsafe_b64encode(data.encode()).decode()
 
-        username = (await bot.get_me()).username
+        username = (await client.get_me()).username
         link = f"https://t.me/{username}?start={token}"
 
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "📋 Copy Link",
+                    copy_text=link
+                )
+            ]
+        ])
+
         await message.reply_text(
-            f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}"
+            f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}",
+            reply_markup=keyboard
         )
 
     except Exception as e:
         await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b> `{str(e)}`"
+            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )

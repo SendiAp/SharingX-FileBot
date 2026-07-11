@@ -7,7 +7,6 @@ from SharingX import bot
 
 DATABASE_CHANNEL = -1004437744973
 
-
 @Client.on_message(filters.command("start"))
 async def start(client, message):
     if len(message.command) < 2:
@@ -46,18 +45,37 @@ async def start(client, message):
             f"<b>Terjadi Kesalahan:</b> <code>{str(e)}</code>"
         )
 
-
 @Client.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:
-        if len(message.command) != 3:
-            return await message.reply_text(
-                "<b>Penggunaan:</b>\n<code>/batch link_awal link_akhir</code>"
-            )
+        msg = await message.reply_text(
+            "<b>🤖 Bot: Silahkan Kirim Link Awal Tautan Yang Ada Dipostingan Database Anda?</b>\n\n"
+            "/cancel - Untuk Membatalkan!"
+        )
 
-        start = message.command[1]
-        end = message.command[2]
+        start_msg = await client.listen(message.chat.id)
 
+        if start_msg.text == "/":
+            await start_msg.delete()
+            return await msg.edit("<b>❌ Proses Dibatalkan!</b>")
+
+        start = start_msg.text.strip()
+        await start_msg.delete()
+        
+        msg = await message.reply_text(
+            "<b>🤖 Bot: Silahkan Kirim Link Akhir Tautan Yang Ada Dipostingan Database Anda?</b>\n\n"
+            "/cancel - Untuk Membatalkan!"
+        )
+
+        end_msg = await client.listen(message.chat.id)
+
+        if end_msg.text == "/":
+            await end_msg.delete()
+            return await msg.edit("<b>❌ Proses Dibatalkan!</b>")
+
+        end = end_msg.text.strip()
+        await end_msg.delete()
+        
         if start.isdigit():
             start_id = int(start)
         else:
@@ -69,7 +87,7 @@ async def batch(client, message):
             end_id = int(end.rstrip("/").split("/")[-1])
 
         if start_id > end_id:
-            return await message.reply_text(
+            return await msg.edit(
                 "<b>ID awal harus lebih kecil dari ID akhir.</b>"
             )
 
@@ -88,17 +106,16 @@ async def batch(client, message):
             ]
         ])
 
-        await message.reply_text(
-            f"<b>Batch Link Berhasil Di Buat :</b>\n\n{link}",
+        await msg.edit(
+            f"<b>Link Batch Berhasil Di Buat :</b>\n\n{link}",
             reply_markup=keyboard
         )
 
     except Exception as e:
         await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
+            f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
         )
-
-
+        
 @Client.on_message(
     filters.private
     & ~filters.command("start", "batch")

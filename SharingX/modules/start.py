@@ -62,7 +62,7 @@ async def batch(client, message):
         start = start_msg.text.strip()
         await start_msg.delete()
         
-        msg = await message.reply_text(
+        msg = await msg.edit(
             "<b>🤖 Bot: Silahkan Kirim Link Akhir Tautan Yang Ada Dipostingan Database Anda?</b>\n\n"
             "/cancel - Untuk Membatalkan!"
         )

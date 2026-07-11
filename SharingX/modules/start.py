@@ -64,18 +64,24 @@ async def store_file(client, message):
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
-                    "📋 Copy Link",
+                    "Copy Link",
                     copy_text=link
                 )
             ]
         ])
 
+        await client.edit_message_reply_markup(
+            chat_id=DATABASE_CHANNEL,
+            message_id=db_msg.id,
+            reply_markup=keyboard
+        )
+
         await message.reply_text(
-            f"✅ Link Sharing File Berhasil Dibuat.\n\n{link}",
+            f"<b>Link Sharing File Berhasil Di Buat :</b>\n\n{link}",
             reply_markup=keyboard
         )
 
     except Exception as e:
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
-        )
+    )

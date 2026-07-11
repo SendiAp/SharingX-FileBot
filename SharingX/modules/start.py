@@ -36,6 +36,7 @@ async def start(client, message):
     & ~filters.command("start")
     & (
         filters.photo
+        | filters.text
         | filters.video
         | filters.document
         | filters.audio

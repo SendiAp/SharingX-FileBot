@@ -22,7 +22,8 @@ async def start(client, message):
             await client.copy_message(
                 chat_id=message.chat.id,
                 from_chat_id=DATABASE_CHANNEL,
-                message_id=msg_id
+                message_id=msg_id,
+                reply_markup=None
             )
 
         elif data.startswith("batch-"):
@@ -33,7 +34,8 @@ async def start(client, message):
                     await client.copy_message(
                         chat_id=message.chat.id,
                         from_chat_id=DATABASE_CHANNEL,
-                        message_id=msg_id
+                        message_id=msg_id,
+                        reply_markup=None
                     )
                 except:
                     pass

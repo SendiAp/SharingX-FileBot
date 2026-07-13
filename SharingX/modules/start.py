@@ -55,7 +55,7 @@ async def batch(client, message):
 
         start_msg = await client.listen(message.chat.id)
 
-        if start_msg.text == "/":
+        if start_msg.text == "/cancel":
             await start_msg.delete()
             return await msg.edit("<b>❌ Proses Dibatalkan!</b>")
 
@@ -69,7 +69,7 @@ async def batch(client, message):
 
         end_msg = await client.listen(message.chat.id)
 
-        if end_msg.text == "/":
+        if end_msg.text == "/cancel":
             await end_msg.delete()
             return await msg.edit("<b>❌ Proses Dibatalkan!</b>")
 

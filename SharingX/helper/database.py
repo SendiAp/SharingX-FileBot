@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from SharingX.config import MONGO_DB_URL
 
-mongo = MongoClient(MONGO_DB_URL)
+db = MongoClient(MONGO_DB_URL)
 
 forcesubdb = db["forcesub"]
 

@@ -3,12 +3,6 @@ from SharingX.config import MONGO_DB_URL
 
 mongo = MongoClient(MONGO_DB_URL)
 
-db = mongo["sharingx"]
-from pymongo import MongoClient
-
-mongo = MongoClient(MONGO_DB_URI)
-db = mongo["SharingX"]
-
 forcesubdb = db["forcesub"]
 
 async def add_forcesub(chat_id: int):

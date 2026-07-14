@@ -4,270 +4,157 @@ from SharingX import bot
 from SharingX.helper.database import (
     add_forcesub,
     del_forcesub,
-    get_forcesub,
-    get_force_sub_count,
-    get_force_sub_status,
-    is_forcesub,
-    set_force_sub_status,
+    get_forcesubs
 )
 
 from pyrogram import filters
 from pyrogram.types import (
+    InlineKeyboardButton,
     InlineKeyboardMarkup,
-    InlineKeyboardButton
+    ReplyKeyboardMarkup
 )
 from pyrogram.errors import (
-    UserNotParticipant,
     ChatAdminRequired,
-    ChatWriteForbidden,
-    PeerIdInvalid
+    UserNotParticipant,
+    ChatWriteForbidden
 )
 
-MAX_FORCESUB = 50
 
-def force_channel(channels, username):
-    buttons = []
-
-    for i, chat in enumerate(channels, start=1):
-        if str(chat).startswith("-100"):
-            url = f"https://t.me/c/{str(chat)[4:]}"
-        else:
-            url = f"https://t.me/{chat}"
-
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    f"📢 Join {i}",
-                    url=url
-                )
-            ]
+@bot.on_message(filters.command("addforcesub"))
+async def addforcesub_handler(client, message):
+    if len(message.command) < 2:
+        return await message.reply(
+            "❌ Gunakan format:\n<code>/addforcesub -100xxxxxxxxxx</code>"
         )
 
-    buttons.append(
-        [
-            InlineKeyboardButton(
-                "🔄 Coba Lagi",
-                url=f"https://t.me/{username}?start=start"
-            )
-        ]
+    try:
+        chat_id = int(message.command[1])
+    except ValueError:
+        return await message.reply("❌ Chat ID harus berupa angka!")
+
+    await add_forcesub(chat_id)
+
+    await message.reply(
+        f"✅ Channel forcesub berhasil ditambahkan.\n\n"
+        f"Chat ID: <code>{chat_id}</code>"
     )
 
-    return InlineKeyboardMarkup(buttons)
 
-@bot.on_message(filters.command("forcesub") & filters.private)
-async def forcesub_cmd(client, message):
-
-    if len(message.command) == 1:
-        return await message.reply_text(
-            "<b>ForceSub Manager</b>\n\n"
-            "<code>/forcesub add -100xxxxxxxxxx</code>\n"
-            "<code>/forcesub del -100xxxxxxxxxx</code>\n"
-            "<code>/forcesub list</code>\n"
-            "<code>/forcesub on</code>\n"
-            "<code>/forcesub off</code>"
+@bot.on_message(filters.command("delforcesub"))
+async def delforcesub_handler(client, message):
+    if len(message.command) < 2:
+        return await message.reply(
+            "❌ Gunakan format:\n<code>/delforcesub -100xxxxxxxxxx</code>"
         )
 
-    action = message.command[1].lower()
+    try:
+        chat_id = int(message.command[1])
+    except ValueError:
+        return await message.reply("❌ Chat ID harus berupa angka!")
 
-    if action == "add":
+    await del_forcesub(chat_id)
 
-        if len(message.command) != 3:
-            return await message.reply_text(
-                "<code>/forcesub add -100xxxxxxxxxx</code>"
-            )
+    await message.reply(
+        f"🗑 Channel forcesub berhasil dihapus.\n\n"
+        f"Chat ID: <code>{chat_id}</code>"
+    )
 
-        chat = message.command[2]
 
-        if await get_force_sub_count() >= MAX_FORCESUB:
-            return await message.reply_text(
-                f"❌ Maksimal {MAX_FORCESUB} ForceSub."
-            )
+@bot.on_message(filters.command("listforcesub"))
+async def listforcesub_handler(client, message):
+    forcesubs = await get_forcesubs()
 
-        if await is_forcesub(chat):
-            return await message.reply_text(
-                "❌ Channel/Grup sudah terdaftar."
-            )
+    if not forcesubs:
+        return await message.reply("ℹ️ Belum ada channel forcesub.")
 
+    text = "<b>📌 Daftar Channel Forcesub</b>\n\n"
+
+    for no, chat_id in enumerate(forcesubs, 1):
         try:
-            info = await bot.get_chat(chat)
+            chat = await bot.get_chat(chat_id)
+            text += f"{no}. {chat.title}\n<code>{chat_id}</code>\n\n"
+        except Exception:
+            text += f"{no}. <code>{chat_id}</code> (Tidak dapat diakses)\n\n"
 
-            await add_forcesub(chat)
+    await message.reply(text)
 
-            try:
-                await bot.send_message(
-                    info.id,
-                    "✅ Bot berhasil dijadikan ForceSub."
-                )
-            except ChatWriteForbidden:
-                pass
-
-            return await message.reply_text(
-                f"✅ Berhasil ditambahkan.\n\n"
-                f"**{info.title}**\n"
-                f"`{chat}`"
-            )
-
-        except Exception as e:
-            return await message.reply_text(
-                f"❌ {e}"
-            )
-
-    elif action == "del":
-
-        if len(message.command) != 3:
-            return await message.reply_text(
-                "<code>/forcesub del -100xxxxxxxxxx</code>"
-            )
-
-        chat = message.command[2]
-
-        if not await is_forcesub(chat):
-            return await message.reply_text(
-                "❌ Data tidak ditemukan."
-            )
-
-        await del_forcesub(chat)
-
-        return await message.reply_text(
-            "✅ ForceSub berhasil dihapus."
-        )
-
-    elif action == "list":
-
-        data = await get_forcesub()
-
-        if not data:
-            return await message.reply_text(
-                "❌ Belum ada ForceSub."
-            )
-
-        text = "<b>Daftar ForceSub</b>\n\n"
-
-        for no, chat in enumerate(data, start=1):
-            try:
-                info = await bot.get_chat(chat)
-                text += (
-                    f"{no}. {info.title}\n"
-                    f"<code>{chat}</code>\n\n"
-                )
-            except Exception:
-                text += (
-                    f"{no}. <code>{chat}</code>\n\n"
-                )
-
-        return await message.reply_text(text)
-
-    elif action == "on":
-
-        await set_force_sub_status(True)
-
-        return await message.reply_text(
-            "✅ ForceSub berhasil diaktifkan."
-        )
-
-    elif action == "off":
-
-        await set_force_sub_status(False)
-
-        return await message.reply_text(
-            "✅ ForceSub berhasil dinonaktifkan."
-        )
-
-    else:
-        return await message.reply_text(
-            "❌ Command tidak dikenal."
-        )
 
 @bot.on_message(filters.private & filters.incoming, group=-1)
-async def check_forcesub(client, message):
-
-    if message.from_user is None:
+async def forcesub(client, message):
+    if not message.from_user:
         return
 
-    if message.from_user.is_bot:
+    forcesubs = await get_forcesubs()
+
+    if not forcesubs:
         return
 
-    if message.text and message.text.startswith("/forcesub"):
-        return
+    not_joined = []
 
-    status = await get_force_sub_status()
-
-    if not status:
-        return
-
-    channels = await get_forcesub()
-
-    if not channels:
-        return
-
-    not_join = []
-
-    for chat in channels:
-
+    for chat_id in forcesubs:
         try:
-            member = await bot.get_chat_member(chat, message.from_user.id)
-
-            if member.status in (
-                "left",
-                "kicked",
-                "restricted"
-            ):
-                not_join.append(chat)
-
+            await bot.get_chat_member(chat_id, message.from_user.id)
         except UserNotParticipant:
-            not_join.append(chat)
-
-        except ChatAdminRequired:
-            return await message.reply_text(
-                f"❌ Bot bukan admin di\n<code>{chat}</code>"
-            )
-
-        except PeerIdInvalid:
-            continue
-
+            not_joined.append(chat_id)
         except Exception:
             continue
 
-    if not not_join:
+    if not not_joined:
         return
 
-    buttons = []
+    keyboard = []
+    row = []
 
-    for i, chat in enumerate(not_join, start=1):
-
+    for chat_id in not_joined:
         try:
-            info = await bot.get_chat(chat)
+            chat = await bot.get_chat(chat_id)
 
-            if info.username:
-                url = f"https://t.me/{info.username}"
+            if chat.username:
+                url = f"https://t.me/{chat.username}"
             else:
-                url = info.invite_link
+                invite = chat.invite_link
 
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        f"📢 Join {i}",
-                        url=url
-                    )
-                ]
+                if not invite:
+                    try:
+                        invite = await bot.create_chat_invite_link(chat_id)
+                        invite = invite.invite_link
+                    except Exception:
+                        continue
+
+                url = invite
+
+            row.append(
+                InlineKeyboardButton(
+                    chat.title,
+                    url=url
+                )
             )
+
+            if len(row) == 2:
+                keyboard.append(row)
+                row = []
 
         except Exception:
             continue
 
-    buttons.append(
+    if row:
+        keyboard.append(row)
+
+    me = await bot.get_me()
+
+    keyboard.append(
         [
             InlineKeyboardButton(
-                "🔄 Coba Lagi",
-                url=f"https://t.me/{(await bot.get_me()).username}?start=start"
+                "✅ Coba Lagi",
+                url=f"https://t.me/{me.username}?start=start"
             )
         ]
     )
 
-    await message.reply_text(
-        f"<b>👋 Halo {message.from_user.mention}</b>\n\n"
-        "Anda harus bergabung ke seluruh channel/grup berikut terlebih dahulu sebelum menggunakan bot.",
-        reply_markup=InlineKeyboardMarkup(buttons),
+    await message.reply(
+        f"👋 Hai {message.from_user.mention},\n\n"
+        "Untuk menggunakan bot ini, silakan bergabung ke seluruh channel di bawah terlebih dahulu.",
+        reply_markup=InlineKeyboardMarkup(keyboard),
         disable_web_page_preview=True
     )
 

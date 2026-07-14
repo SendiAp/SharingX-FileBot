@@ -1,8 +1,9 @@
 from pymongo import MongoClient
 from SharingX.config import MONGO_DB_URL
 
-db = MongoClient(MONGO_DB_URL)
+mongo = MongoClient(MONGO_DB_URL)
 
+db = mongo["SharingX"]
 forcesubdb = db["forcesub"]
 
 async def add_forcesub(chat_id: int):
@@ -12,8 +13,10 @@ async def add_forcesub(chat_id: int):
         upsert=True
     )
 
+
 async def get_forcesubs():
-    return [x["chat_id"] for x in forcesubdb.find()]
+    return [doc["chat_id"] for doc in forcesubdb.find({})]
+
 
 async def del_forcesub(chat_id: int):
     forcesubdb.delete_one({"_id": chat_id})

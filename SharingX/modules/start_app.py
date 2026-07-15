@@ -166,7 +166,9 @@ async def bot_settings(client, callback_query: CallbackQuery):
         status_text = "🔄 Restarting"
     else:
         status_text = "🤖 Crash"
-    
+
+    username = None
+    first_name = "⚠️ Bot Sedang Dalam Penghentian"
     robot = Bot.get_instance(bot['bot_id'])
     if robot:
         me = await robot.get_me()
@@ -249,15 +251,15 @@ async def stop_bot(client, callback_query: CallbackQuery):
             "Bot berhasil dihentikan.",
             show_alert=True
         )
-
+        
     except Exception as e:
         return await callback_query.answer(
             str(e),
             show_alert=True
         )
-
+        
     await bot_settings(client, callback_query)
-
+    
 @app.on_callback_query(filters.regex(r"^startbot_(.+)$"))
 async def start_bot(client, callback_query: CallbackQuery):
 

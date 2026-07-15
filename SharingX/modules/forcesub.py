@@ -100,7 +100,7 @@ async def delforcesub_handler(client, message):
         f"Chat ID: <code>{chat_id}</code>"
     )
 
-@bot.on_message(filters.private & filters.incoming, group=-1)
+@bot.on_message(filters.command("listforcesub"))
 async def listforcesub_handler(client, message):
     forcesubs = await get_forcesubs()
 
@@ -119,7 +119,7 @@ async def listforcesub_handler(client, message):
     await message.reply(text)
 
 
-@bot.on_message(filters.group)
+@bot.on_message(filters.private & filters.incoming, group=-1)
 async def forcesub(client, message):
     if not message.from_user:
         return

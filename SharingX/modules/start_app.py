@@ -1,8 +1,8 @@
 import sys, os
 import asyncio
 import traceback
-from io import BytesIO, StringIO
 import importlib
+from io import BytesIO, StringIO
 
 from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -60,7 +60,6 @@ async def create_bot(client, callback_query: CallbackQuery):
             await asyncio.sleep(2)
             await warn.delete()
 
-
     await callback.edit(
         "<b>🤖 Masukkan API HASH Anda:</b>\n\n"
         "__Dapatkan di web [my.telegram.org](https://my.telegram.org)__"
@@ -72,7 +71,6 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     await user_msg.delete()
 
-
     await callback.edit(
         "<b>🤖 Masukkan BOT TOKEN Anda:</b>\n\n"
         "__Dapatkan di BOT @BotFather__"
@@ -83,7 +81,6 @@ async def create_bot(client, callback_query: CallbackQuery):
     bot_token = user_msg.text.strip()
 
     await user_msg.delete()
-
 
     await callback.edit(
         "<b>🗄 Masukkan MongoDB URL:</b>\n\n"
@@ -97,7 +94,6 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     await user_msg.delete()
 
-
     await callback.edit(
         "<b>📂 Masukkan Nama Database:</b>\n\n"
         "Default: <code>sharingx</code>"
@@ -109,18 +105,14 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     await user_msg.delete()
 
-
     if not database:
         database = "sharingx"
-
 
     await callback.edit(
         "<b>⏳ Mengecek data bot...</b>"
     )
 
-
     bot_id = bot_token.split(":")[0]
-
 
     media = Bot(
         name=str(bot_id),
@@ -129,14 +121,12 @@ async def create_bot(client, callback_query: CallbackQuery):
         bot_token=bot_token
     )
 
-
     try:
         media.in_memory = False
 
         await media.start()
 
         me = await media.get_me()
-
 
         await callback.edit(
             f"<b>✅ Bot berhasil ditemukan!</b>\n\n"
@@ -145,11 +135,9 @@ async def create_bot(client, callback_query: CallbackQuery):
             f"<b>⏳ Menyimpan konfigurasi...</b>"
         )
 
-
     except Exception as e:
 
         error = str(e)
-
 
         if "ACCESS_TOKEN_INVALID" in error:
             return await callback.edit(
@@ -187,7 +175,6 @@ async def create_bot(client, callback_query: CallbackQuery):
             f"<b>❌ ERROR:</b>\n<code>{error}</code>"
         )
 
-
     await add_bot(
         str(media.me.id),
         api_id,
@@ -197,9 +184,7 @@ async def create_bot(client, callback_query: CallbackQuery):
         database
     )
 
-
     await asyncio.sleep(2)
-
 
     await callback.edit(
         "<b>✅ Bot Anda Berhasil Diaktifkan!</b>\n\n"
@@ -217,7 +202,6 @@ async def create_bot(client, callback_query: CallbackQuery):
         )
     )
 
-
     for mod in loadModule():
         importlib.reload(
             importlib.import_module(
@@ -228,7 +212,6 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     try:
         os.popen(f"rm {bot_id}*")
-
     except:
         pass
 
@@ -303,4 +286,3 @@ async def _(client, message):
     else:
         await reply_to_.reply_text(final_output, quote=True)
     await status_message.delete()
-    

@@ -6,7 +6,19 @@ db = mongo["sharingx"]
 
 forcesubdb = db["forcesub"]
 linkdb = db["link_settings"]
+database_channel = db["database_channel"]
 
+async def set_database_channel(chat_id: int):
+    database_channel.update_one(
+        {"_id": "database"},
+        {"$set": {"chat_id": chat_id}},
+        upsert=True
+    )
+
+async def get_database_channel():
+    data = database_channel.find_one({"_id": "database"})
+    return data.get("chat_id") if data else None
+    
 async def set_link_status(status: bool):
     linkdb.update_one(
         {"_id": "link_mode"},

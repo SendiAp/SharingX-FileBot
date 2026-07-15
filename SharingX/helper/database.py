@@ -4,9 +4,43 @@ from SharingX.config import MONGO_DB_URL
 mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 
+botdb = db["sharing"]
 forcesubdb = db["forcesub"]
 linkdb = db["link_settings"]
 database_channel = db["database_channel"]
+
+async def get_bot():
+    data = []
+    async for bt in botdb.find({"bot_id": {"$exists": 1}}):
+        data.append(
+            dict(
+                name=str(bt["bot_id"]),
+                api_id=bt["api_id"],
+                api_hash=bt["api_hash"],
+                bot_token=bt["bot_token"],
+            )
+        )
+    return data
+
+async def add_bot(bot_id, api_id, api_hash, token):
+    cek = await botdb.find_one({"bot_id": bot_id})
+    if cek:
+        await botdb.update_one(
+            {"bot_id": bot_id},
+            {"$set": {"api_id": api_id, "api_hash": api_hash, "bot_token": token}},
+        )
+    else:
+        await botdb.insert_one(
+            {
+                "bot_id": bot_id,
+                "api_id": api_id,
+                "api_hash": api_hash,
+                "bot_token": token,
+            }
+        )
+
+async def remove_bot(bot_id):
+    return await botdb.delete_one({"bot_id": bot_id})
 
 async def set_database_channel(chat_id: int):
     database_channel.update_one(

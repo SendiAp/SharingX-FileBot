@@ -315,11 +315,16 @@ async def restart_bot(client, callback_query: CallbackQuery):
             show_alert=True
         )
 
-    try:
-        old_bot = Bot.get_instance(bot_id)
+    old_bot = Bot.get_instance(bot_id)
 
-        if old_bot:
-            await old_bot.stop()
+    if old_bot is None:
+        return await callback_query.answer(
+            "Bot sedang tidak berjalan.",
+            show_alert=True
+        )
+
+    try:
+        await old_bot.stop()
 
         media = Bot(
             name=str(data["bot_id"]),
@@ -333,23 +338,33 @@ async def restart_bot(client, callback_query: CallbackQuery):
         media.mongo = mongo
         media.db = mongo[data.get("database", "sharingx")]
 
-        await media.restart(block=False)
-        
+        await media.start()
+
+        for mod in loadModule():
+            importlib.reload(
+                importlib.import_module(
+                    f"SharingX.modules.{mod}"
+                )
+            )
+            
         await set_bot_status(bot_id, "running")
 
         await callback_query.answer(
-            "Bot berhasil direstart.",
+            "✅ Bot berhasil direstart.",
             show_alert=True
         )
 
     except Exception as e:
         return await callback_query.answer(
-            str(e),
+            f"❌ {e}",
             show_alert=True
         )
 
-    await bot_settings(client, callback_query)
-
+    try:
+        await bot_settings(client, callback_query)
+    except Exception:
+        pass
+        
 @app.on_callback_query(filters.regex(r"^deletebot_(.+)$"))
 async def delete_bot(client, callback_query: CallbackQuery):
 

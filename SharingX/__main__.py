@@ -1,12 +1,13 @@
 import asyncio
 import importlib
+
+from pymongo import MongoClient
 from pyrogram import idle
 from pyrogram.errors import RPCError
 
 from SharingX import LOOP, Bot, app, LOGGER
 from SharingX.helper.database import get_bot, remove_bot
 from SharingX.modules import loadModule
-
 
 async def main():
     await app.start()
@@ -22,18 +23,39 @@ async def main():
                     api_hash=bt["api_hash"],
                     bot_token=bt["bot_token"]
                 )
+
+                mongo = MongoClient(bt["mongo_url"])
+                b.mongo = mongo
+                b.db = mongo[bt.get("database", "sharingx")]
+
                 await b.start()
-                LOGGER("Bot").info(f"{b.me.first_name} [🔥 BERHASIL DIAKTIFKAN 🔥]")
+
+                LOGGER("Bot").info(
+                    f"{b.me.first_name} [🔥 BERHASIL DIAKTIFKAN 🔥]"
+                )
+
             except RPCError:
-                await remove_bot(bt["name"])
-                LOGGER("Bot").warning(f"🗑️ {bt['name']} Dihapus Dari Database.")
+                await remove_bot(bt["bot_id"])
+                LOGGER("Bot").warning(
+                    f"🗑️ {bt['bot_id']} Dihapus Dari Database."
+                )
+
+            except Exception as e:
+                LOGGER("Bot").error(
+                    f"Gagal Menjalankan Bot {bt['bot_id']} : {e}"
+                )
     else:
-        LOGGER("Bot").info("⚠️ Bot Multi Client Tidak Ditemukan.")
+        LOGGER("Bot").info(
+            "⚠️ Bot Multi Client Tidak Ditemukan."
+        )
 
     for mod in loadModule():
-        importlib.reload(importlib.import_module(f"Media.modules.{mod}"))
+        importlib.reload(
+            importlib.import_module(f"Media.modules.{mod}")
+        )
 
-    LOGGER("Bot").info(f"[🔥 BERHASIL DIAKTIFKAN 🔥]")
+    LOGGER("Bot").info("[🔥 BERHASIL DIAKTIFKAN 🔥]")
+
     await idle()
 
 

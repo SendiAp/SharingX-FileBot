@@ -584,9 +584,15 @@ async def create_bot(client, callback_query: CallbackQuery):
         api_hash,
         bot_token,
         mongo_url,
-        database
+        database,
+        status, "running"
     )
 
+    await add_user_bot(
+        user_id,
+        str(me.id)
+    )
+    
     await callback.edit(
         "<b>✅ Bot berhasil ditambahkan.</b>\n\n"
         "<b>♻️ Me-restart server...</b>"

@@ -47,6 +47,40 @@ async def start(client, message):
             f"<b>Terjadi Kesalahan:</b> <code>{str(e)}</code>"
         )
 
+@Client.on_message(filters.command("link"))
+async def link_mode(client, message):
+    if len(message.command) != 2:
+        status = await get_link_status()
+
+        return await message.reply(
+            f"<b>Status Auto Link:</b> "
+            f"<code>{'ON' if status else 'OFF'}</code>\n\n"
+            "<b>Penggunaan:</b>\n"
+            "<code>/link on</code>\n"
+            "<code>/link off</code>"
+        )
+
+    mode = message.command[1].lower()
+
+    if mode == "on":
+        await set_link_status(True)
+        return await message.reply(
+            "✅ Auto pembuatan link berhasil diaktifkan."
+        )
+
+    elif mode == "off":
+        await set_link_status(False)
+        return await message.reply(
+            "🛑 Auto pembuatan link berhasil dinonaktifkan."
+        )
+
+    else:
+        return await message.reply(
+            "❌ Gunakan:\n"
+            "<code>/link on</code>\n"
+            "<code>/link off</code>"
+        )
+        
 @Client.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:
@@ -117,7 +151,7 @@ async def batch(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
         )
-        
+
 @Client.on_message(
     filters.private
     & ~filters.command("start", "batch")

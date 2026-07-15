@@ -111,17 +111,16 @@ async def my_bots(client, callback_query: CallbackQuery):
         else:
             emoji = "🔴"
     
-        username = bot.get("username")
-
-        if username:
-            text = f"{emoji} @{username}"
-        else:
-            text = f"{emoji} {bot['bot_id']}"
-
+        bot = Bot.get_instance(bot_id)
+        if bot:
+            me = await bot.get_me()
+            username = me.username
+            first_name = me.first_name
+    
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text,
+                    f"@{username}",
                     callback_data=f"bot_{bot['bot_id']}"
                 )
             ]

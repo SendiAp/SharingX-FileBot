@@ -280,6 +280,13 @@ async def start_bot(client, callback_query: CallbackQuery):
 
         await media.start()
 
+        for mod in loadModule():
+            importlib.reload(
+                importlib.import_module(
+                    f"SharingX.modules.{mod}"
+                )
+            )
+            
         await set_bot_status(bot_id, "running")
 
         await callback_query.answer(
@@ -326,8 +333,8 @@ async def restart_bot(client, callback_query: CallbackQuery):
         media.mongo = mongo
         media.db = mongo[data.get("database", "sharingx")]
 
-        await media.start()
-
+        await media.restart(block=False)
+        
         await set_bot_status(bot_id, "running")
 
         await callback_query.answer(

@@ -26,9 +26,9 @@ if not MONGO_DB_URL:
     print("MONGO_DB_URL Tidak ada")
     sys.exit()
 
-
 class Bot(Client):
     _bots = []
+    _instances = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -64,6 +64,21 @@ class Bot(Client):
         if self not in self._bots:
             self._bots.append(self)
 
+        Bot._instances[str(self.me.id)] = self
+
+    async def stop(self, *args, **kwargs):
+        try:
+            await super().stop(*args, **kwargs)
+        finally:
+            if self in self._bots:
+                self._bots.remove(self)
+
+            Bot._instances.pop(str(self.me.id), None)
+
+    @classmethod
+    def get_instance(cls, bot_id):
+        return cls._instances.get(str(bot_id))
+        
 class MainApp(Client):
     def __init__(self):
         super().__init__(

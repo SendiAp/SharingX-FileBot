@@ -172,6 +172,8 @@ async def batch(client, message):
     )
 )
 async def store_file(client, message):
+    if not await get_link_status():
+        return
     try:
         db_msg = await client.copy_message(
             chat_id=DATABASE_CHANNEL,

@@ -59,8 +59,7 @@ async def delforcesub_handler(client, message):
         f"Chat ID: <code>{chat_id}</code>"
     )
 
-
-@bot.on_message(filters.command("listforcesub"))
+@bot.on_message(filters.private & filters.incoming, group=-1)
 async def listforcesub_handler(client, message):
     forcesubs = await get_forcesubs()
 

@@ -114,3 +114,13 @@ async def get_user_data(user_id):
     return userbotdb.find_one(
         {"user_id": user_id}
     )
+
+async def set_bot_status(bot_id, status):
+    return botdb.update_one(
+        {"bot_id": str(bot_id)},
+        {
+            "$set": {
+                "status": status
+            }
+        }
+    )

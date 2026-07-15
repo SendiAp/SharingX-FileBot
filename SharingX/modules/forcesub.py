@@ -20,6 +20,8 @@ from pyrogram.types import (
     ReplyKeyboardMarkup
 )
 
+BUTTON_PER_PAGE = 10
+
 @bot.on_message(filters.command("addforcesub"))
 async def addforcesub_handler(client, message):
     chat_id = None
@@ -83,44 +85,168 @@ async def addforcesub_handler(client, message):
         f"Chat ID: <code>{chat_id}</code>"
     )
 
-@bot.on_message(filters.command("delforcesub"))
-async def delforcesub_handler(client, message):
-    if len(message.command) < 2:
-        return await message.reply(
-            "❌ Gunakan format:\n<code>/delforcesub -100xxxxxxxxxx</code>"
-        )
-
-    try:
-        chat_id = int(message.command[1])
-    except ValueError:
-        return await message.reply("❌ Chat ID harus berupa angka!")
-
-    await del_forcesub(chat_id)
-
-    await message.reply(
-        f"🗑 Channel forcesub berhasil dihapus.\n\n"
-        f"Chat ID: <code>{chat_id}</code>"
-    )
-
-@bot.on_message(filters.command("listforcesub"))
-async def listforcesub_handler(client, message):
+async def build_forcesub_menu(page=0):
     forcesubs = await get_forcesubs()
 
     if not forcesubs:
-        return await message.reply("ℹ️ Belum ada channel forcesub.")
+        return "ℹ️ Belum ada channel forcesub.", None
 
-    text = "<b>📌 Daftar Channel Forcesub</b>\n\n"
+    start = page * BUTTON_PER_PAGE
+    end = start + BUTTON_PER_PAGE
 
-    for no, chat_id in enumerate(forcesubs, 1):
+    buttons = []
+
+    for chat_id in forcesubs[start:end]:
         try:
             chat = await bot.get_chat(chat_id)
-            text += f"{no}. {chat.title}\n<code>{chat_id}</code>\n\n"
+            name = chat.title
         except Exception:
-            text += f"{no}. <code>{chat_id}</code> (Tidak dapat diakses)\n\n"
+            name = str(chat_id)
 
-    await message.reply(text)
+        buttons.append([
+            InlineKeyboardButton(
+                f"📢 {name}",
+                callback_data=f"forcesub_{chat_id}"
+            )
+        ])
+
+    nav = []
+
+    if page > 0:
+        nav.append(
+            InlineKeyboardButton(
+                "⬅️",
+                callback_data=f"forcesub_page_{page-1}"
+            )
+        )
+
+    if end < len(forcesubs):
+        nav.append(
+            InlineKeyboardButton(
+                "➡️",
+                callback_data=f"forcesub_page_{page+1}"
+            )
+        )
+
+    if nav:
+        buttons.append(nav)
+
+    text = (
+        "<b>📌 Daftar Forcesub</b>\n\n"
+        "Pilih salah satu channel/grup untuk mengelolanya."
+    )
+
+    return text, InlineKeyboardMarkup(buttons)
+
+@bot.on_message(filters.command("listforcesub"))
+async def listforcesub_handler(client, message):
+    text, markup = await build_forcesub_menu()
+
+    await message.reply(
+        text,
+        reply_markup=markup
+    )
+
+@bot.on_callback_query(filters.regex(r"^forcesub_page_(\d+)$"))
+async def forcesub_page_callback(client, callback_query):
+    page = int(callback_query.matches[0].group(1))
+
+    text, markup = await build_forcesub_menu(page)
+
+    await callback_query.message.edit_text(
+        text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer()
+
+@bot.on_callback_query(filters.regex(r"^forcesub_(-?\d+)$"))
+async def forcesub_detail_callback(client, callback_query):
+    chat_id = int(callback_query.matches[0].group(1))
+
+    try:
+        chat = await bot.get_chat(chat_id)
+        title = chat.title
+        username = f"@{chat.username}" if chat.username else "-"
+    except:
+        title = "Tidak diketahui"
+        username = "-"
+
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "🗑 Hapus Forcesub",
+                callback_data=f"forcesub_delete_{chat_id}"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "🔙 Kembali",
+                callback_data="forcesub_back"
+            )
+        ]
+    ])
+
+    await callback_query.message.edit_text(
+        f"<b>📢 {title}</b>\n\n"
+        f"<b>Chat ID:</b>\n<code>{chat_id}</code>\n"
+        f"<b>Username:</b> {username}",
+        reply_markup=keyboard
+    )
+
+    await callback_query.answer()
+
+@bot.on_callback_query(filters.regex(r"^forcesub_delete_(-?\d+)$"))
+async def forcesub_delete_callback(client, callback_query):
+    chat_id = int(callback_query.matches[0].group(1))
+
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "✅ Ya, Hapus",
+                callback_data=f"forcesub_yes_{chat_id}"
+            ),
+            InlineKeyboardButton(
+                "❌ Batal",
+                callback_data=f"forcesub_{chat_id}"
+            )
+        ]
+    ])
+
+    await callback_query.message.edit_text(
+        "⚠️ <b>Yakin ingin menghapus channel/grup ini dari Forcesub?</b>",
+        reply_markup=keyboard
+    )
+
+    await callback_query.answer()
+
+@bot.on_callback_query(filters.regex(r"^forcesub_yes_(-?\d+)$"))
+async def forcesub_yes_callback(client, callback_query):
+    chat_id = int(callback_query.matches[0].group(1))
+
+    await del_forcesub(chat_id)
+
+    text, markup = await build_forcesub_menu()
+
+    await callback_query.message.edit_text(
+        "✅ Berhasil dihapus dari Forcesub.\n\n" + text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer("Berhasil dihapus")
 
 
+@bot.on_callback_query(filters.regex("^forcesub_back$"))
+async def forcesub_back_callback(client, callback_query):
+    text, markup = await build_forcesub_menu()
+
+    await callback_query.message.edit_text(
+        text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer()
+    
 @bot.on_message(filters.private & filters.incoming, group=-1)
 async def forcesub(client, message):
     if not message.from_user:

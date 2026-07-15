@@ -51,7 +51,7 @@ async def main():
 
     for mod in loadModule():
         importlib.reload(
-            importlib.import_module(f"Media.modules.{mod}")
+            importlib.import_module(f"SharingX.modules.{mod}")
         )
 
     LOGGER("Bot").info("[🔥 BERHASIL DIAKTIFKAN 🔥]")

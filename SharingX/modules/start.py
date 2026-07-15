@@ -6,10 +6,10 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from SharingX import bot
 from SharingX.helper.database import (
     set_link_status,
-    get_link_status
+    get_link_status,
+    set_database_channel,
+    get_database_channel
 )
-
-DATABASE_CHANNEL = -1004437744973
 
 @Client.on_message(filters.command("start"))
 async def start(client, message):
@@ -18,14 +18,15 @@ async def start(client, message):
 
     try:
         token = message.command[1]
+        database_channel = await get_database_channel()
         data = base64.urlsafe_b64decode(token).decode()
-
+        
         if data.startswith("get-"):
             msg_id = int(data.split("-")[1])
 
             await client.copy_message(
                 chat_id=message.chat.id,
-                from_chat_id=DATABASE_CHANNEL,
+                from_chat_id=database_channel,
                 message_id=msg_id,
                 reply_markup=None
             )
@@ -37,7 +38,7 @@ async def start(client, message):
                 try:
                     await client.copy_message(
                         chat_id=message.chat.id,
-                        from_chat_id=DATABASE_CHANNEL,
+                        from_chat_id=database_channel,
                         message_id=msg_id,
                         reply_markup=None
                     )
@@ -156,6 +157,70 @@ async def batch(client, message):
             f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
         )
 
+@Client.on_message(filters.command("adddb"))
+async def adddb(client, message):
+    chat_id = None
+
+    if len(message.command) > 1:
+        target = message.command[1]
+
+        if target.startswith("@"):
+            try:
+                chat = await client.get_chat(target)
+                chat_id = chat.id
+            except Exception:
+                return await message.reply(
+                    "❌ Username channel/grup tidak ditemukan."
+                )
+        else:
+            try:
+                chat_id = int(target)
+            except ValueError:
+                return await message.reply(
+                    "❌ Chat ID tidak valid."
+                )
+
+    elif message.reply_to_message:
+        reply = message.reply_to_message
+
+        if reply.forward_from_chat:
+            chat_id = reply.forward_from_chat.id
+        elif reply.sender_chat:
+            chat_id = reply.sender_chat.id
+        else:
+            return await message.reply(
+                "❌ Reply ke pesan hasil forward dari channel/grup."
+            )
+
+    else:
+        return await message.reply(
+            "<b>Gunakan salah satu cara berikut:</b>\n\n"
+            "• <code>/adddb -100xxxxxxxxxx</code>\n"
+            "• <code>/adddb @username</code>\n"
+            "• Reply ke pesan hasil forward dari channel/grup dengan <code>/adddb</code>"
+        )
+
+    try:
+        await client.send_message(
+            chat_id,
+            "✅ Berhasil disimpan sebagai Database Channel."
+        )
+    except Exception:
+        return await message.reply(
+            "❌ Bot tidak dapat mengirim pesan ke channel/grup.\n"
+            "Pastikan bot sudah menjadi admin dan memiliki izin mengirim pesan."
+        )
+
+    await set_database_channel(chat_id)
+
+    chat = await client.get_chat(chat_id)
+
+    await message.reply(
+        f"✅ Database berhasil disimpan.\n\n"
+        f"<b>Nama:</b> {chat.title}\n"
+        f"<b>Chat ID:</b> <code>{chat_id}</code>"
+    )
+    
 @Client.on_message(
     filters.private
     & ~filters.command("start", "batch")
@@ -174,9 +239,16 @@ async def batch(client, message):
 async def store_file(client, message):
     if not await get_link_status():
         return
+        
+    database_channel = await get_database_channel()
+    if not database_channel:
+        return await message.reply_text(
+            "❌ Database Channel belum disetel.\nGunakan /adddb terlebih dahulu."
+        )
+        
     try:
         db_msg = await client.copy_message(
-            chat_id=DATABASE_CHANNEL,
+            chat_id=database_channel,
             from_chat_id=message.chat.id,
             message_id=message.id
         )
@@ -197,7 +269,7 @@ async def store_file(client, message):
         ])
 
         await client.edit_message_reply_markup(
-            chat_id=DATABASE_CHANNEL,
+            chat_id=database_channel,
             message_id=db_msg.id,
             reply_markup=keyboard
         )

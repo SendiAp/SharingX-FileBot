@@ -167,7 +167,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
     else:
         status_text = "🤖 Crash"
     
-    robot = Bot.get_instance(bot_id)
+    robot = Bot.get_instance(bot['bot_id'])
     if robot:
         me = await robot.get_me()
         username = me.username

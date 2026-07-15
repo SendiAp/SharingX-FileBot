@@ -334,9 +334,16 @@ async def restart_bot(client, callback_query: CallbackQuery):
 
     try:
         await set_bot_status(bot_id, "restart")
+
+        await callback_query.answer(
+            "✅ Bot berhasil direstart.",
+            show_alert=True
+        )
         
         await old_bot.stop()
 
+        awat asyncio.sleep(10)
+        
         media = Bot(
             name=str(data["bot_id"]),
             api_id=data["api_id"],
@@ -359,11 +366,6 @@ async def restart_bot(client, callback_query: CallbackQuery):
             )
             
         await set_bot_status(bot_id, "running")
-
-        await callback_query.answer(
-            "✅ Bot berhasil direstart.",
-            show_alert=True
-        )
 
     except Exception as e:
         return await callback_query.answer(

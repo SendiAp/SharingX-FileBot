@@ -19,7 +19,7 @@ async def start(client, message):
 
     await message.reply_text(
         "<b>🤖 Welcome To SharingX Bot Manager</b>\n\n"
-        "Silahkan pilih menu di bawah untuk membuat bot baru.",
+        "Silahkan pilih menu di bawah.",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
@@ -27,11 +27,406 @@ async def start(client, message):
                         "➕ Create Bot",
                         callback_data="create_bot"
                     )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "📦 My Bots",
+                        callback_data="my_bots"
+                    )
                 ]
             ]
         )
     )
-  
+
+@app.on_callback_query(filters.regex("^back_start$"))
+async def back_start(client, callback_query: CallbackQuery):
+
+    await callback_query.edit_message_text(
+        "<b>🤖 Welcome To SharingX Bot Manager</b>\n\n"
+        "Silahkan pilih menu di bawah.",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "➕ Create Bot",
+                        callback_data="create_bot"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "📦 My Bots",
+                        callback_data="my_bots"
+                    )
+                ]
+            ]
+        )
+    )
+
+@app.on_callback_query(filters.regex("^my_bots$"))
+async def my_bots(client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+
+    bots = await get_user_bots(user_id)
+
+    if not bots:
+        return await callback_query.edit_message_text(
+            "<b>📦 My Bots</b>\n\n"
+            "Anda belum memiliki bot.",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "➕ Create Bot",
+                            callback_data="create_bot"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "⬅️ Back",
+                            callback_data="back_start"
+                        )
+                    ]
+                ]
+            )
+        )
+
+    buttons = []
+
+    for bot in bots:
+
+        status = bot.get("status", "running")
+        emoji = "🟢" if status == "running" else "🔴"
+
+        username = bot.get("username")
+
+        if username:
+            text = f"{emoji} @{username}"
+        else:
+            text = f"{emoji} {bot['bot_id']}"
+
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text,
+                    callback_data=f"bot_{bot['bot_id']}"
+                )
+            ]
+        )
+
+    buttons.append(
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="back_start"
+            )
+        ]
+    )
+
+    await callback_query.edit_message_text(
+        f"<b>📦 My Bots ({len(bots)})</b>\n\n"
+        "Silahkan pilih bot yang ingin dikelola.",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+@app.on_callback_query(filters.regex(r"^bot_(.+)$"))
+async def bot_settings(client, callback_query: CallbackQuery):
+
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    bot = await get_bot_data(bot_id)
+
+    if not bot:
+        return await callback_query.answer(
+            "Bot tidak ditemukan.",
+            show_alert=True
+        )
+
+    status = bot.get("status", "running")
+
+    if status == "running":
+        status_text = "🟢 Running"
+    else:
+        status_text = "🔴 Stopped"
+
+    username = bot.get("username")
+    first_name = bot.get("first_name")
+
+    text = (
+        "<b>🤖 Bot Manager</b>\n\n"
+        f"<b>Nama :</b> {first_name or '-'}\n"
+        f"<b>Username :</b> @{username if username else '-'}\n"
+        f"<b>ID :</b> <code>{bot['bot_id']}</code>\n"
+        f"<b>Status :</b> {status_text}\n"
+        f"<b>Database :</b> <code>{bot.get('database', 'sharingx')}</code>"
+    )
+
+    await callback_query.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "▶️ Start",
+                        callback_data=f"startbot_{bot_id}"
+                    ),
+                    InlineKeyboardButton(
+                        "⏸ Stop",
+                        callback_data=f"stopbot_{bot_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "🔄 Restart",
+                        callback_data=f"restartbot_{bot_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "🗑 Delete",
+                        callback_data=f"deletebot_{bot_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "⬅️ Back",
+                        callback_data="my_bots"
+                    )
+                ]
+            ]
+        )
+    )
+
+@app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
+async def stop_bot(client, callback_query: CallbackQuery):
+
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "Bot tidak ditemukan.",
+            show_alert=True
+        )
+
+    bot = Bot.get_instance(bot_id)
+
+    if bot is None:
+        await set_bot_status(bot_id, "stopped")
+
+        return await callback_query.answer(
+            "Bot sudah berhenti.",
+            show_alert=True
+        )
+
+    try:
+        await bot.stop()
+
+        await set_bot_status(bot_id, "stopped")
+
+        await callback_query.answer(
+            "Bot berhasil dihentikan.",
+            show_alert=True
+        )
+
+    except Exception as e:
+        return await callback_query.answer(
+            str(e),
+            show_alert=True
+        )
+
+    await bot_settings(client, callback_query)
+
+@app.on_callback_query(filters.regex(r"^startbot_(.+)$"))
+async def start_bot(client, callback_query: CallbackQuery):
+
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "Bot tidak ditemukan.",
+            show_alert=True
+        )
+
+    if Bot.get_instance(bot_id):
+        return await callback_query.answer(
+            "Bot sudah berjalan.",
+            show_alert=True
+        )
+
+    try:
+        media = Bot(
+            name=str(data["bot_id"]),
+            api_id=data["api_id"],
+            api_hash=data["api_hash"],
+            bot_token=data["bot_token"]
+        )
+
+        mongo = MongoClient(data["mongo_url"])
+
+        media.mongo = mongo
+        media.db = mongo[data.get("database", "sharingx")]
+
+        await media.start()
+
+        await set_bot_status(bot_id, "running")
+
+        await callback_query.answer(
+            "Bot berhasil dijalankan.",
+            show_alert=True
+        )
+
+    except Exception as e:
+        return await callback_query.answer(
+            str(e),
+            show_alert=True
+        )
+
+    await bot_settings(client, callback_query)
+
+@app.on_callback_query(filters.regex(r"^restartbot_(.+)$"))
+async def restart_bot(client, callback_query: CallbackQuery):
+
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "Bot tidak ditemukan.",
+            show_alert=True
+        )
+
+    try:
+        old_bot = Bot.get_instance(bot_id)
+
+        if old_bot:
+            await old_bot.stop()
+
+        media = Bot(
+            name=str(data["bot_id"]),
+            api_id=data["api_id"],
+            api_hash=data["api_hash"],
+            bot_token=data["bot_token"]
+        )
+
+        mongo = MongoClient(data["mongo_url"])
+
+        media.mongo = mongo
+        media.db = mongo[data.get("database", "sharingx")]
+
+        await media.start()
+
+        await set_bot_status(bot_id, "running")
+
+        await callback_query.answer(
+            "Bot berhasil direstart.",
+            show_alert=True
+        )
+
+    except Exception as e:
+        return await callback_query.answer(
+            str(e),
+            show_alert=True
+        )
+
+    await bot_settings(client, callback_query)
+
+@app.on_callback_query(filters.regex(r"^deletebot_(.+)$"))
+async def delete_bot(client, callback_query: CallbackQuery):
+
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "Bot tidak ditemukan.",
+            show_alert=True
+        )
+
+    try:
+        bot = Bot.get_instance(bot_id)
+
+        if bot:
+            await bot.stop()
+
+        await remove_bot(bot_id)
+
+        await remove_user_bot(
+            callback_query.from_user.id,
+            bot_id
+        )
+
+        await callback_query.answer(
+            "Bot berhasil dihapus.",
+            show_alert=True
+        )
+
+    except Exception as e:
+        return await callback_query.answer(
+            str(e),
+            show_alert=True
+        )
+
+    bots = await get_user_bots(callback_query.from_user.id)
+
+    if not bots:
+        return await callback_query.edit_message_text(
+            "<b>📦 My Bots</b>\n\n"
+            "Anda belum memiliki bot.",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "➕ Create Bot",
+                            callback_data="create_bot"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "⬅️ Back",
+                            callback_data="back_start"
+                        )
+                    ]
+                ]
+            )
+        )
+
+    buttons = []
+
+    for bot in bots:
+        status = bot.get("status", "running")
+        emoji = "🟢" if status == "running" else "🔴"
+
+        username = bot.get("username")
+
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    f"{emoji} @{username}" if username else f"{emoji} {bot['bot_id']}",
+                    callback_data=f"bot_{bot['bot_id']}"
+                )
+            ]
+        )
+
+    buttons.append(
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="back_start"
+            )
+        ]
+    )
+
+    await callback_query.edit_message_text(
+        f"<b>📦 My Bots ({len(bots)})</b>\n\n"
+        "Silahkan pilih bot yang ingin dikelola.",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    
 @app.on_callback_query(filters.regex("create_bot"))
 async def create_bot(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id

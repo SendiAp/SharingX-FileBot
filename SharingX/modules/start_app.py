@@ -339,6 +339,8 @@ async def restart_bot(client, callback_query: CallbackQuery):
             "✅ Bot berhasil direstart.",
             show_alert=True
         )
+
+        await bot_settings(client, callback_query)
         
         await old_bot.stop()
 

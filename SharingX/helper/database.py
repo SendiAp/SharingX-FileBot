@@ -6,6 +6,7 @@ mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 
 botdb = db["sharing"]
+userbotdb = db["mybot_users"]
 
 async def get_bot():
     data = []
@@ -60,3 +61,56 @@ async def remove_bot(bot_id):
 
 async def get_bot_data(bot_id):
     return botdb.find_one({"bot_id": bot_id})
+
+# ==========================
+# MY BOT USERS
+# ==========================
+
+async def add_user_bot(user_id, bot_id):
+    userbotdb.update_one(
+        {"user_id": user_id},
+        {
+            "$addToSet": {
+                "bots": str(bot_id)
+            }
+        },
+        upsert=True
+    )
+
+async def remove_user_bot(user_id, bot_id):
+    userbotdb.update_one(
+        {"user_id": user_id},
+        {
+            "$pull": {
+                "bots": str(bot_id)
+            }
+        }
+    )
+
+async def get_user_bot_ids(user_id):
+    data = userbotdb.find_one(
+        {"user_id": user_id}
+    )
+
+    if not data:
+        return []
+
+    return data.get("bots", [])
+
+async def get_user_bots(user_id):
+    bot_ids = await get_user_bot_ids(user_id)
+
+    bots = []
+
+    for bot_id in bot_ids:
+        bot = botdb.find_one({"bot_id": str(bot_id)})
+
+        if bot:
+            bots.append(bot)
+
+    return bots
+
+async def get_user_data(user_id):
+    return userbotdb.find_one(
+        {"user_id": user_id}
+    )

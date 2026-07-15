@@ -104,8 +104,13 @@ async def my_bots(client, callback_query: CallbackQuery):
     for bot in bots:
 
         status = bot.get("status", "running")
-        emoji = "🟢" if status == "running" else "🔴"
-
+        if status == "running":
+            emoji = "🟢"
+        elif status == "restart":
+            emoji = "🔄"
+        else:
+            emoji = "🔴"
+    
         username = bot.get("username")
 
         if username:
@@ -151,12 +156,16 @@ async def bot_settings(client, callback_query: CallbackQuery):
         )
 
     status = bot.get("status", "running")
-
+    
     if status == "running":
         status_text = "🟢 Running"
-    else:
+    elif status == "stopped":
         status_text = "🔴 Stopped"
-
+    elif status == "restart":
+        status_text = "🔄 Restarting"
+    else:
+        status_text = "🤖 Crash"
+    
     username = bot.get("username")
     first_name = bot.get("first_name")
 
@@ -324,6 +333,8 @@ async def restart_bot(client, callback_query: CallbackQuery):
         )
 
     try:
+        await set_bot_status(bot_id, "restart")
+        
         await old_bot.stop()
 
         media = Bot(

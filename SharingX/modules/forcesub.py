@@ -79,7 +79,7 @@ async def listforcesub_handler(client, message):
     await message.reply(text)
 
 
-@bot.on_message(filters.private & filters.incoming, group=-1)
+@bot.on_message(filters.group)
 async def forcesub(client, message):
     if not message.from_user:
         return

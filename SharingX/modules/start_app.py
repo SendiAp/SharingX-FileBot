@@ -591,19 +591,9 @@ async def create_bot(client, callback_query: CallbackQuery):
         user_id,
         str(me.id)
     )
-    
-    await callback.edit(
-        "<b>✅ Bot berhasil ditambahkan.</b>\n\n"
-        "<b>♻️ Me-restart server...</b>"
-    )
-    
-    os.execv(
-        sys.executable,
-        [sys.executable, "-m", "SharingX"]
-    )
-    
-    await asyncio.sleep(10)
 
+    await asyncio.sleep(2)
+    
     await callback.edit(
         "<b>✅ Bot Anda Berhasil Diaktifkan!</b>\n\n"
         f"<b>• Username:</b> @{me.username}\n"
@@ -632,7 +622,12 @@ async def create_bot(client, callback_query: CallbackQuery):
         os.popen(f"rm {bot_id}*")
     except:
         pass
-
+        
+    os.execv(
+        sys.executable,
+        [sys.executable, "-m", "SharingX"]
+    )
+    
 async def aexec(code, client, message):
     exec(
         "async def __aexec(client, message): "

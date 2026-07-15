@@ -167,16 +167,18 @@ async def bot_settings(client, callback_query: CallbackQuery):
     else:
         status_text = "🤖 Crash"
     
-    username = bot.get("username")
-    first_name = bot.get("first_name")
-
+    robot = Bot.get_instance(bot_id)
+    if robot:
+        me = await robot.get_me()
+        username = me.username
+        first_name = me.first_name
+        
     text = (
-        "<b>🤖 Bot Manager</b>\n\n"
-        f"<b>Nama :</b> {first_name or '-'}\n"
-        f"<b>Username :</b> @{username if username else '-'}\n"
-        f"<b>ID :</b> <code>{bot['bot_id']}</code>\n"
-        f"<b>Status :</b> {status_text}\n"
-        f"<b>Database :</b> <code>{bot.get('database', 'sharingx')}</code>"
+        "<b>⚙️ Setting Bots</b>\n\n"
+        f"<b>🤖 Nama :</b> [{first_name}](t.me/{username})\n"
+        f"<b>🆔 Bot:</b> <code>{bot['bot_id']}</code>\n"
+        f"<b>👨‍💻 Status :</b> {status_text}\n"
+        f"<b>📂 Database :</b> <code>{bot.get('database', 'sharingx')}</code>"
     )
 
     await callback_query.edit_message_text(

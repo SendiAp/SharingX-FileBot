@@ -1,16 +1,17 @@
 from pymongo import MongoClient
 from SharingX.config import MONGO_DB_URL
 
+
 mongo = MongoClient(MONGO_DB_URL)
+
 db = mongo["sharingx"]
 
 botdb = db["sharing"]
 
-
 async def get_bot():
     data = []
 
-    async for bt in botdb.find({"bot_id": {"$exists": True}}):
+    for bt in botdb.find({"bot_id": {"$exists": True}}):
         data.append(
             {
                 "name": str(bt["bot_id"]),
@@ -25,7 +26,6 @@ async def get_bot():
 
     return data
 
-
 async def add_bot(
     bot_id,
     api_id,
@@ -34,6 +34,7 @@ async def add_bot(
     mongo_url,
     database="sharingx",
 ):
+
     data = {
         "bot_id": bot_id,
         "api_id": api_id,
@@ -43,20 +44,20 @@ async def add_bot(
         "database": database,
     }
 
-    cek = await botdb.find_one({"bot_id": bot_id})
+    cek = botdb.find_one({"bot_id": bot_id})
 
     if cek:
-        await botdb.update_one(
+        botdb.update_one(
             {"bot_id": bot_id},
             {"$set": data},
         )
     else:
-        await botdb.insert_one(data)
+        botdb.insert_one(data)
 
 
 async def remove_bot(bot_id):
-    return await botdb.delete_one({"bot_id": bot_id})
+    return botdb.delete_one({"bot_id": bot_id})
 
 
 async def get_bot_data(bot_id):
-    return await botdb.find_one({"bot_id": bot_id})
+    return botdb.find_one({"bot_id": bot_id})

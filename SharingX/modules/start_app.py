@@ -184,7 +184,17 @@ async def create_bot(client, callback_query: CallbackQuery):
         database
     )
 
-    await asyncio.sleep(2)
+    await callback.edit(
+        "<b>✅ Bot berhasil ditambahkan.</b>\n\n"
+        "<b>♻️ Me-restart server...</b>"
+    )
+    
+    os.execv(
+        sys.executable,
+        [sys.executable, "-m", "SharingX"]
+    )
+    
+    await asyncio.sleep(10)
 
     await callback.edit(
         "<b>✅ Bot Anda Berhasil Diaktifkan!</b>\n\n"

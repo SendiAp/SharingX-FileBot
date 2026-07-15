@@ -116,11 +116,12 @@ async def my_bots(client, callback_query: CallbackQuery):
             me = await bot.get_me()
             username = me.username
             first_name = me.first_name
-    
+            text = f"@{username}"
+        
         buttons.append(
             [
                 InlineKeyboardButton(
-                    f"@{username}",
+                    text,
                     callback_data=f"bot_{bot['bot_id']}"
                 )
             ]

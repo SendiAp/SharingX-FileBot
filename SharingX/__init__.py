@@ -32,22 +32,30 @@ class Bot(Client):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
+
         self.mongo = None
         self.db = None
 
-    def on_message(self, filters=None):
+    @classmethod
+    def on_message(cls, filters=None):
         def decorator(func):
-            for b in self._bots:
-                b.add_handler(MessageHandler(func, filters))
+            for b in cls._bots:
+                b.add_handler(
+                    MessageHandler(func, filters)
+                )
             return func
+
         return decorator
 
-    def on_callback_query(self, filters=None):
+    @classmethod
+    def on_callback_query(cls, filters=None):
         def decorator(func):
-            for b in self._bots:
-                b.add_handler(CallbackQueryHandler(func, filters))
+            for b in cls._bots:
+                b.add_handler(
+                    CallbackQueryHandler(func, filters)
+                )
             return func
+
         return decorator
 
     async def start(self):
@@ -55,7 +63,6 @@ class Bot(Client):
 
         if self not in self._bots:
             self._bots.append(self)
-
 
 class MainApp(Client):
     def __init__(self):

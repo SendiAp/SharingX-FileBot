@@ -8,7 +8,15 @@ from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from SharingX import app, Bot
-from SharingX.helper.database import add_bot
+from SharingX.helper.database import (
+    add_bot,
+    get_bot_data,
+    get_user_bots,
+    add_user_bot,
+    remove_user_bot,
+    remove_bot,
+    set_bot_status,
+)
 from SharingX.modules import loadModule
 
 from pyrogram import filters

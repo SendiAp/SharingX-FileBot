@@ -21,6 +21,7 @@ async def get_bot():
                 "bot_token": bt["bot_token"],
                 "mongo_url": bt["mongo_url"],
                 "database": bt.get("database", "sharingx"),
+                "status": bt.get("status", "running"),
             }
         )
 
@@ -42,6 +43,7 @@ async def add_bot(
         "bot_token": bot_token,
         "mongo_url": mongo_url,
         "database": database,
+        "status": "running"
     }
 
     cek = botdb.find_one({"bot_id": bot_id})

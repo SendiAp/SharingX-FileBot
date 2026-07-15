@@ -111,7 +111,7 @@ async def my_bots(client, callback_query: CallbackQuery):
         else:
             emoji = "🔴"
     
-        bot = Bot.get_instance(bot_id)
+        bot = Bot.get_instance(bot['bot_id'])
         if bot:
             me = await bot.get_me()
             username = me.username

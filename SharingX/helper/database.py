@@ -56,10 +56,8 @@ async def add_bot(
     else:
         botdb.insert_one(data)
 
-
 async def remove_bot(bot_id):
     return botdb.delete_one({"bot_id": bot_id})
-
 
 async def get_bot_data(bot_id):
     return botdb.find_one({"bot_id": bot_id})

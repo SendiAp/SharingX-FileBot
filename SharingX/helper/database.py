@@ -6,16 +6,26 @@ mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 forcesubdb = db["forcesub"]
 
+
 async def add_forcesub(chat_id: int):
-    if not forcesubdb.find_one({"chat_id": chat_id}):
-        forcesubdb.insert_one({
-            "chat_id": chat_id
-        })
+    forcesubdb.update_one(
+        {"_id": chat_id},
+        {"$set": {"chat_id": chat_id}},
+        upsert=True
+    )
 
 
 async def get_forcesubs():
-    return [doc["chat_id"] for doc in forcesubdb.find({}, {"chat_id": 1})]
+    data = []
+
+    for doc in forcesubdb.find({}):
+        if "chat_id" in doc:
+            data.append(doc["chat_id"])
+        elif "_id" in doc and isinstance(doc["_id"], int):
+            data.append(doc["_id"])
+
+    return data
 
 
 async def del_forcesub(chat_id: int):
-    forcesubdb.delete_one({"chat_id": chat_id})
+    forcesubdb.delete_one({"_id": chat_id})

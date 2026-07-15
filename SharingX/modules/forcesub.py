@@ -22,20 +22,64 @@ from pyrogram.types import (
 
 @bot.on_message(filters.command("addforcesub"))
 async def addforcesub_handler(client, message):
-    if len(message.command) < 2:
+    chat_id = None
+
+    if len(message.command) > 1:
+        target = message.command[1]
+
+        if target.startswith("@"):
+            try:
+                chat = await bot.get_chat(target)
+                chat_id = chat.id
+            except Exception:
+                return await message.reply(
+                    "❌ Username channel/grup tidak ditemukan."
+                )
+
+        else:
+            try:
+                chat_id = int(target)
+            except ValueError:
+                return await message.reply(
+                    "❌ Chat ID atau username tidak valid."
+                )
+
+    elif message.reply_to_message:
+        reply = message.reply_to_message
+
+        if reply.forward_from_chat:
+            chat_id = reply.forward_from_chat.id
+        elif reply.sender_chat:
+            chat_id = reply.sender_chat.id
+        else:
+            return await message.reply(
+                "❌ Reply ke pesan hasil forward dari channel/grup."
+            )
+
+    else:
         return await message.reply(
-            "❌ Gunakan format:\n<code>/addforcesub -100xxxxxxxxxx</code>"
+            "<b>Gunakan salah satu cara berikut:</b>\n\n"
+            "• <code>/addforcesub -100xxxxxxxxxx</code>\n"
+            "• <code>/addforcesub @username</code>\n"
+            "• Reply ke pesan hasil forward dari channel/grup dengan perintah <code>/addforcesub</code>"
         )
 
     try:
-        chat_id = int(message.command[1])
-    except ValueError:
-        return await message.reply("❌ Chat ID harus berupa angka!")
+        await bot.send_message(
+            chat_id,
+            "✅ Berhasil Disimpan Untuk Forcesub"
+        )
+    except Exception:
+        return await message.reply(
+            "❌ Gagal mengirim pesan ke channel/grup.\n"
+            "Pastikan bot sudah menjadi admin dan memiliki izin mengirim pesan."
+        )
 
     await add_forcesub(chat_id)
 
     await message.reply(
-        f"✅ Channel forcesub berhasil ditambahkan.\n\n"
+        f"✅ Forcesub berhasil ditambahkan.\n\n"
+        f"Nama: <b>{(await bot.get_chat(chat_id)).title}</b>\n"
         f"Chat ID: <code>{chat_id}</code>"
     )
 

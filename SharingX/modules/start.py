@@ -220,6 +220,29 @@ async def adddb(client, message):
         f"<b>Nama:</b> {chat.title}\n"
         f"<b>Chat ID:</b> <code>{chat_id}</code>"
     )
+
+@Client.on_message(filters.command("deldb"))
+async def deldb(client, message):
+    chat_id = await get_database_channel()
+
+    if not chat_id:
+        return await message.reply(
+            "❌ Database Channel belum disetel."
+        )
+
+    try:
+        chat = await client.get_chat(chat_id)
+        name = chat.title
+    except Exception:
+        name = "Tidak diketahui"
+
+    await del_database_channel()
+
+    await message.reply(
+        f"🗑 Database Channel berhasil dihapus.\n\n"
+        f"<b>Nama:</b> {name}\n"
+        f"<b>Chat ID:</b> <code>{chat_id}</code>"
+    )
     
 @Client.on_message(
     filters.private

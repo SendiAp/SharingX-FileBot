@@ -584,8 +584,7 @@ async def create_bot(client, callback_query: CallbackQuery):
         api_hash,
         bot_token,
         mongo_url,
-        database,
-        status, "running"
+        database
     )
 
     await add_user_bot(

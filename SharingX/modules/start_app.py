@@ -219,7 +219,7 @@ async def create_bot(client, callback_query: CallbackQuery):
     for mod in loadModule():
         importlib.reload(
             importlib.import_module(
-                f"Media.modules.{mod}"
+                f"SharingX.modules.{mod}"
             )
         )
 

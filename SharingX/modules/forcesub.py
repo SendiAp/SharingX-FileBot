@@ -15,53 +15,12 @@ from pyrogram.errors import (
 )
 
 from pyrogram.types import (
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
-    KeyboardButton,
-    KeyboardButtonRequestChat
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup
 )
 
 @bot.on_message(filters.command("addforcesub"))
-async def addforcesub(client, message):
-    keyboard = ReplyKeyboardMarkup(
-        [[
-            KeyboardButton(
-                text="📢 Pilih Channel",
-                request_chat=KeyboardButtonRequestChat(
-                    request_id=1,
-                    chat_is_channel=True,
-                    chat_is_created=False,
-                    bot_is_member=True,
-                    bot_administrator_rights=None,
-                    user_administrator_rights=None
-                )
-            )
-        ]],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
-
-    await message.reply(
-        "Silakan pilih channel yang akan dijadikan Force Subscribe.",
-        reply_markup=keyboard
-    )
-
-@bot.on_message(filters.private)
-async def selected_chat(client, message):
-    if not message.chat_shared:
-        return
-
-    chat_id = message.chat_shared.chat_id
-
-    await add_forcesub(chat_id)
-
-    await message.reply(
-        f"✅ Force Subscribe berhasil ditambahkan.\n\n"
-        f"Chat ID: `{chat_id}`",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    
-@bot.on_message(filters.command("jdjfjf"))
 async def addforcesub_handler(client, message):
     if len(message.command) < 2:
         return await message.reply(
@@ -79,7 +38,6 @@ async def addforcesub_handler(client, message):
         f"✅ Channel forcesub berhasil ditambahkan.\n\n"
         f"Chat ID: <code>{chat_id}</code>"
     )
-
 
 @bot.on_message(filters.command("delforcesub"))
 async def delforcesub_handler(client, message):

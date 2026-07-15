@@ -342,7 +342,7 @@ async def restart_bot(client, callback_query: CallbackQuery):
         
         await old_bot.stop()
 
-        awat asyncio.sleep(10)
+        await asyncio.sleep(10)
         
         media = Bot(
             name=str(data["bot_id"]),

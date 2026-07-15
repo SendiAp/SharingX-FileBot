@@ -4,6 +4,10 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from SharingX import bot
+from SharingX.helper.database import (
+    set_link_status,
+    get_link_status
+)
 
 DATABASE_CHANNEL = -1004437744973
 

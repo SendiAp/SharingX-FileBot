@@ -15,6 +15,8 @@ from SharingX.modules.db import (
     add_forcesub,
     del_forcesub,
     get_forcesubs,
+    get_forcesub_button_mode,
+    set_forcesub_button_mode,
 )
 
 BUTTON_PER_PAGE = 10

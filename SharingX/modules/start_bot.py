@@ -17,6 +17,8 @@ from SharingX.modules.db import (
     add_forcesub,
     get_forcesubs,
     del_forcesub,
+    get_user,
+    add_user
 )
 
 @Bot.on_message(filters.command("start") & filters.private)

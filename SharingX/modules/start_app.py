@@ -79,8 +79,8 @@ async def back_start(client, callback_query: CallbackQuery):
 
 @app.on_callback_query(filters.regex("^my_bots$"))
 async def my_bots(client, callback_query: CallbackQuery):
-    user_id = callback_query.from_user.id
 
+    user_id = callback_query.from_user.id
     bots = await get_user_bots(user_id)
 
     if not bots:
@@ -107,24 +107,39 @@ async def my_bots(client, callback_query: CallbackQuery):
 
     buttons = []
 
-    for bot in bots:
+    for data in bots:
 
-        status = bot.get("status", "running")
-        if status == "running":
-            emoji = "🟢"
-        elif status == "restart":
-            emoji = "🔄"
-        else:
-            emoji = "🔴"
+        bot_id = data["bot_id"]
+        status = data.get("status", "stopped")
 
-        bot_id = bot['bot_id']
-        bot = Bot.get_instance(bot_id)
-        if bot:
-            me = await bot.get_me()
-            username = me.username
-            first_name = me.first_name
-            text = f"@{username}"
-        
+        status_map = {
+            "running": ("🟢", "Running"),
+            "restart": ("🔄", "Restart"),
+            "stopped": ("🔴", "Stopped"),
+            "crash": ("⚫", "Crash")
+        }
+
+        emoji, status_text = status_map.get(
+            status,
+            ("⚫", status.title())
+        )
+
+        text = f"{bot_id} | {emoji} {status_text}"
+
+        try:
+            robot = Bot.get_instance(bot_id)
+
+            if robot and status == "running":
+                me = await robot.get_me()
+
+                if me.username:
+                    text = f"@{me.username} | {emoji} {status_text}"
+                else:
+                    text = f"{bot_id} | {emoji} {status_text}"
+
+        except Exception:
+            pass
+
         buttons.append(
             [
                 InlineKeyboardButton(
@@ -137,18 +152,19 @@ async def my_bots(client, callback_query: CallbackQuery):
     buttons.append(
         [
             InlineKeyboardButton(
-                "⬅️ Back",
+                "🔙 Kembali",
                 callback_data="back_start"
             )
         ]
     )
 
     await callback_query.edit_message_text(
-        f"<b>📦 My Bots ({len(bots)})</b>\n\n"
-        "Silahkan pilih bot yang ingin dikelola.",
+        f"<b>🤖 Daftar Bot ({len(bots)}/5)</b>\n\n"
+        f"__⚠️ Pastikan Selalu Melihat Kondisi Bot Anda, Agar Bot Tetap Aman!__\n\n"
+        f"Silahkan Pilih Bot Anda:",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
-
+    
 @app.on_callback_query(filters.regex(r"^bot_(.+)$"))
 async def bot_settings(client, callback_query: CallbackQuery):
 

@@ -1,42 +1,44 @@
 import time
 import asyncio
 
+from pyrogram import filters
 from pyrogram.errors import (
     FloodWait,
     UserIsBlocked,
     InputUserDeactivated
 )
 
-async def remove_duplicates(users):
+from SharingX import Bot
+
+async def remove_duplicates(client, users):
     seen = set()
     unique_users = []
-    
-    for user in users:
-        if user not in seen:
-            seen.add(user)
-            unique_users.append(user)
+
+    for user_id in users:
+        if user_id not in seen:
+            seen.add(user_id)
+            unique_users.append(user_id)
         else:
-            await del_user(user)
+            await del_user(client, user_id)
+
     return unique_users
-  
-@bot.on_message(filters.command(["broadcast", "gcast"]) & filters.private & filters.user(OWNER_ID))
+
+@Bot.on_message(filters.command(["broadcast", "gcast"]))
 async def broadcast(client, message):
 
     if not message.reply_to_message:
         return await message.reply(
-            "❌ Reply Pesan Apapun!",
-            quote=True
+            "<b>❌ Reply Pesan Yang Ingin Dibroadcast!</b>"
         )
 
-    users = await get_user()
+    users = await get_user(client)
 
     if not users:
         return await message.reply(
-            "⚠️ Tidak Ada Pengguna Yang Terdaftar!",
-            quote=True
+            "⚠️ Tidak Ada Pengguna Yang Terdaftar!"
         )
 
-    users = await remove_duplicates(users)
+    users = await remove_duplicates(client, users)
 
     broadcast_msg = message.reply_to_message
 
@@ -49,8 +51,7 @@ async def broadcast(client, message):
     start_time = time.time()
 
     pls_wait = await message.reply(
-        "📡 Broadcast Sedang Berlangsung...",
-        quote=True
+        "📡 Broadcast Sedang Berlangsung..."
     )
 
     for user_id in users:
@@ -61,7 +62,6 @@ async def broadcast(client, message):
 
         except FloodWait as e:
             await asyncio.sleep(e.value)
-
             try:
                 await broadcast_msg.copy(user_id)
                 successful += 1
@@ -69,32 +69,27 @@ async def broadcast(client, message):
                 unsuccessful += 1
 
         except UserIsBlocked:
-            await del_user(user_id)
+            await del_user(client, user_id)
             blocked += 1
 
         except InputUserDeactivated:
-            await del_user(user_id)
+            await del_user(client, user_id)
             deleted += 1
 
         except Exception:
-            await del_user(user_id)
             unsuccessful += 1
 
     elapsed = int(time.time() - start_time)
 
-    hours, rem = divmod(elapsed, 3600)
-    minutes, seconds = divmod(rem, 60)
+    jam, sisa = divmod(elapsed, 3600)
+    menit, detik = divmod(sisa, 60)
 
-    process_time = f"{hours:02}:{minutes:02}:{seconds:02}"
-
-    status = (
+    await pls_wait.edit(
         "<b>✅ Broadcast Selesai</b>\n\n"
         f"👥 Total User : <code>{total}</code>\n"
         f"📨 Berhasil : <code>{successful}</code>\n"
         f"❌ Gagal : <code>{unsuccessful}</code>\n"
         f"🚫 Diblokir : <code>{blocked}</code>\n"
         f"🗑 Akun Terhapus : <code>{deleted}</code>\n"
-        f"⏱ Waktu Proses : <code>{process_time}</code>"
+        f"⏱ Waktu : <code>{jam:02}:{menit:02}:{detik:02}</code>"
     )
-
-    await pls_wait.edit(status)

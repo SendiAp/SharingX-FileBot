@@ -18,7 +18,6 @@ from SharingX.modules.db import (
     del_forcesub,
 )
 
-
 @Bot.on_message(filters.command("start"))
 async def start(client, message):
 
@@ -37,6 +36,76 @@ async def start(client, message):
                 "<b>❌ Database Channel belum disetel.</b>"
             )
 
+        forcesubs = await get_forcesubs(client)
+        mode = await get_forcesub_button_mode(client)
+
+        buttons = []
+        row = []
+
+        for chat_id in forcesubs:
+            try:
+                chat = await client.get_chat(chat_id)
+
+                if chat.username:
+                    url = f"https://t.me/{chat.username}"
+                else:
+                    invite = chat.invite_link
+
+                    if not invite:
+                        try:
+                            invite = await client.create_chat_invite_link(chat_id)
+                            invite = invite.invite_link
+                        except:
+                            continue
+
+                    url = invite
+
+                if mode == "text":
+                    text = (
+                        "📢 Channel"
+                        if chat.type.name.lower() == "channel"
+                        else "👥 Group"
+                    )
+
+                elif mode == "username":
+                    text = (
+                        f"@{chat.username}"
+                        if chat.username
+                        else "🔗 Join"
+                    )
+
+                else:
+                    text = chat.title
+
+                row.append(
+                    InlineKeyboardButton(
+                        text,
+                        url=url
+                    )
+                )
+
+                if len(row) == 2:
+                    buttons.append(row)
+                    row = []
+
+            except:
+                continue
+
+        if row:
+            buttons.append(row)
+
+        if not buttons:
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        "❌ Close",
+                        callback_data="close"
+                    )
+                ]
+            )
+
+        keyboard = InlineKeyboardMarkup(buttons)
+
         data = base64.urlsafe_b64decode(token).decode()
 
         if data.startswith("get-"):
@@ -47,11 +116,10 @@ async def start(client, message):
                 chat_id=message.chat.id,
                 from_chat_id=database_channel,
                 message_id=msg_id,
-                reply_markup=None
+                reply_markup=keyboard
             )
 
         elif data.startswith("batch-"):
-
             _, start_id, end_id = data.split("-")
 
             for msg_id in range(int(start_id), int(end_id) + 1):
@@ -60,7 +128,7 @@ async def start(client, message):
                         chat_id=message.chat.id,
                         from_chat_id=database_channel,
                         message_id=msg_id,
-                        reply_markup=None
+                        reply_markup=keyboard
                     )
                 except:
                     pass
@@ -74,7 +142,13 @@ async def start(client, message):
             f"<b>❌ Error:</b>\n<code>{e}</code>"
         )
 
+@Bot.on_callback_query(filters.regex("^close$"))
+async def close_callback(client, callback_query):
 
+    await callback_query.message.delete()
+
+    await callback_query.answer()
+    
 @Bot.on_message(filters.command("link"))
 async def link_mode(client, message):
 

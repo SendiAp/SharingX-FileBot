@@ -9,6 +9,10 @@ from pyrogram.errors import (
 )
 
 from SharingX import Bot
+from SharingX.modules.db import (
+    get_user,
+    del_user,
+)
 
 async def remove_duplicates(client, users):
     seen = set()

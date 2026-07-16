@@ -19,7 +19,6 @@ from SharingX.modules.db import (
 
 BUTTON_PER_PAGE = 10
 
-
 @Bot.on_message(filters.command("addforcesub"))
 async def addforcesub_handler(client, message):
 
@@ -97,7 +96,6 @@ async def addforcesub_handler(client, message):
         f"<b>Nama :</b> {chat.title}\n"
         f"<b>Chat ID :</b> <code>{chat_id}</code>"
     )
-
 
 async def build_forcesub_menu(client, page=0):
 
@@ -286,7 +284,94 @@ async def forcesub_yes_callback(client, callback_query):
         "Berhasil dihapus."
     )
 
+@Bot.on_message(filters.command("forcesubbutton"))
+async def forcesub_button(client, message):
 
+    mode = await get_forcesub_button_mode(client)
+
+    mode_text = {
+        "text": "Text",
+        "username": "Username",
+        "name": "Nama"
+    }.get(mode, "Text")
+
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "📝 Text",
+                    callback_data="fsbtn_text"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "👤 Username",
+                    callback_data="fsbtn_username"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📢 Nama",
+                    callback_data="fsbtn_name"
+                )
+            ]
+        ]
+    )
+
+    await message.reply_text(
+        "<b>⚙️ Force Subscribe Button</b>\n\n"
+        f"<b>Mode Saat Ini:</b> <code>{mode_text}</code>\n\n"
+        "Silakan pilih mode tombol yang akan digunakan.",
+        reply_markup=keyboard
+    )
+
+@Bot.on_callback_query(filters.regex(r"^fsbtn_(text|username|name)$"))
+async def forcesub_button_callback(client, callback_query):
+
+    mode = callback_query.matches[0].group(1)
+
+    await set_forcesub_button_mode(client, mode)
+
+    mode_text = {
+        "text": "Text",
+        "username": "Username",
+        "name": "Nama"
+    }[mode]
+
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "📝 Text",
+                    callback_data="fsbtn_text"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "👤 Username",
+                    callback_data="fsbtn_username"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📢 Nama",
+                    callback_data="fsbtn_name"
+                )
+            ]
+        ]
+    )
+
+    await callback_query.edit_message_text(
+        "<b>⚙️ Force Subscribe Button</b>\n\n"
+        f"<b>Mode Saat Ini:</b> <code>{mode_text}</code>\n\n"
+        "Silakan pilih mode tombol yang akan digunakan.",
+        reply_markup=keyboard
+    )
+
+    await callback_query.answer(
+        "Mode berhasil diubah."
+    )
+    
 @Bot.on_callback_query(filters.regex("^forcesub_back$"))
 async def forcesub_back_callback(client, callback_query):
 

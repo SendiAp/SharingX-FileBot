@@ -444,7 +444,8 @@ async def forcesub(client, message):
 
     await message.reply_text(
         f"👋 Hai {message.from_user.mention},\n\n"
-        "Untuk menggunakan bot ini, silakan bergabung ke seluruh channel/grup di bawah terlebih dahulu.",
+        f"__Anda Harus Bergabung Di Channel/Group Saya Terlebih Dahulu Untuk Menggunakan Bot Ini.__\n\n"
+        f"Silahkan Bergabung Channel/Groups:",
         reply_markup=InlineKeyboardMarkup(keyboard),
         disable_web_page_preview=True
     )

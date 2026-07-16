@@ -29,7 +29,7 @@ async def start(client, message):
         await message.reply_text(
             f"👋Hai {message.from_user.first_name}!\n"
             f"<b>SharingX</b> Adalah Bot Yang Dapat Menyimpan Media Yang Anda Kirim Kebot Dan Bot Akan Mengirimkan Link Media/File Tersebut.\n\n"
-            f"<b>👉Apa Yang Spesial Disini?</b>, Database Tidaklah Sharing Dengan Pengguna Lain, Jadi Anda Dapat Membawa Link Database Sendiri.\n\n"
+            f"<b>👉Apa Yang Spesial Disini?</b> Database Tidaklah Sharing Dengan Pengguna Lain, Jadi Anda Dapat Membawa Link Database Anda Sendiri.\n\n"
             f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
             f"Tekan <b>Bantuan</b> Jika Kalian Belum Mengerti Semua Hal Yang Anda Butuhkan, Jangan Segan Untuk Hubungi <b>Admin</b> Atau <b>Pemilik</b> Jika Butuh Bantuan.\n\n"
             f"<b>📜 Privacy Policy</b>",
@@ -54,7 +54,7 @@ async def start(client, message):
 async def back_start(client, callback_query: CallbackQuery):
     try:
         await callback_query.edit_message_text(
-            f"👋Hai {message.from_user.first_name}!\n"
+            f"👋Hai {callback_query.from_user.first_name}!\n"
             f"<b>SharingX</b> Adalah Bot Yang Dapat Menyimpan Media Yang Anda Kirim Kebot Dan Bot Akan Mengirimkan Link Media/File Tersebut.\n\n"
             f"<b>👉Apa Yang Spesial Disini?</b>, Database Tidaklah Sharing Dengan Pengguna Lain, Jadi Anda Dapat Membawa Link Database Sendiri.\n\n"
             f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
@@ -85,8 +85,7 @@ async def my_bots(client, callback_query: CallbackQuery):
 
     if not bots:
         return await callback_query.edit_message_text(
-            "<b>📦 My Bots</b>\n\n"
-            "Anda belum memiliki bot.",
+            "<b>⚠️ Kamu Belum Memiliki Bot, Silahkan Buat Terlebih Dahulu!",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
@@ -97,7 +96,7 @@ async def my_bots(client, callback_query: CallbackQuery):
                     ],
                     [
                         InlineKeyboardButton(
-                            "⬅️ Back",
+                            "⬅️ Kembali",
                             callback_data="back_start"
                         )
                     ]
@@ -114,7 +113,7 @@ async def my_bots(client, callback_query: CallbackQuery):
 
         status_map = {
             "running": ("🟢", "Running"),
-            "restart": ("🔄", "Restart"),
+            "restart": ("🔄", "Restarting"),
             "stopped": ("🔴", "Stopped"),
             "crash": ("⚫", "Crash")
         }
@@ -159,9 +158,9 @@ async def my_bots(client, callback_query: CallbackQuery):
     )
 
     await callback_query.edit_message_text(
-        f"<b>🤖 Daftar Bot ({len(bots)}/5)</b>\n\n"
+        f"<b>🤖 Daftar Bot {callback_query.from_user.first_name} ({len(bots)}/5):</b>\n\n"
         f"__⚠️ Pastikan Selalu Melihat Kondisi Bot Anda, Agar Bot Tetap Aman!__\n\n"
-        f"Silahkan Pilih Bot Anda:",
+        f"<b>Silahkan Pilih Bot Anda:</b>",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
     
@@ -187,7 +186,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
     elif status == "restart":
         status_text = "🔄 Restarting"
     else:
-        status_text = "🤖 Crash"
+        status_text = "⚫ Crash"
 
     username = None
     first_name = "⚠️ Bot Sedang Dalam Penghentian"

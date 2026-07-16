@@ -1,9 +1,7 @@
 from pymongo.collection import Collection
 
-
 def _col(client, name: str) -> Collection:
     return client.db[name]
-
 
 # =========================
 # DATABASE CHANNEL
@@ -16,19 +14,16 @@ async def set_database_channel(client, chat_id: int):
         upsert=True
     )
 
-
 async def get_database_channel(client):
     data = _col(client, "database_channel").find_one(
         {"_id": "database"}
     )
     return data.get("chat_id") if data else None
 
-
 async def del_database_channel(client):
     _col(client, "database_channel").delete_one(
         {"_id": "database"}
     )
-
 
 # =========================
 # AUTO LINK
@@ -41,7 +36,6 @@ async def set_link_status(client, status: bool):
         upsert=True
     )
 
-
 async def get_link_status(client):
     data = _col(client, "link_mode").find_one(
         {"_id": "link_mode"}
@@ -51,7 +45,6 @@ async def get_link_status(client):
         return True
 
     return data.get("enabled", True)
-
 
 # =========================
 # FORCE SUBSCRIBE
@@ -63,7 +56,6 @@ async def add_forcesub(client, chat_id: int):
         {"$set": {"chat_id": chat_id}},
         upsert=True
     )
-
 
 async def get_forcesubs(client):
     data = []
@@ -78,12 +70,10 @@ async def get_forcesubs(client):
 
     return data
 
-
 async def del_forcesub(client, chat_id: int):
     _col(client, "forcesub").delete_one(
         {"_id": chat_id}
     )
-
 
 # =========================
 # BUTTONS
@@ -101,7 +91,6 @@ async def add_button(client, text: str, url: str):
         upsert=True
     )
 
-
 async def get_buttons(client):
     return list(
         _col(client, "buttons").find(
@@ -110,12 +99,10 @@ async def get_buttons(client):
         )
     )
 
-
 async def del_button(client, text: str):
     _col(client, "buttons").delete_one(
         {"text": text}
     )
-
 
 # =========================
 # SETTINGS
@@ -128,7 +115,6 @@ async def set_setting(client, key: str, value):
         upsert=True
     )
 
-
 async def get_setting(client, key: str, default=None):
     data = _col(client, "settings").find_one(
         {"_id": key}
@@ -138,3 +124,31 @@ async def get_setting(client, key: str, default=None):
         return default
 
     return data.get("value", default)
+
+# =========================
+# MODE BUTTON FORCESUB
+# =========================
+
+async def set_forcesub_button_mode(client, mode: str):
+    db = client.db["forcesub_settings"]
+
+    db.update_one(
+        {"_id": "button_mode"},
+        {"$set": {"mode": mode}},
+        upsert=True
+    )
+
+async def get_forcesub_button_mode(client):
+    db = client.db["forcesub_settings"]
+
+    data = db.find_one({"_id": "button_mode"})
+
+    if not data:
+        return "text"
+
+    mode = data.get("mode", "text")
+
+    if mode not in ["text", "username", "name"]:
+        mode = "text"
+
+    return mode

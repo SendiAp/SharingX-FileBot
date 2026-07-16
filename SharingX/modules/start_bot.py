@@ -22,19 +22,6 @@ from SharingX.modules.db import (
 async def start(client, message):
 
     if len(message.command) < 2:
-        return await message.reply_text(
-            "<b>📁 Kirim file ke bot ini untuk membuat Link Sharing.</b>"
-        )
-
-    try:
-        token = message.command[1]
-
-        database_channel = await get_database_channel(client)
-
-        if not database_channel:
-            return await message.reply_text(
-                "<b>❌ Database Channel belum disetel.</b>"
-            )
 
         forcesubs = await get_forcesubs(client)
         mode = await get_forcesub_button_mode(client)
@@ -53,7 +40,7 @@ async def start(client, message):
 
                     if not invite:
                         try:
-                            invite = await client.create_chat_invite_link(chat_id)
+                            invite = await client.create_chat_invite_link(chat.id)
                             invite = invite.invite_link
                         except:
                             continue
@@ -61,18 +48,13 @@ async def start(client, message):
                     url = invite
 
                 if mode == "text":
-                    text = (
-                        "📢 Channel"
-                        if chat.type.name.lower() == "channel"
-                        else "👥 Group"
-                    )
+                    if chat.type.name.lower() == "channel":
+                        text = "📢 Join Channel"
+                    else:
+                        text = "👥 Join Group"
 
                 elif mode == "username":
-                    text = (
-                        f"@{chat.username}"
-                        if chat.username
-                        else "🔗 Join"
-                    )
+                    text = f"@{chat.username}" if chat.username else "🔗 Join"
 
                 else:
                     text = chat.title
@@ -104,7 +86,20 @@ async def start(client, message):
                 ]
             )
 
-        keyboard = InlineKeyboardMarkup(buttons)
+        return await message.reply_text(
+            "<b>📁 Kirim file ke bot ini untuk membuat Link Sharing.</b>",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+
+    try:
+        token = message.command[1]
+
+        database_channel = await get_database_channel(client)
+
+        if not database_channel:
+            return await message.reply_text(
+                "<b>❌ Database Channel belum disetel.</b>"
+            )
 
         data = base64.urlsafe_b64decode(token).decode()
 
@@ -116,10 +111,11 @@ async def start(client, message):
                 chat_id=message.chat.id,
                 from_chat_id=database_channel,
                 message_id=msg_id,
-                reply_markup=keyboard
+                reply_markup=None
             )
 
         elif data.startswith("batch-"):
+
             _, start_id, end_id = data.split("-")
 
             for msg_id in range(int(start_id), int(end_id) + 1):
@@ -128,7 +124,7 @@ async def start(client, message):
                         chat_id=message.chat.id,
                         from_chat_id=database_channel,
                         message_id=msg_id,
-                        reply_markup=keyboard
+                        reply_markup=None
                     )
                 except:
                     pass
@@ -141,7 +137,7 @@ async def start(client, message):
         await message.reply_text(
             f"<b>❌ Error:</b>\n<code>{e}</code>"
         )
-
+        
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):
 

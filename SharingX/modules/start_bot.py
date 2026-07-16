@@ -19,11 +19,15 @@ from SharingX.modules.db import (
     del_forcesub,
 )
 
-@Bot.on_message(filters.command("start"))
+@Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 
     if len(message.command) < 2:
 
+        gcast = await get_user(client)
+        if message.from_user.id not in gcast:
+            await add_user(client, message.from_user.id)
+            
         forcesubs = await get_forcesubs(client)
         mode = await get_forcesub_button_mode(client)
 
@@ -82,6 +86,10 @@ async def start(client, message):
     try:
         token = message.command[1]
 
+        gcast = await get_user(client)
+        if message.from_user.id not in gcast:
+            await add_user(client, message.from_user.id)
+            
         database_channel = await get_database_channel(client)
 
         if not database_channel:
@@ -103,7 +111,11 @@ async def start(client, message):
         elif data.startswith("batch-"):
 
             _, start_id, end_id = data.split("-")
-
+            
+            gcast = await get_user(client)
+            if message.from_user.id not in gcast:
+                await add_user(client, message.from_user.id)
+            
             for msg_id in range(int(start_id), int(end_id) + 1):
                 try:
                     await client.copy_message(
@@ -129,7 +141,7 @@ async def close_callback(client, callback_query):
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
     
-@Bot.on_message(filters.command("link"))
+@Bot.on_message(filters.command("link") & filters.private)
 async def link_mode(client, message):
 
     if len(message.command) != 2:
@@ -241,7 +253,7 @@ async def batch(client, message):
     except Exception as e:
         return await message.reply_text(f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>")
 
-@Bot.on_message(filters.command("adddb"))
+@Bot.on_message(filters.command("adddb") & filters.private)
 async def adddb(client, message):
 
     chat_id = None
@@ -312,7 +324,7 @@ async def adddb(client, message):
         f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
-@Bot.on_message(filters.command("deldb"))
+@Bot.on_message(filters.command("deldb") & filters.private)
 async def deldb(client, message):
 
     chat_id = await get_database_channel(client)

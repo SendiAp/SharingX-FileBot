@@ -21,7 +21,7 @@ from SharingX.modules.db import (
 
 BUTTON_PER_PAGE = 10
 
-@Bot.on_message(filters.command("addforcesub"))
+@Bot.on_message(filters.command("addfc"))
 async def addforcesub_handler(client, message):
 
     chat_id = None
@@ -38,7 +38,7 @@ async def addforcesub_handler(client, message):
 
             except Exception:
                 return await message.reply_text(
-                    "<b>❌ Username channel/grup tidak ditemukan.</b>"
+                    "<b>❌ Username Channel/Groups Tidak Ditemukan!</b>"
                 )
 
         else:
@@ -48,7 +48,7 @@ async def addforcesub_handler(client, message):
 
             except ValueError:
                 return await message.reply_text(
-                    "<b>❌ Chat ID atau Username tidak valid.</b>"
+                    "<b>❌ ChatID Atau Username Tidak Valid!</b>"
                 )
 
     elif message.reply_to_message:
@@ -63,27 +63,21 @@ async def addforcesub_handler(client, message):
 
         else:
             return await message.reply_text(
-                "<b>❌ Reply ke pesan hasil forward dari channel/grup.</b>"
+                "<b>❌ Reply Pesan Dari Hasil Forward!</b>"
             )
 
     else:
-
+        
         return await message.reply_text(
-            "<b>Gunakan salah satu cara berikut:</b>\n\n"
-            "• <code>/addforcesub -100xxxxxxxxxx</code>\n"
-            "• <code>/addforcesub @username</code>\n"
-            "• Reply ke pesan hasil forward dari channel/grup dengan <code>/addforcesub</code>"
+            "<b>Gunakan Salah Satu Cara Berikut:</b>\n\n"
+            "• <code>/addfc -100xxxxxxxxxx</code>\n"
+            "• <code>/addfc @username</code>\n"
+            "• Reply Pesan Dari Hasil Forward Channel/Groups <code>/addfc</code>"
         )
 
     try:
-
-        await client.send_message(
-            chat_id,
-            "✅ Berhasil disimpan sebagai Force Subscribe."
-        )
-
+        await client.send_message(chat_id, "✅ Berhasil disimpan sebagai Force Subscribe.")
     except Exception:
-
         return await message.reply_text(
             "<b>❌ Bot tidak dapat mengirim pesan ke channel/grup.</b>\n\n"
             "Pastikan bot sudah menjadi admin dan memiliki izin mengirim pesan."
@@ -94,9 +88,10 @@ async def addforcesub_handler(client, message):
     chat = await client.get_chat(chat_id)
 
     await message.reply_text(
-        f"<b>✅ Force Subscribe berhasil ditambahkan.</b>\n\n"
-        f"<b>Nama :</b> {chat.title}\n"
-        f"<b>Chat ID :</b> <code>{chat_id}</code>"
+        f"<b>✅ Forcesub Berhasil Ditambahkan Dari Database!</b>\n\n"
+        f"<b>📢 Nama :</b> {chat.title}\n"
+        f"<b>🆔 ChatID :</b> `{chat_id}\n\n"
+        f"/listfc - Untuk Mengelola Forcesub Anda!"
     )
 
 async def build_forcesub_menu(client, page=0):
@@ -104,10 +99,7 @@ async def build_forcesub_menu(client, page=0):
     forcesubs = await get_forcesubs(client)
 
     if not forcesubs:
-        return (
-            "<b>ℹ️ Belum ada Force Subscribe.</b>",
-            None
-        )
+        return ("<b>ℹ️ Belum Ada Forcesub Yang Tersimpan Didatabase.</b>", None)
 
     start = page * BUTTON_PER_PAGE
     end = start + BUTTON_PER_PAGE
@@ -126,7 +118,7 @@ async def build_forcesub_menu(client, page=0):
         buttons.append(
             [
                 InlineKeyboardButton(
-                    f"📢 {title}",
+                    f"{title}",
                     callback_data=f"forcesub_{chat_id}"
                 )
             ]
@@ -154,37 +146,29 @@ async def build_forcesub_menu(client, page=0):
         buttons.append(nav)
 
     return (
-        "<b>📌 Daftar Force Subscribe</b>\n\n"
-        "Pilih salah satu channel/grup.",
+        "<b>👨‍💻 MANAGE FORCESUB</b>\n\n"
+        "__Pilih Salah Satu Forcesub Yang Ingin Anda Kelola, Atau Lihat Detailnya.__\n\n"
+        "<b>⚠️ Hubungi Developer Jika Ada Sesuatu Yang Error.</b>",
         InlineKeyboardMarkup(buttons)
     )
 
-@Bot.on_message(filters.command("listforcesub"))
+@Bot.on_message(filters.command("listfc"))
 async def listforcesub_handler(client, message):
-
-    text, markup = await build_forcesub_menu(client)
-
-    await message.reply_text(
-        text,
-        reply_markup=markup
-    )
-
+    try:
+        text, markup = await build_forcesub_menu(client)
+        await message.reply_text(text, reply_markup=markup)
+    except Exception as e:
+        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        
 @Bot.on_callback_query(filters.regex(r"^forcesub_page_(\d+)$"))
 async def forcesub_page_callback(client, callback_query):
-
-    page = int(callback_query.matches[0].group(1))
-
-    text, markup = await build_forcesub_menu(
-        client,
-        page
-    )
-
-    await callback_query.message.edit_text(
-        text,
-        reply_markup=markup
-    )
-
-    await callback_query.answer()
+    try:
+        page = int(callback_query.matches[0].group(1))
+        text, markup = await build_forcesub_menu(client, page)
+        await callback_query.message.edit_text(text, reply_markup=markup)
+        await callback_query.answer()
+    except Exception as e:
+        return await callback_query.message.edit_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
 @Bot.on_callback_query(filters.regex(r"^forcesub_(-?\d+)$"))
 async def forcesub_detail_callback(client, callback_query):
@@ -219,13 +203,12 @@ async def forcesub_detail_callback(client, callback_query):
     await callback_query.message.edit_text(
         f"<b>🔐 INFORMASI DATA</b>\n\n"
         f"<b>📢 Nama: {title}</b>\n"
-        f"<b>🔗 Username:</b> @{username}"
+        f"<b>🔗 Username:</b> {username}\n"
         f"<b>🆔 ChatID: {chat_id}\n",
         reply_markup=keyboard
     )
 
     await callback_query.answer()
-
 
 @Bot.on_callback_query(filters.regex(r"^forcesub_delete_(-?\d+)$"))
 async def forcesub_delete_callback(client, callback_query):
@@ -250,7 +233,7 @@ async def forcesub_delete_callback(client, callback_query):
     )
 
     await callback_query.message.edit_text(
-        "<b>⚠️ Yakin ingin menghapus Force Subscribe ini?</b>",
+        "<b>⚠️ Apa Kamu Yakin Ingin Menghapus Forcesub Ini Dari Database?</b>",
         reply_markup=keyboard
     )
 
@@ -266,7 +249,7 @@ async def forcesub_yes_callback(client, callback_query):
     except Exception as e:
         return await callback_query.message.edit_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
-@Bot.on_message(filters.command("forcesubbutton"))
+@Bot.on_message(filters.command("modefc"))
 async def forcesub_button(client, message):
 
     mode = await get_forcesub_button_mode(client)

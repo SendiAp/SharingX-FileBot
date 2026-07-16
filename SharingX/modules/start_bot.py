@@ -47,25 +47,19 @@ async def start(client, message):
                             continue
 
                     url = invite
-
+                    
                 if mode == "text":
                     if chat.type.name.lower() == "channel":
-                        text = "📢 Join Channel"
+                        text = "Join Channel"
                     else:
-                        text = "👥 Join Group"
-
+                        text = "Join Groups"
+                        
                 elif mode == "username":
-                    text = f"@{chat.username}" if chat.username else "🔗 Join"
-
+                    text = f"@{chat.username}" if chat.username else "Join"
                 else:
                     text = chat.title
 
-                row.append(
-                    InlineKeyboardButton(
-                        text,
-                        url=url
-                    )
-                )
+                row.append(InlineKeyboardButton(text, url=url))
 
                 if len(row) == 2:
                     buttons.append(row)
@@ -78,14 +72,7 @@ async def start(client, message):
             buttons.append(row)
 
         if not buttons:
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        "❌ Close",
-                        callback_data="close"
-                    )
-                ]
-            )
+            buttons.append([InlineKeyboardButton("Tutup", callback_data="close")])
 
         return await message.reply_text(
             "<b>📁 Kirim file ke bot ini untuk membuat Link Sharing.</b>",
@@ -98,9 +85,7 @@ async def start(client, message):
         database_channel = await get_database_channel(client)
 
         if not database_channel:
-            return await message.reply_text(
-                "<b>❌ Database Channel belum disetel.</b>"
-            )
+            return await message.reply_text("<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>")
 
         data = base64.urlsafe_b64decode(token).decode()
 
@@ -131,20 +116,18 @@ async def start(client, message):
                     pass
 
         else:
-            raise Exception("Token tidak valid.")
+            raise Exception("⚠️ Link Tidak Valid!")
 
     except Exception as e:
-
-        await message.reply_text(
-            f"<b>❌ Error:</b>\n<code>{e}</code>"
-        )
+        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>")
         
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):
-
-    await callback_query.message.delete()
-
-    await callback_query.answer()
+    try:
+        await callback_query.message.delete()
+        await callback_query.answer()
+    except Exception as e:
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
     
 @Bot.on_message(filters.command("link"))
 async def link_mode(client, message):
@@ -168,7 +151,7 @@ async def link_mode(client, message):
         await set_link_status(client, True)
 
         return await message.reply_text(
-            "<b>✅ Auto Link berhasil diaktifkan.</b>"
+            "<b>🟢 Auto Link Berhasil Diaktifkan!</b>"
         )
 
     elif mode == "off":
@@ -176,11 +159,11 @@ async def link_mode(client, message):
         await set_link_status(client, False)
 
         return await message.reply_text(
-            "<b>🛑 Auto Link berhasil dinonaktifkan.</b>"
+            "<b>🛑 Auto Link Berhasil Dinonaktifkan!</b>"
         )
 
     else:
-
+        
         return await message.reply_text(
             "<b>Gunakan:</b>\n"
             "<code>/link on</code>\n"
@@ -243,7 +226,7 @@ async def batch(client, message):
             [
                 [
                     InlineKeyboardButton(
-                        "📋 Copy Link",
+                        "Copy Link",
                         copy_text=link
                     )
                 ]
@@ -256,9 +239,7 @@ async def batch(client, message):
         )
 
     except Exception as e:
-        await message.reply_text(
-            f"<b>❌ Error:</b>\n<code>{e}</code>"
-        )
+        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>")
 
 @Bot.on_message(filters.command("adddb"))
 async def adddb(client, message):
@@ -275,9 +256,9 @@ async def adddb(client, message):
                 chat = await client.get_chat(target)
                 chat_id = chat.id
 
-            except Exception:
+            except Exception as e:
                 return await message.reply_text(
-                    "<b>❌ Username channel/grup tidak ditemukan.</b>"
+                    f"<b>⚠️ Channel/Groups Tidak Ditemukan!</b>\n\n`{str(e)}`"
                 )
 
         else:
@@ -286,9 +267,7 @@ async def adddb(client, message):
                 chat_id = int(target)
 
             except ValueError:
-                return await message.reply_text(
-                    "<b>❌ Chat ID tidak valid.</b>"
-                )
+                return await message.reply_text("<b>❌ ID Tidak Valid!</b>")
 
     elif message.reply_to_message:
 
@@ -302,7 +281,7 @@ async def adddb(client, message):
 
         else:
             return await message.reply_text(
-                "<b>❌ Reply ke pesan hasil forward dari channel/grup.</b>"
+                "<b>❌ Reply Ke Pesan Channel/Groups Hasil Forward!</b>"
             )
 
     else:
@@ -315,18 +294,9 @@ async def adddb(client, message):
         )
 
     try:
-
-        await client.send_message(
-            chat_id,
-            "✅ Database Channel berhasil disimpan."
-        )
-
+        await client.send_message(chat_id, "🔗 Connect, Channel/Groups Ini Berhasil Disimpan Untuk Database!")
     except Exception:
-
-        return await message.reply_text(
-            "<b>❌ Bot tidak dapat mengirim pesan ke channel/grup.</b>\n\n"
-            "Pastikan bot sudah menjadi admin dan memiliki izin mengirim pesan."
-        )
+        return await message.reply_text("<b>⚠️ Bot Perlu Menjadi Admin!</b>")
 
     await set_database_channel(client, chat_id)
 
@@ -337,9 +307,9 @@ async def adddb(client, message):
         title = "Unknown"
 
     await message.reply_text(
-        f"<b>✅ Database berhasil disimpan.</b>\n\n"
-        f"<b>Nama :</b> {title}\n"
-        f"<b>Chat ID :</b> <code>{chat_id}</code>"
+        f"<b>✅ Channel/Groups Database Berhasil Disimpan!</b>\n\n"
+        f"<b>Nama:</b> {title}\n"
+        f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
 @Bot.on_message(filters.command("deldb"))
@@ -348,22 +318,20 @@ async def deldb(client, message):
     chat_id = await get_database_channel(client)
 
     if not chat_id:
-        return await message.reply_text(
-            "<b>❌ Database Channel belum disetel.</b>"
-        )
+        return await message.reply_text("<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>")
 
     try:
         chat = await client.get_chat(chat_id)
         name = chat.title
     except Exception:
-        name = "Tidak diketahui"
+        name = "Unknwon"
 
     await del_database_channel(client)
 
     await message.reply_text(
-        f"<b>🗑 Database Channel berhasil dihapus.</b>\n\n"
-        f"<b>Nama :</b> {name}\n"
-        f"<b>Chat ID :</b> <code>{chat_id}</code>"
+        f"<b>🗑 Groups/Channel Database Berhasil Dihapus!</b>\n\n"
+        f"<b>Nama:</b> {name}\n"
+        f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
 @Bot.on_message(
@@ -390,7 +358,7 @@ async def store_file(client, message):
 
     if not database_channel:
         return await message.reply_text(
-            "<b>❌ Database Channel belum disetel.\nGunakan /adddb terlebih dahulu.</b>"
+            "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
         )
 
     try:
@@ -417,7 +385,7 @@ async def store_file(client, message):
             [
                 [
                     InlineKeyboardButton(
-                        "📋 Copy Link",
+                        "Copy Link",
                         copy_text=link
                     )
                 ]
@@ -438,5 +406,5 @@ async def store_file(client, message):
     except Exception as e:
 
         await message.reply_text(
-            f"<b>❌ Terjadi Kesalahan:</b>\n<code>{e}</code>"
+            f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>"
     )

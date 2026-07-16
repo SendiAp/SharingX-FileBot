@@ -1,0 +1,390 @@
+import asyncio
+
+from pyrogram import filters
+from pyrogram.errors import (
+    UserNotParticipant,
+)
+
+from pyrogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+
+from SharingX import Bot
+from SharingX.modules.db import (
+    add_forcesub,
+    del_forcesub,
+    get_forcesubs,
+)
+
+BUTTON_PER_PAGE = 10
+
+
+@Bot.on_message(filters.command("addforcesub"))
+async def addforcesub_handler(client, message):
+
+    chat_id = None
+
+    if len(message.command) > 1:
+
+        target = message.command[1]
+
+        if target.startswith("@"):
+
+            try:
+                chat = await client.get_chat(target)
+                chat_id = chat.id
+
+            except Exception:
+                return await message.reply_text(
+                    "<b>❌ Username channel/grup tidak ditemukan.</b>"
+                )
+
+        else:
+
+            try:
+                chat_id = int(target)
+
+            except ValueError:
+                return await message.reply_text(
+                    "<b>❌ Chat ID atau Username tidak valid.</b>"
+                )
+
+    elif message.reply_to_message:
+
+        reply = message.reply_to_message
+
+        if reply.forward_from_chat:
+            chat_id = reply.forward_from_chat.id
+
+        elif reply.sender_chat:
+            chat_id = reply.sender_chat.id
+
+        else:
+            return await message.reply_text(
+                "<b>❌ Reply ke pesan hasil forward dari channel/grup.</b>"
+            )
+
+    else:
+
+        return await message.reply_text(
+            "<b>Gunakan salah satu cara berikut:</b>\n\n"
+            "• <code>/addforcesub -100xxxxxxxxxx</code>\n"
+            "• <code>/addforcesub @username</code>\n"
+            "• Reply ke pesan hasil forward dari channel/grup dengan <code>/addforcesub</code>"
+        )
+
+    try:
+
+        await client.send_message(
+            chat_id,
+            "✅ Berhasil disimpan sebagai Force Subscribe."
+        )
+
+    except Exception:
+
+        return await message.reply_text(
+            "<b>❌ Bot tidak dapat mengirim pesan ke channel/grup.</b>\n\n"
+            "Pastikan bot sudah menjadi admin dan memiliki izin mengirim pesan."
+        )
+
+    await add_forcesub(client, chat_id)
+
+    chat = await client.get_chat(chat_id)
+
+    await message.reply_text(
+        f"<b>✅ Force Subscribe berhasil ditambahkan.</b>\n\n"
+        f"<b>Nama :</b> {chat.title}\n"
+        f"<b>Chat ID :</b> <code>{chat_id}</code>"
+    )
+
+
+async def build_forcesub_menu(client, page=0):
+
+    forcesubs = await get_forcesubs(client)
+
+    if not forcesubs:
+        return (
+            "<b>ℹ️ Belum ada Force Subscribe.</b>",
+            None
+        )
+
+    start = page * BUTTON_PER_PAGE
+    end = start + BUTTON_PER_PAGE
+
+    buttons = []
+
+    for chat_id in forcesubs[start:end]:
+
+        try:
+            chat = await client.get_chat(chat_id)
+            title = chat.title
+
+        except Exception:
+            title = str(chat_id)
+
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    f"📢 {title}",
+                    callback_data=f"forcesub_{chat_id}"
+                )
+            ]
+        )
+
+    nav = []
+
+    if page > 0:
+        nav.append(
+            InlineKeyboardButton(
+                "⬅️",
+                callback_data=f"forcesub_page_{page-1}"
+            )
+        )
+
+    if end < len(forcesubs):
+        nav.append(
+            InlineKeyboardButton(
+                "➡️",
+                callback_data=f"forcesub_page_{page+1}"
+            )
+        )
+
+    if nav:
+        buttons.append(nav)
+
+    return (
+        "<b>📌 Daftar Force Subscribe</b>\n\n"
+        "Pilih salah satu channel/grup.",
+        InlineKeyboardMarkup(buttons)
+    )
+
+@Bot.on_message(filters.command("listforcesub"))
+async def listforcesub_handler(client, message):
+
+    text, markup = await build_forcesub_menu(client)
+
+    await message.reply_text(
+        text,
+        reply_markup=markup
+    )
+
+
+@Bot.on_callback_query(filters.regex(r"^forcesub_page_(\d+)$"))
+async def forcesub_page_callback(client, callback_query):
+
+    page = int(callback_query.matches[0].group(1))
+
+    text, markup = await build_forcesub_menu(
+        client,
+        page
+    )
+
+    await callback_query.message.edit_text(
+        text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer()
+
+
+@Bot.on_callback_query(filters.regex(r"^forcesub_(-?\d+)$"))
+async def forcesub_detail_callback(client, callback_query):
+
+    chat_id = int(
+        callback_query.matches[0].group(1)
+    )
+
+    try:
+        chat = await client.get_chat(chat_id)
+
+        title = chat.title
+        username = (
+            f"@{chat.username}"
+            if chat.username else "-"
+        )
+
+    except Exception:
+
+        title = "Tidak diketahui"
+        username = "-"
+
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🗑 Hapus Force Subscribe",
+                    callback_data=f"forcesub_delete_{chat_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "⬅️ Kembali",
+                    callback_data="forcesub_back"
+                )
+            ]
+        ]
+    )
+
+    await callback_query.message.edit_text(
+        f"<b>📢 {title}</b>\n\n"
+        f"<b>Chat ID :</b>\n"
+        f"<code>{chat_id}</code>\n"
+        f"<b>Username :</b> {username}",
+        reply_markup=keyboard
+    )
+
+    await callback_query.answer()
+
+
+@Bot.on_callback_query(filters.regex(r"^forcesub_delete_(-?\d+)$"))
+async def forcesub_delete_callback(client, callback_query):
+
+    chat_id = int(
+        callback_query.matches[0].group(1)
+    )
+
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "✅ Ya",
+                    callback_data=f"forcesub_yes_{chat_id}"
+                ),
+                InlineKeyboardButton(
+                    "❌ Batal",
+                    callback_data=f"forcesub_{chat_id}"
+                )
+            ]
+        ]
+    )
+
+    await callback_query.message.edit_text(
+        "<b>⚠️ Yakin ingin menghapus Force Subscribe ini?</b>",
+        reply_markup=keyboard
+    )
+
+    await callback_query.answer()
+
+@Bot.on_callback_query(filters.regex(r"^forcesub_yes_(-?\d+)$"))
+async def forcesub_yes_callback(client, callback_query):
+
+    chat_id = int(
+        callback_query.matches[0].group(1)
+    )
+
+    await del_forcesub(client, chat_id)
+
+    text, markup = await build_forcesub_menu(client)
+
+    await callback_query.message.edit_text(
+        "✅ Berhasil dihapus dari Force Subscribe.\n\n" + text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer(
+        "Berhasil dihapus."
+    )
+
+
+@Bot.on_callback_query(filters.regex("^forcesub_back$"))
+async def forcesub_back_callback(client, callback_query):
+
+    text, markup = await build_forcesub_menu(client)
+
+    await callback_query.message.edit_text(
+        text,
+        reply_markup=markup
+    )
+
+    await callback_query.answer()
+
+
+@Bot.on_message(filters.private & filters.incoming, group=-1)
+async def forcesub(client, message):
+
+    if not message.from_user:
+        return
+
+    forcesubs = await get_forcesubs(client)
+
+    if not forcesubs:
+        return
+
+    not_joined = []
+
+    for chat_id in forcesubs:
+
+        try:
+            await client.get_chat_member(
+                chat_id,
+                message.from_user.id
+            )
+
+        except UserNotParticipant:
+            not_joined.append(chat_id)
+
+        except Exception:
+            continue
+
+    if not not_joined:
+        return
+
+    keyboard = []
+    row = []
+    for chat_id in not_joined:
+
+        try:
+            chat = await client.get_chat(chat_id)
+
+            if chat.username:
+                url = f"https://t.me/{chat.username}"
+
+            else:
+                invite = chat.invite_link
+
+                if not invite:
+                    try:
+                        invite = await client.create_chat_invite_link(chat_id)
+                        invite = invite.invite_link
+                    except Exception:
+                        continue
+
+                url = invite
+
+            row.append(
+                InlineKeyboardButton(
+                    chat.title,
+                    url=url
+                )
+            )
+
+            if len(row) == 2:
+                keyboard.append(row)
+                row = []
+
+        except Exception:
+            continue
+
+    if row:
+        keyboard.append(row)
+
+    me = await client.get_me()
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                "✅ Coba Lagi",
+                url=f"https://t.me/{me.username}?start=start"
+            )
+        ]
+    )
+
+    await message.reply_text(
+        f"👋 Hai {message.from_user.mention},\n\n"
+        "Untuk menggunakan bot ini, silakan bergabung ke seluruh channel/grup di bawah terlebih dahulu.",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        disable_web_page_preview=True
+    )
+
+    await message.stop_propagation()

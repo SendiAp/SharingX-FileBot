@@ -25,51 +25,57 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-
-    await message.reply_text(
-        "<b>🤖 Welcome To SharingX Bot Manager</b>\n\n"
-        "Silahkan pilih menu di bawah.",
-        reply_markup=InlineKeyboardMarkup(
-            [
+    try:
+        await message.reply_text(
+            f"👋Hai {message.from_user.first_name}!\n"
+            f"<b>SharingX</b> Adalah Bot Yang Dapat Menyimpan Media Yang Anda Kirim Kebot Dan Bot Akan Mengirimkan Link Media/File Tersebut.\n\n"
+            f"<b>👉Apa Yang Spesial Disini?</b>, Database Tidaklah Sharing Dengan Pengguna Lain, Jadi Anda Dapat Membawa Link Database Sendiri.\n\n"
+            f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
+            f"Tekan <b>Bantuan</b> Jika Kalian Belum Mengerti Semua Hal Yang Anda Butuhkan, Jangan Segan Untuk Hubungi <b>Admin</b> Atau <b>Pemilik</b> Jika Butuh Bantuan.\n\n"
+            f"<b>📜 Privacy Policy</b>",
+            reply_markup = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton(
-                        "➕ Create Bot",
-                        callback_data="create_bot"
-                    )
+                    InlineKeyboardButton("🤖 Add Bot", callback_data="create_bot"),
+                    InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
                 ],
                 [
-                    InlineKeyboardButton(
-                        "📦 My Bots",
-                        callback_data="my_bots"
-                    )
+                    InlineKeyboardButton("📚 Panduan", callback_data="0"),
+                    InlineKeyboardButton("⚠️ Bantuan", callback_data="0")
+                ],
+                [
+                    InlineKeyboardButton("</> Command", callback_data="0")
                 ]
-            ]
+            ])
         )
-    )
-
+    except Exception as e:
+        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        
 @app.on_callback_query(filters.regex("^back_start$"))
 async def back_start(client, callback_query: CallbackQuery):
-
-    await callback_query.edit_message_text(
-        "<b>🤖 Welcome To SharingX Bot Manager</b>\n\n"
-        "Silahkan pilih menu di bawah.",
-        reply_markup=InlineKeyboardMarkup(
-            [
+    try:
+        await callback_query.edit_message_text(
+            f"👋Hai {message.from_user.first_name}!\n"
+            f"<b>SharingX</b> Adalah Bot Yang Dapat Menyimpan Media Yang Anda Kirim Kebot Dan Bot Akan Mengirimkan Link Media/File Tersebut.\n\n"
+            f"<b>👉Apa Yang Spesial Disini?</b>, Database Tidaklah Sharing Dengan Pengguna Lain, Jadi Anda Dapat Membawa Link Database Sendiri.\n\n"
+            f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
+            f"Tekan <b>Bantuan</b> Jika Kalian Belum Mengerti Semua Hal Yang Anda Butuhkan, Jangan Segan Untuk Hubungi <b>Admin</b> Atau <b>Pemilik</b> Jika Butuh Bantuan.\n\n"
+            f"<b>📜 Privacy Policy</b>",
+            reply_markup = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton(
-                        "➕ Create Bot",
-                        callback_data="create_bot"
-                    )
+                    InlineKeyboardButton("🤖 Add Bot", callback_data="create_bot"),
+                    InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
                 ],
                 [
-                    InlineKeyboardButton(
-                        "📦 My Bots",
-                        callback_data="my_bots"
-                    )
+                    InlineKeyboardButton("📚 Panduan", callback_data="0"),
+                    InlineKeyboardButton("⚠️ Bantuan", callback_data="0")
+                ],
+                [
+                    InlineKeyboardButton("</> Command", callback_data="0")
                 ]
-            ]
+            ])
         )
-    )
+    except Exception as e:
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
 @app.on_callback_query(filters.regex("^my_bots$"))
 async def my_bots(client, callback_query: CallbackQuery):

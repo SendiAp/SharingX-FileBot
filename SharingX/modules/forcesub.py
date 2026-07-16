@@ -169,7 +169,6 @@ async def listforcesub_handler(client, message):
         reply_markup=markup
     )
 
-
 @Bot.on_callback_query(filters.regex(r"^forcesub_page_(\d+)$"))
 async def forcesub_page_callback(client, callback_query):
 
@@ -187,39 +186,30 @@ async def forcesub_page_callback(client, callback_query):
 
     await callback_query.answer()
 
-
 @Bot.on_callback_query(filters.regex(r"^forcesub_(-?\d+)$"))
 async def forcesub_detail_callback(client, callback_query):
 
-    chat_id = int(
-        callback_query.matches[0].group(1)
-    )
+    chat_id = int(callback_query.matches[0].group(1))
 
     try:
         chat = await client.get_chat(chat_id)
-
         title = chat.title
-        username = (
-            f"@{chat.username}"
-            if chat.username else "-"
-        )
-
+        username = (f"@{chat.username}" if chat.username else "-")
     except Exception:
-
-        title = "Tidak diketahui"
+        title = "Unknown"
         username = "-"
 
     keyboard = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "🗑 Hapus Force Subscribe",
+                    "🗑 Delete",
                     callback_data=f"forcesub_delete_{chat_id}"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    "⬅️ Kembali",
+                    "🔙 Kembali",
                     callback_data="forcesub_back"
                 )
             ]
@@ -227,10 +217,10 @@ async def forcesub_detail_callback(client, callback_query):
     )
 
     await callback_query.message.edit_text(
-        f"<b>📢 {title}</b>\n\n"
-        f"<b>Chat ID :</b>\n"
-        f"<code>{chat_id}</code>\n"
-        f"<b>Username :</b> {username}",
+        f"<b>🔐 INFORMASI DATA</b>\n\n"
+        f"<b>📢 Nama: {title}</b>\n"
+        f"<b>🔗 Username:</b> @{username}"
+        f"<b>🆔 ChatID: {chat_id}\n",
         reply_markup=keyboard
     )
 
@@ -252,7 +242,7 @@ async def forcesub_delete_callback(client, callback_query):
                     callback_data=f"forcesub_yes_{chat_id}"
                 ),
                 InlineKeyboardButton(
-                    "❌ Batal",
+                    "❌ Tidak",
                     callback_data=f"forcesub_{chat_id}"
                 )
             ]
@@ -268,23 +258,13 @@ async def forcesub_delete_callback(client, callback_query):
 
 @Bot.on_callback_query(filters.regex(r"^forcesub_yes_(-?\d+)$"))
 async def forcesub_yes_callback(client, callback_query):
-
-    chat_id = int(
-        callback_query.matches[0].group(1)
-    )
-
-    await del_forcesub(client, chat_id)
-
-    text, markup = await build_forcesub_menu(client)
-
-    await callback_query.message.edit_text(
-        "✅ Berhasil dihapus dari Force Subscribe.\n\n" + text,
-        reply_markup=markup
-    )
-
-    await callback_query.answer(
-        "Berhasil dihapus."
-    )
+    try:
+        chat_id = int(callback_query.matches[0].group(1))
+        await del_forcesub(client, chat_id)
+        text, markup = await build_forcesub_menu(client)
+        await callback_query.message.edit_text("✅ Berhasil Dihapus Dari Database!\n\n" + text, reply_markup=markup)
+    except Exception as e:
+        return await callback_query.message.edit_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
 @Bot.on_message(filters.command("forcesubbutton"))
 async def forcesub_button(client, message):
@@ -370,22 +350,16 @@ async def forcesub_button_callback(client, callback_query):
         reply_markup=keyboard
     )
 
-    await callback_query.answer(
-        "Mode berhasil diubah."
-    )
+    await callback_query.answer(f"✅ Mode Berhasil Diubah Menjadi {mode_text}", show_alert=True)
     
 @Bot.on_callback_query(filters.regex("^forcesub_back$"))
 async def forcesub_back_callback(client, callback_query):
-
-    text, markup = await build_forcesub_menu(client)
-
-    await callback_query.message.edit_text(
-        text,
-        reply_markup=markup
-    )
-
-    await callback_query.answer()
-
+    try:
+        text, markup = await build_forcesub_menu(client)
+        await callback_query.message.edit_text(text, reply_markup=markup)
+        await callback_query.answer()
+    except Exception as e:
+        return await callback_query.message.edit_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
 @Bot.on_message(filters.private & filters.incoming, group=-1)
 async def forcesub(client, message):
@@ -398,10 +372,11 @@ async def forcesub(client, message):
     if not forcesubs:
         return
 
+    mode = await get_forcesub_button_mode(client)
+
     not_joined = []
 
     for chat_id in forcesubs:
-
         try:
             await client.get_chat_member(
                 chat_id,
@@ -419,6 +394,7 @@ async def forcesub(client, message):
 
     keyboard = []
     row = []
+
     for chat_id in not_joined:
 
         try:
@@ -426,7 +402,6 @@ async def forcesub(client, message):
 
             if chat.username:
                 url = f"https://t.me/{chat.username}"
-
             else:
                 invite = chat.invite_link
 
@@ -439,9 +414,26 @@ async def forcesub(client, message):
 
                 url = invite
 
+            if mode == "text":
+                text = (
+                    "Join Channel"
+                    if chat.type.name.lower() == "channel"
+                    else "Join Groups"
+                )
+
+            elif mode == "username":
+                text = (
+                    f"@{chat.username}"
+                    if chat.username
+                    else "🔗 Join"
+                )
+
+            else:
+                text = chat.title
+
             row.append(
                 InlineKeyboardButton(
-                    chat.title,
+                    text,
                     url=url
                 )
             )

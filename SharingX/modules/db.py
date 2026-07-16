@@ -152,3 +152,30 @@ async def get_forcesub_button_mode(client):
         mode = "text"
 
     return mode
+
+# =========================
+# BROADCAST
+# =========================
+
+async def add_user(client, user_id, user):
+    db = client.db["broadcast"]
+
+    data = db.find_one(
+        {
+            "user_id": user_id,
+            "user": user
+        }
+    )
+
+    if data:
+        db.update_one(
+            {"user_id": user_id},
+            {"$set": {"user": user}}
+        )
+    else:
+        db.insert_one(
+            {
+                "user_id": user_id,
+                "user": user
+            }
+)

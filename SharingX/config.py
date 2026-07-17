@@ -14,6 +14,10 @@ MONGO_DB_URL = getenv("MONGO_DB_URL", "mongodb+srv://nobek62863:nobek62863@clust
 API_HASH = getenv("API_HASH", "beeeebe74c0c467c47c6ac4a1c9d75b5")
 OWNER_ID = [int(x) for x in (os.environ.get("OWNER_ID", "").split())]
 
+VERSION = "SharingX v1.0.0"
+BUILD = "17 Jul 2026"
+DB_LIMIT_MB = 512
+
 LOG_FILE_NAME = "sharingx.txt"
 logging.basicConfig(
     level=logging.INFO,

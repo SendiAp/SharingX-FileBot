@@ -200,6 +200,9 @@ async def batch(client, message):
             await start_msg.delete()
             return await msg.edit("<b>❌ Proses dibatalkan.</b>")
 
+        start = start_msg.text.strip()
+        await start_msg.delete()
+        
         await msg.edit(
             "<b>🤖 Silahkan kirim Link Akhir dari Database Channel Anda.</b>\n\n"
             "/cancel - Untuk membatalkan."

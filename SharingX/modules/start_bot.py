@@ -24,17 +24,16 @@ from SharingX.modules.db import (
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 
+    users = await get_user(client)
+    if message.from_user.id not in users:
+        await add_user(client, message.from_user.id)
+
     if len(message.command) < 2:
 
-        gcast = await get_user(client)
-        if message.from_user.id not in gcast:
-            await add_user(client, message.from_user.id)
-            
         forcesubs = await get_forcesubs(client)
         mode = await get_forcesub_button_mode(client)
 
-        buttons = []
-        row = []
+        buttons, row = [], []
 
         for chat_id in forcesubs:
             try:
@@ -44,41 +43,46 @@ async def start(client, message):
                     url = f"https://t.me/{chat.username}"
                 else:
                     invite = chat.invite_link
-
                     if not invite:
                         try:
                             invite = await client.create_chat_invite_link(chat.id)
                             invite = invite.invite_link
                         except:
                             continue
-
                     url = invite
-                    
+
                 if mode == "text":
-                    if chat.type.name.lower() == "channel":
-                        text = "Join Channel"
-                    else:
-                        text = "Join Groups"
-                        
+                    text = (
+                        "Join Channel"
+                        if chat.type.name.lower() == "channel"
+                        else "Join Groups"
+                    )
                 elif mode == "username":
                     text = f"@{chat.username}" if chat.username else "Join"
                 else:
                     text = chat.title
 
-                row.append(InlineKeyboardButton(text, url=url))
+                row.append(
+                    InlineKeyboardButton(text, url=url)
+                )
 
                 if len(row) == 2:
                     buttons.append(row)
                     row = []
 
             except:
-                continue
+                pass
 
         if row:
             buttons.append(row)
 
         if not buttons:
-            buttons.append([InlineKeyboardButton("Tutup", callback_data="close")])
+            buttons = [[
+                InlineKeyboardButton(
+                    "Tutup",
+                    callback_data="close"
+                )
+            ]]
 
         return await message.reply_text(
             "<b>📁 Kirim file ke bot ini untuk membuat Link Sharing.</b>",
@@ -88,20 +92,20 @@ async def start(client, message):
     try:
         token = message.command[1]
 
-        gcast = await get_user(client)
-        if message.from_user.id not in gcast:
-            await add_user(client, message.from_user.id)
-            
         database_channel = await get_database_channel(client)
 
         if not database_channel:
-            return await message.reply_text("<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>")
+            return await message.reply_text(
+                "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
+            )
 
-        data = base64.urlsafe_b64decode(token).decode()
+        chg = abs(database_channel)
+
+        data = await decode(token)
 
         if data.startswith("get-"):
 
-            msg_id = int(data.split("-")[1])
+            msg_id = int(data.split("-")[1]) // chg
 
             await client.copy_message(
                 chat_id=message.chat.id,
@@ -113,12 +117,11 @@ async def start(client, message):
         elif data.startswith("batch-"):
 
             _, start_id, end_id = data.split("-")
-            
-            gcast = await get_user(client)
-            if message.from_user.id not in gcast:
-                await add_user(client, message.from_user.id)
-            
-            for msg_id in range(int(start_id), int(end_id) + 1):
+
+            start_id = int(start_id) // chg
+            end_id = int(end_id) // chg
+
+            for msg_id in range(start_id, end_id + 1):
                 try:
                     await client.copy_message(
                         chat_id=message.chat.id,
@@ -133,7 +136,9 @@ async def start(client, message):
             raise Exception("⚠️ Link Tidak Valid!")
 
     except Exception as e:
-        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>")
+        await message.reply_text(
+            f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
+        )
         
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):

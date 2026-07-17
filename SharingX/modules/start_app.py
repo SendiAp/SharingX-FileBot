@@ -143,10 +143,10 @@ async def my_bots(client, callback_query: CallbackQuery):
 
         text = (
             f"<b>🤖 Daftar Bot {callback_query.from_user.first_name} ({len(bots)}/5):</b>\n\n"
-            f"<b>🟢 Running :</b> <code>{count['running']}</code>\n"
-            f"<b>🔴 Stopped :</b> <code>{count['stopped']}</code>\n"
-            f"<b>🔄 Restart :</b> <code>{count['restart']}</code>\n"
-            f"<b>⚫ Crash :</b> <code>{count['crash']}</code>\n\n"
+            f"<b>🟢 Running :</b> __{count['running']} bot__\n"
+            f"<b>🔴 Stopped :</b> __{count['stopped']} bot__\n"
+            f"<b>🔄 Restart :</b> __{count['restart']} bot__\n"
+            f"<b>⚫ Crash :</b> __{count['crash']} bot__\n\n"
             "<b>Silahkan Pilih Bot Yang Ingin Dikelola:</b>"
         )
 
@@ -261,36 +261,21 @@ async def stop_bot(client, callback_query: CallbackQuery):
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer(
-            "Bot tidak ditemukan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
 
     bot = Bot.get_instance(bot_id)
 
     if bot is None:
         await set_bot_status(bot_id, "stopped")
 
-        return await callback_query.answer(
-            "Bot sudah berhenti.",
-            show_alert=True
-        )
+        return await callback_query.answer("🔴 Bot Sudah Berhenti!.", show_alert=True)
 
     try:
         await bot.stop()
-
         await set_bot_status(bot_id, "stopped")
-
-        await callback_query.answer(
-            "Bot berhasil dihentikan.",
-            show_alert=True
-        )
-        
+        await callback_query.answer("🔴 Bot Berhasil Dihentikan!", show_alert=True)
     except Exception as e:
-        return await callback_query.answer(
-            str(e),
-            show_alert=True
-        )
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
         
     await bot_settings(client, callback_query)
     
@@ -302,16 +287,10 @@ async def start_bot(client, callback_query: CallbackQuery):
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer(
-            "Bot tidak ditemukan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
 
     if Bot.get_instance(bot_id):
-        return await callback_query.answer(
-            "Bot sudah berjalan.",
-            show_alert=True
-        )
+        return await callback_query.answer("🟢 Bot Sudah Berjalan!", show_alert=True)
 
     try:
         media = Bot(
@@ -337,16 +316,10 @@ async def start_bot(client, callback_query: CallbackQuery):
             
         await set_bot_status(bot_id, "running")
 
-        await callback_query.answer(
-            "Bot berhasil dijalankan.",
-            show_alert=True
-        )
+        await callback_query.answer("🟢 Bot Berhasil Dijalankan!", show_alert=True)
 
     except Exception as e:
-        return await callback_query.answer(
-            str(e),
-            show_alert=True
-        )
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
     await bot_settings(client, callback_query)
 
@@ -358,26 +331,17 @@ async def restart_bot(client, callback_query: CallbackQuery):
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer(
-            "Bot tidak ditemukan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!")
 
     old_bot = Bot.get_instance(bot_id)
 
     if old_bot is None:
-        return await callback_query.answer(
-            "Bot sedang tidak berjalan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Sedang Tidak Berjalan!")
 
     try:
         await set_bot_status(bot_id, "restart")
 
-        await callback_query.answer(
-            "✅ Bot berhasil direstart.",
-            show_alert=True
-        )
+        await callback_query.answer("🔄 Bot Berhasil Direstart!", show_alert=True)
 
         await bot_settings(client, callback_query)
         
@@ -409,10 +373,7 @@ async def restart_bot(client, callback_query: CallbackQuery):
         await set_bot_status(bot_id, "running")
 
     except Exception as e:
-        return await callback_query.answer(
-            f"❌ {e}",
-            show_alert=True
-        )
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
     try:
         await bot_settings(client, callback_query)
@@ -427,10 +388,7 @@ async def delete_bot(client, callback_query: CallbackQuery):
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer(
-            "Bot tidak ditemukan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!")
 
     try:
         bot = Bot.get_instance(bot_id)
@@ -440,78 +398,29 @@ async def delete_bot(client, callback_query: CallbackQuery):
 
         await remove_bot(bot_id)
 
-        await remove_user_bot(
-            callback_query.from_user.id,
-            bot_id
-        )
+        await remove_user_bot(callback_query.from_user.id, bot_id)
 
-        await callback_query.answer(
-            "Bot berhasil dihapus.",
-            show_alert=True
+        await callback_query.edit_message_text(
+            "<b>✅ Bot Berhasil Diputuskan!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Kembali", callback_data="back_start")]
+            ])
         )
 
     except Exception as e:
-        return await callback_query.answer(
-            str(e),
-            show_alert=True
-        )
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
     bots = await get_user_bots(callback_query.from_user.id)
 
     if not bots:
         return await callback_query.edit_message_text(
-            "<b>📦 My Bots</b>\n\n"
-            "Anda belum memiliki bot.",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "➕ Create Bot",
-                            callback_data="create_bot"
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "⬅️ Back",
-                            callback_data="back_start"
-                        )
-                    ]
-                ]
-            )
+            "<b>⚠️ Kamu Belum Memiliki Bot, Silahkan Buat Terlebih Dahulu!</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("➕ Create Bot", callback_data="create_bot")],
+                [InlineKeyboardButton("🔙 Kembali", callback_data="back_start")]
+            ])
         )
 
-    buttons = []
-
-    for bot in bots:
-        status = bot.get("status", "running")
-        emoji = "🟢" if status == "running" else "🔴"
-
-        username = bot.get("username")
-
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    f"{emoji} @{username}" if username else f"{emoji} {bot['bot_id']}",
-                    callback_data=f"bot_{bot['bot_id']}"
-                )
-            ]
-        )
-
-    buttons.append(
-        [
-            InlineKeyboardButton(
-                "⬅️ Back",
-                callback_data="back_start"
-            )
-        ]
-    )
-
-    await callback_query.edit_message_text(
-        f"<b>📦 My Bots ({len(bots)})</b>\n\n"
-        "Silahkan pilih bot yang ingin dikelola.",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-    
 @app.on_callback_query(filters.regex("create_bot"))
 async def create_bot(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id

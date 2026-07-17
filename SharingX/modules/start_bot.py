@@ -186,13 +186,15 @@ async def link_mode(client, message):
 
 @Bot.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
+    user_id = message.from_user.id
+    
     try:
         msg = await message.reply_text(
             "<b>🤖 Silahkan kirim Link Awal dari Database Channel Anda.</b>\n\n"
             "/cancel - Untuk membatalkan."
         )
 
-        start_msg = await client.listen(message.chat.id)
+        start_msg = await client.listen(user_id)
 
         if start_msg.text and start_msg.text.startswith("/"):
             await start_msg.delete()
@@ -206,7 +208,7 @@ async def batch(client, message):
             "/cancel - Untuk membatalkan."
         )
 
-        end_msg = await client.listen(message.chat.id)
+        end_msg = await client.listen(user_id)
 
         if end_msg.text and end_msg.text.startswith("/"):
             await end_msg.delete()

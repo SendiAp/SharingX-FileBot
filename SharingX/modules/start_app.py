@@ -140,11 +140,11 @@ async def my_bots(client, callback_query: CallbackQuery):
 
         text = (
             f"<b>🤖 Daftar Bot {callback_query.from_user.first_name} ({len(bots)}/5):</b>\n\n"
-            f"🟢 Running : <code>{count['running']}</code>\n"
-            f"🔴 Stopped : <code>{count['stopped']}</code>\n"
-            f"🔄 Restart : <code>{count['restart']}</code>\n"
-            f"⚫ Crash : <code>{count['crash']}</code>\n\n"
-            "<b>Silahkan pilih bot yang ingin dikelola.</b>"
+            f"<b>🟢 Running :</b> <code>{count['running']}</code>\n"
+            f"<b>🔴 Stopped :</b> <code>{count['stopped']}</code>\n"
+            f"<b>🔄 Restart :</b> <code>{count['restart']}</code>\n"
+            f"<b>⚫ Crash :</b> <code>{count['crash']}</code>\n\n"
+            "<b>Silahkan Pilih Bot Yang Ingin Dikelola:</b>"
         )
 
         await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
@@ -160,10 +160,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
     bot = await get_bot_data(bot_id)
 
     if not bot:
-        return await callback_query.answer(
-            "Bot tidak ditemukan.",
-            show_alert=True
-        )
+        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
 
     status = bot.get("status", "running")
     
@@ -214,13 +211,13 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 ],
                 [
                     InlineKeyboardButton(
-                        "🗑 Delete",
+                        "🔗 Putuskan",
                         callback_data=f"deletebot_{bot_id}"
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        "⬅️ Back",
+                        "🔙 Kembali",
                         callback_data="my_bots"
                     )
                 ]

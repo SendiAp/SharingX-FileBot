@@ -186,77 +186,82 @@ async def link_mode(client, message):
 
 @Bot.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
-    user_id = message.from_user.id
-    
     try:
         msg = await message.reply_text(
             "<b>🤖 Silahkan kirim Link Awal dari Database Channel Anda.</b>\n\n"
             "/cancel - Untuk membatalkan."
         )
 
-        start_msg = await client.listen(user_id)
+        first = await client.listen(message.chat.id)
 
-        if start_msg.text and start_msg.text.startswith("/"):
-            await start_msg.delete()
+        if not first or not first.text:
+            return await msg.edit("<b>❌ Input tidak valid.</b>")
+
+        if first.text.startswith("/"):
+            await client.delete_messages(message.chat.id, first.id)
             return await msg.edit("<b>❌ Proses dibatalkan.</b>")
 
-        start = start_msg.text.strip()
-        await start_msg.delete()
-        
+        start_link = first.text.strip()
+        await client.delete_messages(message.chat.id, first.id)
+
         await msg.edit(
             "<b>🤖 Silahkan kirim Link Akhir dari Database Channel Anda.</b>\n\n"
             "/cancel - Untuk membatalkan."
         )
 
-        end_msg = await client.listen(user_id)
+        second = await client.listen(message.chat.id)
 
-        if end_msg.text and end_msg.text.startswith("/"):
-            await end_msg.delete()
+        if not second or not second.text:
+            return await msg.edit("<b>❌ Input tidak valid.</b>")
+
+        if second.text.startswith("/"):
+            await client.delete_messages(message.chat.id, second.id)
             return await msg.edit("<b>❌ Proses dibatalkan.</b>")
 
-        end = end_msg.text.strip()
-        await end_msg.delete()
+        end_link = second.text.strip()
+        await client.delete_messages(message.chat.id, second.id)
 
-        if start.isdigit():
-            start_id = int(start)
-        else:
-            start_id = int(start.rstrip("/").split("/")[-1])
+        start_id = (
+            int(start_link)
+            if start_link.isdigit()
+            else int(start_link.rstrip("/").split("/")[-1])
+        )
 
-        if end.isdigit():
-            end_id = int(end)
-        else:
-            end_id = int(end.rstrip("/").split("/")[-1])
+        end_id = (
+            int(end_link)
+            if end_link.isdigit()
+            else int(end_link.rstrip("/").split("/")[-1])
+        )
 
         if start_id > end_id:
             return await msg.edit(
                 "<b>❌ ID awal harus lebih kecil dari ID akhir.</b>"
             )
 
-        data = f"batch-{start_id}-{end_id}"
-        token = base64.urlsafe_b64encode(data.encode()).decode()
+        token = base64.urlsafe_b64encode(
+            f"batch-{start_id}-{end_id}".encode()
+        ).decode()
 
-        me = await client.get_me()
+        me = client.me or await client.get_me()
         link = f"https://t.me/{me.username}?start={token}"
 
-        keyboard = InlineKeyboardMarkup(
-            [
+        await msg.edit(
+            f"<b>✅ Link Batch Berhasil Dibuat</b>\n\n<code>{link}</code>",
+            reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
                         "Copy Link",
                         copy_text=link
                     )
                 ]
-            ]
-        )
-
-        await msg.edit(
-            f"<b>✅ Link Batch Berhasil Dibuat</b>\n\n{link}",
-            reply_markup=keyboard
+            ])
         )
 
     except Exception as e:
-        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>")
-
+        await message.reply_text(
+            f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
+        )
+        
 @Bot.on_message(filters.command("adddb") & filters.private)
 async def adddb(client, message):
 

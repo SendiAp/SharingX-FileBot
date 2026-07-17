@@ -21,6 +21,17 @@ from SharingX.modules.db import (
     add_user
 )
 
+async def encode(text: str):
+    return base64.urlsafe_b64encode(
+        text.encode()
+    ).decode().rstrip("=")
+
+async def decode(text: str):
+    text += "=" * (-len(text) % 4)
+    return base64.urlsafe_b64decode(
+        text.encode()
+    ).decode()
+    
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 
@@ -137,7 +148,7 @@ async def start(client, message):
 
     except Exception as e:
         await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
+            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
         
 @Bot.on_callback_query(filters.regex("^close$"))
@@ -189,17 +200,6 @@ async def link_mode(client, message):
             "<code>/link off</code>"
         )
 
-async def encode(text: str):
-    return base64.urlsafe_b64encode(
-        text.encode()
-    ).decode().rstrip("=")
-
-async def decode(text: str):
-    text += "=" * (-len(text) % 4)
-    return base64.urlsafe_b64decode(
-        text.encode()
-    ).decode()
-    
 @Bot.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:
@@ -264,7 +264,7 @@ async def batch(client, message):
         link = f"https://t.me/{me.username}?start={token}"
 
         await msg.edit(
-            f"<b>✅ Link Batch Berhasil Dibuat</b>\n\n<code>{link}</code>",
+            f"<b>✅ Link Batch Berhasil Dibuat</b>\n\n{link}",
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
@@ -277,7 +277,7 @@ async def batch(client, message):
 
     except Exception as e:
         await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n<code>{e}</code>"
+            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
         
 @Bot.on_message(filters.command("adddb") & filters.private)
@@ -408,10 +408,9 @@ async def store_file(client, message):
             message_id=message.id
         )
 
-        data = f"get-{db_msg.id}"
-        token = base64.urlsafe_b64encode(
-            data.encode()
-        ).decode()
+        chg = abs(database_channel)
+        string = f"get-{db_msg.id * chg}"
+        token = await encode(string)
 
         me = await client.get_me()
 

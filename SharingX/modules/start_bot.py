@@ -21,10 +21,10 @@ from SharingX.modules.db import (
     add_user
 )
 
-async def encode(text: str):
-    return base64.urlsafe_b64encode(
-        text.encode()
-    ).decode().rstrip("=")
+async def encode(string):
+    string_bytes = string.encode("ascii")
+    base64_bytes = base64.urlsafe_b64encode(string_bytes)
+    return (base64_bytes.decode("ascii")).strip("=")
 
 async def decode(text: str):
     text += "=" * (-len(text) % 4)

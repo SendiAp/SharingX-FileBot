@@ -35,41 +35,33 @@ class Bot(Client):
 
         self.mongo = None
         self.db = None
+        self.start_time = None
 
     @classmethod
-    def on_message(cls, filters=None, group=0):
+    def on_message(cls, filters=None):
         def decorator(func):
             for b in cls._bots:
-                b.add_handler(
-                    MessageHandler(func, filters),
-                    group=group
-                )
+                b.add_handler(MessageHandler(func, filters))
             return func
-
         return decorator
 
     @classmethod
-    def on_callback_query(cls, filters=None, group=0):
+    def on_callback_query(cls, filters=None):
         def decorator(func):
             for b in cls._bots:
-                b.add_handler(
-                    CallbackQueryHandler(func, filters),
-                    group=group
-                )
+                b.add_handler(CallbackQueryHandler(func, filters))
             return func
-
         return decorator
 
     async def start(self):
         await super().start()
 
+        self.start_time = time.time()
+
         if self not in self._bots:
             self._bots.append(self)
 
-        me = await self.get_me()
-        self.me = me
-
-        Bot._instances[str(me.id)] = self
+        Bot._instances[str(self.me.id)] = self
 
     async def stop(self, *args, **kwargs):
         try:
@@ -78,8 +70,10 @@ class Bot(Client):
             if self in self._bots:
                 self._bots.remove(self)
 
-            if getattr(self, "me", None):
+            if self.me:
                 Bot._instances.pop(str(self.me.id), None)
+
+            self.start_time = None
 
     @classmethod
     def get_instance(cls, bot_id):

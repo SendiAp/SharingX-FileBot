@@ -1,3 +1,4 @@
+import time
 import sys
 import asyncio
 
@@ -30,6 +31,9 @@ class Bot(Client):
     _bots = []
     _instances = {}
 
+    _message_handlers = []
+    _callback_handlers = []
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -38,19 +42,33 @@ class Bot(Client):
         self.start_time = None
 
     @classmethod
-    def on_message(cls, filters=None):
+    def on_message(cls, filters=None, group=0):
         def decorator(func):
-            for b in cls._bots:
-                b.add_handler(MessageHandler(func, filters))
+            cls._message_handlers.append((func, filters, group))
+
+            for bot in cls._bots:
+                bot.add_handler(
+                    MessageHandler(func, filters),
+                    group
+                )
+
             return func
+
         return decorator
 
     @classmethod
-    def on_callback_query(cls, filters=None):
+    def on_callback_query(cls, filters=None, group=0):
         def decorator(func):
-            for b in cls._bots:
-                b.add_handler(CallbackQueryHandler(func, filters))
+            cls._callback_handlers.append((func, filters, group))
+
+            for bot in cls._bots:
+                bot.add_handler(
+                    CallbackQueryHandler(func, filters),
+                    group
+                )
+
             return func
+
         return decorator
 
     async def start(self):
@@ -58,10 +76,23 @@ class Bot(Client):
 
         self.start_time = time.time()
 
+        for func, filters, group in self._message_handlers:
+            self.add_handler(
+                MessageHandler(func, filters),
+                group
+            )
+
+        for func, filters, group in self._callback_handlers:
+            self.add_handler(
+                CallbackQueryHandler(func, filters),
+                group
+            )
+
         if self not in self._bots:
             self._bots.append(self)
 
-        Bot._instances[str(self.me.id)] = self
+        if self.me:
+            self._instances[str(self.me.id)] = self
 
     async def stop(self, *args, **kwargs):
         try:
@@ -71,7 +102,7 @@ class Bot(Client):
                 self._bots.remove(self)
 
             if self.me:
-                Bot._instances.pop(str(self.me.id), None)
+                self._instances.pop(str(self.me.id), None)
 
             self.start_time = None
 

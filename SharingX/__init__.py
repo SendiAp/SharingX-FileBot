@@ -40,7 +40,25 @@ class Bot(Client):
         self.mongo = None
         self.db = None
         self.start_time = None
-
+        
+    async def copy(
+        self,
+        chat_id,
+        from_chat_id=None,
+        message_id=None,
+        message=None,
+        **kwargs
+    ):
+        if message:
+            from_chat_id = message.chat.id
+            message_id = message.id
+            
+        return await self.copy_message(
+            chat_id=chat_id,
+            from_chat_id=from_chat_id,
+            message_id=message_id,
+            **kwargs
+              
     @classmethod
     def on_message(cls, filters=None, group=0):
         def decorator(func):

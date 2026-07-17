@@ -21,6 +21,14 @@ from SharingX.helper.database import (
 )
 from SharingX.modules import loadModule
 
+from SharingX.config import (
+    VERSION,
+    BUILD,
+    DB_LIMIT_MB
+)
+
+from pyrogram.enums import ButtonStyle
+
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -155,53 +163,81 @@ async def my_bots(client, callback_query: CallbackQuery):
 
 @app.on_callback_query(filters.regex(r"^bot_(.+)$"))
 async def bot_settings(client, callback_query: CallbackQuery):
+    try:
+        bot_id = callback_query.data.split("_", 1)[1]
+        data = await get_bot_data(bot_id)
 
-    bot_id = callback_query.data.split("_", 1)[1]
+        if not data:
+            return await callback_query.answer(
+                "⚠️ Bot Tidak Ditemukan!",
+                show_alert=True
+            )
 
-    bot = await get_bot_data(bot_id)
+        status = {
+            "running": "🟢 Running",
+            "stopped": "🔴 Stopped",
+            "restart": "🔄 Restarting",
+            "crash": "⚫ Crash"
+        }.get(data.get("status"), "⚫ Unknown")
 
-    if not bot:
-        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
+        name = "⚠️ Bot Sedang Offline"
+        ping = uptime = "-"
+        used = free = docs = cols = 0
 
-    status = bot.get("status", "running")
-    
-    if status == "running":
-        status_text = "🟢 Running"
-    elif status == "stopped":
-        status_text = "🔴 Stopped"
-    elif status == "restart":
-        status_text = "🔄 Restarting"
-    else:
-        status_text = "⚫ Crash"
+        if robot := Bot.get_instance(bot_id):
+            me = await robot.get_me()
+            name = (
+                f"[{me.first_name}](https://t.me/{me.username})"
+                if me.username else me.first_name
+            )
 
-    username = None
-    first_name = "⚠️ Bot Sedang Dalam Penghentian"
-    robot = Bot.get_instance(bot['bot_id'])
-    if robot:
-        me = await robot.get_me()
-        username = me.username
-        first_name = me.first_name
-        
-    text = (
-        "<b>⚙️ Setting Bots</b>\n\n"
-        f"<b>🤖 Nama :</b> [{first_name}](t.me/{username})\n"
-        f"<b>🆔 Bot:</b> <code>{bot['bot_id']}</code>\n"
-        f"<b>👨‍💻 Status :</b> {status_text}\n"
-        f"<b>📂 Database :</b> <code>{bot.get('database', 'sharingx')}</code>"
-    )
+            t = time.perf_counter()
+            await robot.get_me()
+            ping = f"{(time.perf_counter()-t)*1000:.0f} ms"
 
-    await callback_query.edit_message_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            [
+            if robot.start_time:
+                s = int(time.time() - robot.start_time)
+                h, s = divmod(s, 3600)
+                m, s = divmod(s, 60)
+                uptime = f"{h:02}:{m:02}:{s:02}"
+
+            try:
+                db = robot.db.command("dbStats")
+                used = db["dataSize"] / 1048576
+                free = max(DB_LIMIT_MB - used, 0)
+                cols = db["collections"]
+                docs = db["objects"]
+            except:
+                pass
+
+        await callback_query.edit_message_text(
+            (
+                "<b>⚙️ Bot Information</b>\n\n"
+                f"🤖 <b>Bot :</b> {name}\n"
+                f"🆔 <b>ID :</b> <code>{bot_id}</code>\n"
+                f"👨‍💻 <b>Status :</b> {status}\n\n"
+                f"⚡ <b>Ping :</b> <code>{ping}</code>\n"
+                f"⏱ <b>Uptime :</b> <code>{uptime}</code>\n\n"
+                f"🗄 <b>Database :</b> <code>{data.get('database','sharingx')}</code>\n"
+                f"📁 <b>Collection :</b> <code>{cols:,}</code>\n"
+                f"📄 <b>Documents :</b> <code>{docs:,}</code>\n"
+                f"💾 <b>Used :</b> <code>{used:.2f} MB</code>\n"
+                f"📦 <b>Free :</b> <code>{free:.2f} MB</code>\n\n"
+                f"📦 <b>Version :</b> <code>{VERSION}</code>\n"
+                f"🛠 <b>Build :</b> <code>{BUILD}</code>"
+            ),
+            disable_web_page_preview=True,
+            reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
                         "▶️ Start",
-                        callback_data=f"startbot_{bot_id}"
+                        callback_data=f"startbot_{bot_id}",
+                        style=ButtonStyle.SUCCESS
                     ),
                     InlineKeyboardButton(
                         "⏸ Stop",
-                        callback_data=f"stopbot_{bot_id}"
+                        callback_data=f"stopbot_{bot_id}",
+                        style=ButtonStyle.DANGER
                     )
                 ],
                 [
@@ -222,10 +258,12 @@ async def bot_settings(client, callback_query: CallbackQuery):
                         callback_data="my_bots"
                     )
                 ]
-            ]
+            ])
         )
-    )
 
+    except Exception as e:
+        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        
 @app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
 async def stop_bot(client, callback_query: CallbackQuery):
 

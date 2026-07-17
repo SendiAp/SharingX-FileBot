@@ -184,6 +184,17 @@ async def link_mode(client, message):
             "<code>/link off</code>"
         )
 
+async def encode(text: str):
+    return base64.urlsafe_b64encode(
+        text.encode()
+    ).decode().rstrip("=")
+
+async def decode(text: str):
+    text += "=" * (-len(text) % 4)
+    return base64.urlsafe_b64decode(
+        text.encode()
+    ).decode()
+    
 @Bot.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:
@@ -238,10 +249,12 @@ async def batch(client, message):
                 "<b>❌ ID awal harus lebih kecil dari ID akhir.</b>"
             )
 
-        token = base64.urlsafe_b64encode(
-            f"batch-{start_id}-{end_id}".encode()
-        ).decode()
-
+        db_channel = await get_database_channel(client)
+        chg = abs(db_channel)
+        
+        string = f"batch-{start_id * chg}-{end_id * chg}"
+        token = await encode(string)
+        
         me = client.me or await client.get_me()
         link = f"https://t.me/{me.username}?start={token}"
 

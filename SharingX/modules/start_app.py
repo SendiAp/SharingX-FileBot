@@ -21,12 +21,6 @@ from SharingX.helper.database import (
 )
 from SharingX.modules import loadModule
 
-from SharingX.config import (
-    VERSION,
-    BUILD,
-    DB_LIMIT_MB
-)
-
 from pyrogram.enums import ButtonStyle
 
 from pyrogram import filters
@@ -199,12 +193,10 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 s = int(time.time() - robot.start_time)
                 h, s = divmod(s, 3600)
                 m, s = divmod(s, 60)
-                uptime = f"{h:02}:{m:02}:{s:02}"
+                uptime = f"{h:02}Jam:{m:02}Menit:{s:02}Detik"
 
             try:
                 db = robot.db.command("dbStats")
-                used = db["dataSize"] / 1048576
-                free = max(DB_LIMIT_MB - used, 0)
                 cols = db["collections"]
                 docs = db["objects"]
             except:
@@ -216,15 +208,12 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 f"🤖 <b>Bot :</b> {name}\n"
                 f"🆔 <b>ID :</b> <code>{bot_id}</code>\n"
                 f"👨‍💻 <b>Status :</b> {status}\n\n"
-                f"⚡ <b>Ping :</b> <code>{ping}</code>\n"
-                f"⏱ <b>Uptime :</b> <code>{uptime}</code>\n\n"
-                f"🗄 <b>Database :</b> <code>{data.get('database','sharingx')}</code>\n"
-                f"📁 <b>Collection :</b> <code>{cols:,}</code>\n"
-                f"📄 <b>Documents :</b> <code>{docs:,}</code>\n"
-                f"💾 <b>Used :</b> <code>{used:.2f} MB</code>\n"
-                f"📦 <b>Free :</b> <code>{free:.2f} MB</code>\n\n"
-                f"📦 <b>Version :</b> <code>{VERSION}</code>\n"
-                f"🛠 <b>Build :</b> <code>{BUILD}</code>"
+                f"⚡ <b>Ping :</b> {ping}\n"
+                f"⏱ <b>Uptime :</b> {uptime}\n\n"
+                f"🗄 <b>DB</b> {data.get('database')}\n"
+                f"📁 <b>Collection :</b> {cols:,}\n"
+                f"📄 <b>Documents :</b> {docs:,}\n\n"
+                f"<b>© Bot By SharingX</b>"
             ),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup([

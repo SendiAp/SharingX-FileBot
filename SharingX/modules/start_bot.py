@@ -408,8 +408,7 @@ async def store_file(client, message):
             message_id=message.id
         )
 
-        ids = await message.copy(database_channel)
-        fuck = ids.id * abs(database_channel)
+        fuck = db_msg.id * abs(database_channel)
         string = f"get-{fuck}"
         token = await encode(string)
 

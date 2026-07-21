@@ -277,7 +277,7 @@ async def batch(client, message):
 
     except Exception as e:
         await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
+            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code> {client}"
         )
         
 @Bot.on_message(filters.command("adddb") & filters.private)

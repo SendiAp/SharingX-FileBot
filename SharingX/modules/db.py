@@ -195,26 +195,24 @@ async def del_user(client, user_id):
 # PROTECTION (BOT)
 # =========================
 
-async def add_protect(client, user_id, protect):
+async def set_protect(client, protect: bool):
     _col(client, "protect").update_one(
-        {"user_id": user_id},
-        {
-            "$set": {
-                "user_id": user_id,
-                "protect": protect
-            }
-        },
+        {"_id": "protect"},
+        {"$set": {"enabled": protect}},
         upsert=True
     )
 
 
-async def protect_info(client, user_id):
+async def protect_info(client):
     data = _col(client, "protect").find_one(
-        {"user_id": user_id}
+        {"_id": "protect"}
     )
 
-    return data["protect"] if data else True
+    if not data:
+        return True
 
+    return data.get("enabled", True)
+    
 
 # =========================
 # OWNER (BOT)

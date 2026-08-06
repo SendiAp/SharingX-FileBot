@@ -213,3 +213,31 @@ async def protect_info(client, user_id):
     data = await db.find_one({"user_id": user_id})
 
     return data["protect"] if data else True
+
+# =========================
+# OWNER (BOT)
+# =========================
+
+async def add_owner(client, user_id):
+    db = client.db["owner"]
+
+    await db.update_one(
+        {},
+        {
+            "$set": {
+                "user_id": user_id
+            }
+        },
+        upsert=True
+    )
+
+async def get_owner(client):
+    db = client.db["owner"]
+
+    data = await db.find_one({})
+
+    return data["user_id"] if data else None
+
+async def is_owner(client, user_id):
+    owner = await get_owner(client)
+    return owner == user_id

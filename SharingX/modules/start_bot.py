@@ -8,7 +8,7 @@ from pyrogram.types import (
 )
 
 from SharingX import Bot
-from SharingX.helper.tools import strtobool, encode, decode
+from SharingX.helper.tools import strtobool, encode, decode, owner_admin
 from SharingX.modules.db import (
     get_forcesub_button_mode,
     set_database_channel,
@@ -157,7 +157,7 @@ async def close_callback(client, callback_query):
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
     
-@Bot.on_message(filters.command("link") & filters.private)
+@Bot.on_message(filters.command("link") & filters.private & owner_admin)
 async def link_mode(client, message):
 
     if len(message.command) != 2:

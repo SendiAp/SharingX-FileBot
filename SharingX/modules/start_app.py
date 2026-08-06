@@ -10,7 +10,6 @@ from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from SharingX import app, Bot
-from SharingX.modules.db import add_owner
 from SharingX.helper.database import (
     add_bot,
     remove_bot,
@@ -578,6 +577,11 @@ async def create_bot(client, callback_query: CallbackQuery):
         user_id,
         str(me.id)
     )
+
+    await add_owner(
+        str(me.id),
+        user_id
+    )
     
     await asyncio.sleep(2)
     
@@ -604,8 +608,6 @@ async def create_bot(client, callback_query: CallbackQuery):
             )
         )
         
-    await add_owner(media, user_id)
-
     try:
         os.popen(f"rm {bot_id}*")
     except:

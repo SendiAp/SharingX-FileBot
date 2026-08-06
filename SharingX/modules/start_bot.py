@@ -4,6 +4,7 @@ from pyrogram import filters
 from pyrogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
+    Message
 )
 
 from SharingX import Bot
@@ -210,6 +211,30 @@ async def link_mode(client, message):
             "<code>/link off</code>"
         )
 
+@Bot.on_message(filters.command("protect") & filters.private)
+async def protect_cmd(client, message: Message):
+    if len(message.command) != 2:
+        return await message.reply_text(
+            "<b>Usage:</b>\n"
+            "<code>/protect true</code>\n"
+            "<code>/protect false</code>"
+        )
+
+    value = message.command[1].lower()
+
+    if value not in ("true", "false"):
+        return await message.reply_text(
+            "<b>Parameter harus:</b> <code>true</code> atau <code>false</code>"
+        )
+
+    protect = value == "true"
+
+    await add_protect(client, message.from_user.id, protect)
+
+    await message.reply_text(
+        f"✅ <b>Protect berhasil {'diaktifkan' if protect else 'dinonaktifkan'}.</b>"
+    )
+    
 @Bot.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:

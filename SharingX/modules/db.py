@@ -152,6 +152,7 @@ async def get_forcesub_button_mode(client):
         mode = "text"
 
     return mode
+    
 # =========================
 # BROADCAST (BOT)
 # =========================
@@ -187,3 +188,28 @@ async def del_user(client, user_id):
             "user_id": user_id
         }
     )
+
+# =========================
+# PROTECTION (BOT)
+# =========================
+
+async def add_protect(client, user_id, protect):
+    db = client.db["protect"]
+
+    await db.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "user_id": user_id,
+                "protect": protect
+            }
+        },
+        upsert=True
+    )
+
+async def protect_info(client, user_id):
+    db = client.db["protect"]
+
+    data = await db.find_one({"user_id": user_id})
+
+    return data["protect"] if data else True

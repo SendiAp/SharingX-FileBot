@@ -8,6 +8,7 @@ from pyrogram.types import (
 )
 
 from SharingX import Bot
+from SharingX.helper.tools import strtobool, encode, decode
 from SharingX.modules.db import (
     get_forcesub_button_mode,
     set_database_channel,
@@ -23,20 +24,6 @@ from SharingX.modules.db import (
     add_user
 )
 
-def strtobool(val):
-    return str(val).lower() in ("true", "1", "yes", "y", "on")
-    
-async def encode(string):
-    string_bytes = string.encode("ascii")
-    base64_bytes = base64.urlsafe_b64encode(string_bytes)
-    return (base64_bytes.decode("ascii")).strip("=")
-
-async def decode(text: str):
-    text += "=" * (-len(text) % 4)
-    return base64.urlsafe_b64decode(
-        text.encode()
-    ).decode()
-    
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 

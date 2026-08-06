@@ -1,3 +1,5 @@
+from SharingX.modules.db import is_owner, is_admin
+
 async def owner_admin_filter(_, client, message):
     user_id = message.from_user.id
 

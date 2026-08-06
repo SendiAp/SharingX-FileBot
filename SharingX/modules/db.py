@@ -221,7 +221,7 @@ async def protect_info(client, user_id):
 async def add_owner(client, user_id):
     db = client.db["owner"]
 
-    await db.update_one(
+    db.update_one(
         {},
         {
             "$set": {
@@ -234,7 +234,7 @@ async def add_owner(client, user_id):
 async def get_owner(client):
     db = client.db["owner"]
 
-    data = await db.find_one({})
+    data = db.find_one({})
 
     return data["user_id"] if data else None
 
@@ -248,8 +248,8 @@ async def is_owner(client, user_id):
 
 async def add_admin(client, user_id):
     db = client.db["admin"]
-
-    await db.update_one(
+    
+    db.update_one(
         {"user_id": user_id},
         {
             "$set": {
@@ -262,7 +262,7 @@ async def add_admin(client, user_id):
 async def del_admin(client, user_id):
     db = client.db["admin"]
 
-    await db.delete_one(
+    db.delete_one(
         {
             "user_id": user_id
         }
@@ -271,7 +271,7 @@ async def del_admin(client, user_id):
 async def is_admin(client, user_id):
     db = client.db["admin"]
 
-    data = await db.find_one(
+    data = db.find_one(
         {
             "user_id": user_id
         }

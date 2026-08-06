@@ -12,12 +12,13 @@ from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBu
 from SharingX import app, Bot
 from SharingX.helper.database import (
     add_bot,
+    add_owner
+    remove_bot,
+    add_user_bot,
     get_bot_data,
     get_user_bots,
-    add_user_bot,
-    remove_user_bot,
-    remove_bot,
     set_bot_status,
+    remove_user_bot
 )
 from SharingX.modules import loadModule
 
@@ -578,6 +579,8 @@ async def create_bot(client, callback_query: CallbackQuery):
         str(me.id)
     )
 
+    await add_owner(media, user_id)
+    
     await asyncio.sleep(2)
     
     await callback.edit(
@@ -602,7 +605,6 @@ async def create_bot(client, callback_query: CallbackQuery):
                 f"SharingX.modules.{mod}"
             )
         )
-
 
     try:
         os.popen(f"rm {bot_id}*")

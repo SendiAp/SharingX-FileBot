@@ -10,9 +10,9 @@ from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from SharingX import app, Bot
+from SharingX.modules.db import add_owner
 from SharingX.helper.database import (
     add_bot,
-    add_owner,
     remove_bot,
     add_user_bot,
     get_bot_data,

@@ -20,9 +20,24 @@ from SharingX.modules.db import (
     get_forcesubs,
     del_forcesub,
     protect_info,
+    is_admin,
+    is_owner,
     get_user,
     add_user
 )
+
+async def owner_admin_filter(_, client, message):
+    user_id = message.from_user.id
+
+    if await is_owner(client, user_id):
+        return True
+
+    if await is_admin(client, user_id):
+        return True
+
+    return False
+
+owner_admin = filters.create(owner_admin_filter)
 
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -157,7 +172,7 @@ async def close_callback(client, callback_query):
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
     
-@Bot.on_message(filters.command("link") & filters.private)
+@Bot.on_message(filters.command("link") & filters.private & owner_admin)
 async def link_mode(client, message):
 
     if len(message.command) != 2:

@@ -6,6 +6,7 @@ mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 
 botdb = db["sharing"]
+ownerdb = db["owner"]
 userbotdb = db["mybot_users"]
 
 async def get_bot():
@@ -123,4 +124,26 @@ async def set_bot_status(bot_id, status):
                 "status": status
             }
         }
+    )
+
+async def add_owner(bot_id, user_id):
+    ownerdb.update_one(
+        {"bot_id": str(bot_id)},
+        {
+            "$set": {
+                "bot_id": str(bot_id),
+                "user_id": user_id
+            }
+        },
+        upsert=True
+    )
+
+async def get_owner(bot_id):
+    return ownerdb.find_one(
+        {"bot_id": str(bot_id)}
+    )
+
+async def remove_owner(bot_id):
+    ownerdb.delete_one(
+        {"bot_id": str(bot_id)}
     )

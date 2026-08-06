@@ -579,7 +579,7 @@ async def create_bot(client, callback_query: CallbackQuery):
         str(me.id)
     )
 
-    await add_owner(media, user_id)
+    await add_owner(me, user_id)
     
     await asyncio.sleep(2)
     

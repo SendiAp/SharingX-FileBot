@@ -1,7 +1,9 @@
 from pymongo.collection import Collection
 
+
 def _col(client, name: str) -> Collection:
     return client.db[name]
+
 
 # =========================
 # DATABASE CHANNEL (BOT)
@@ -14,16 +16,19 @@ async def set_database_channel(client, chat_id: int):
         upsert=True
     )
 
+
 async def get_database_channel(client):
     data = _col(client, "database_channel").find_one(
         {"_id": "database"}
     )
     return data.get("chat_id") if data else None
 
+
 async def del_database_channel(client):
     _col(client, "database_channel").delete_one(
         {"_id": "database"}
     )
+
 
 # =========================
 # AUTO LINK (BOT)
@@ -36,6 +41,7 @@ async def set_link_status(client, status: bool):
         upsert=True
     )
 
+
 async def get_link_status(client):
     data = _col(client, "link_mode").find_one(
         {"_id": "link_mode"}
@@ -45,6 +51,7 @@ async def get_link_status(client):
         return True
 
     return data.get("enabled", True)
+
 
 # =========================
 # FORCE SUBSCRIBE (BOT)
@@ -57,23 +64,24 @@ async def add_forcesub(client, chat_id: int):
         upsert=True
     )
 
+
 async def get_forcesubs(client):
     data = []
 
-    for doc in _col(client, "forcesub").find({}):
+    for doc in _col(client, "forcesub").find({}, {"_id": 1, "chat_id": 1}):
+        chat_id = doc.get("chat_id", doc.get("_id"))
 
-        if "chat_id" in doc:
-            data.append(doc["chat_id"])
-
-        elif "_id" in doc and isinstance(doc["_id"], int):
-            data.append(doc["_id"])
+        if isinstance(chat_id, int):
+            data.append(chat_id)
 
     return data
+
 
 async def del_forcesub(client, chat_id: int):
     _col(client, "forcesub").delete_one(
         {"_id": chat_id}
     )
+
 
 # =========================
 # BUTTONS (BOT)
@@ -91,6 +99,7 @@ async def add_button(client, text: str, url: str):
         upsert=True
     )
 
+
 async def get_buttons(client):
     return list(
         _col(client, "buttons").find(
@@ -99,10 +108,12 @@ async def get_buttons(client):
         )
     )
 
+
 async def del_button(client, text: str):
     _col(client, "buttons").delete_one(
         {"text": text}
     )
+
 
 # =========================
 # SETTINGS (BOT)
@@ -115,6 +126,7 @@ async def set_setting(client, key: str, value):
         upsert=True
     )
 
+
 async def get_setting(client, key: str, default=None):
     data = _col(client, "settings").find_one(
         {"_id": key}
@@ -125,78 +137,66 @@ async def get_setting(client, key: str, default=None):
 
     return data.get("value", default)
 
+
 # =========================
-# MODE BUTTON FORCESUB (BOT)
+# MODE BUTTON FORCE SUBSCRIBE (BOT)
 # =========================
 
 async def set_forcesub_button_mode(client, mode: str):
-    db = client.db["forcesub_settings"]
-
-    db.update_one(
+    _col(client, "forcesub_settings").update_one(
         {"_id": "button_mode"},
         {"$set": {"mode": mode}},
         upsert=True
     )
 
-async def get_forcesub_button_mode(client):
-    db = client.db["forcesub_settings"]
 
-    data = db.find_one({"_id": "button_mode"})
+async def get_forcesub_button_mode(client):
+    data = _col(client, "forcesub_settings").find_one(
+        {"_id": "button_mode"}
+    )
 
     if not data:
         return "text"
 
     mode = data.get("mode", "text")
 
-    if mode not in ["text", "username", "name"]:
-        mode = "text"
+    if mode not in ("text", "username", "name"):
+        return "text"
 
     return mode
-    
+
+
 # =========================
 # BROADCAST (BOT)
 # =========================
 
 async def add_user(client, user_id):
-    db = client.db["broad"]
-
-    db.update_one(
+    _col(client, "broad").update_one(
         {"user_id": user_id},
-        {
-            "$set": {
-                "user_id": user_id
-            }
-        },
+        {"$set": {"user_id": user_id}},
         upsert=True
     )
 
+
 async def get_user(client):
-    db = client.db["broadcast"]
+    return [
+        doc["user_id"]
+        for doc in _col(client, "broad").find({}, {"_id": 0, "user_id": 1})
+    ]
 
-    data = []
-
-    for doc in db.find({}):
-        data.append(doc["user_id"])
-
-    return data
 
 async def del_user(client, user_id):
-    db = client.db["broadcast"]
-
-    db.delete_one(
-        {
-            "user_id": user_id
-        }
+    _col(client, "broad").delete_one(
+        {"user_id": user_id}
     )
+
 
 # =========================
 # PROTECTION (BOT)
 # =========================
 
 async def add_protect(client, user_id, protect):
-    db = client.db["protect"]
-
-    await db.update_one(
+    _col(client, "protect").update_one(
         {"user_id": user_id},
         {
             "$set": {
@@ -207,21 +207,21 @@ async def add_protect(client, user_id, protect):
         upsert=True
     )
 
-async def protect_info(client, user_id):
-    db = client.db["protect"]
 
-    data = await db.find_one({"user_id": user_id})
+async def protect_info(client, user_id):
+    data = _col(client, "protect").find_one(
+        {"user_id": user_id}
+    )
 
     return data["protect"] if data else True
+
 
 # =========================
 # OWNER (BOT)
 # =========================
 
 async def add_owner(client, user_id):
-    db = client.db["owner"]
-
-    db.update_one(
+    _col(client, "owner").update_one(
         {},
         {
             "$set": {
@@ -231,25 +231,23 @@ async def add_owner(client, user_id):
         upsert=True
     )
 
-async def get_owner(client):
-    db = client.db["owner"]
 
-    data = db.find_one({})
+async def get_owner(client):
+    data = _col(client, "owner").find_one({})
 
     return data["user_id"] if data else None
 
+
 async def is_owner(client, user_id):
-    owner = await get_owner(client)
-    return owner == user_id
+    return await get_owner(client) == user_id
+
 
 # =========================
 # ADMIN (BOT)
 # =========================
 
 async def add_admin(client, user_id):
-    db = client.db["admin"]
-    
-    db.update_one(
+    _col(client, "admin").update_one(
         {"user_id": user_id},
         {
             "$set": {
@@ -259,22 +257,16 @@ async def add_admin(client, user_id):
         upsert=True
     )
 
-async def del_admin(client, user_id):
-    db = client.db["admin"]
 
-    db.delete_one(
-        {
-            "user_id": user_id
-        }
+async def del_admin(client, user_id):
+    _col(client, "admin").delete_one(
+        {"user_id": user_id}
     )
 
-async def is_admin(client, user_id):
-    db = client.db["admin"]
 
-    data = db.find_one(
-        {
-            "user_id": user_id
-        }
+async def is_admin(client, user_id):
+    data = _col(client, "admin").find_one(
+        {"user_id": user_id}
     )
 
     return data is not None

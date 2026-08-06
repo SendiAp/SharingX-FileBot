@@ -1,6 +1,5 @@
 import base64
 from pyrogram import filters
-from SharingX.modules.db import is_owner, is_admin
 
 def strtobool(val):
     return str(val).lower() in ("true", "1", "yes", "y", "on")
@@ -15,16 +14,3 @@ async def decode(text: str):
     return base64.urlsafe_b64decode(
         text.encode()
     ).decode()
-
-async def owner_admin_filter(_, client, message):
-    user_id = message.from_user.id
-
-    if await is_owner(client, user_id):
-        return True
-
-    if await is_admin(client, user_id):
-        return True
-
-    return False
-
-owner_admin = filters.create(owner_admin_filter)

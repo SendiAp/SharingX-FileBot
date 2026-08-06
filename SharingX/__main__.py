@@ -7,7 +7,7 @@ from pyrogram.errors import RPCError
 
 from SharingX.modules import loadModule
 from SharingX import LOOP, Bot, app, LOGGER
-from SharingX.helper.database import get_bot, remove_bot, get_owner
+from SharingX.helper.database import get_bot, remove_bot, get_owner, remove_owner
 
 async def main():
     await app.start()

@@ -195,7 +195,7 @@ async def del_user(client, user_id):
 # PROTECTION (BOT)
 # =========================
 
-async def set_protect(client, protect: bool):
+async def add_protect(client, protect: bool):
     _col(client, "protect").update_one(
         {"_id": "protect"},
         {"$set": {"enabled": protect}},

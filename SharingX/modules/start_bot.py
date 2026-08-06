@@ -124,7 +124,7 @@ async def start(client, message):
 
         cckh = await protect_info(client)
         
-        rkhw = strtobool(kk)
+        rkhw = strtobool(cckh)
         
         if data.startswith("get-"):
 

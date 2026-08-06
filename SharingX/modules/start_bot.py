@@ -8,7 +8,8 @@ from pyrogram.types import (
 )
 
 from SharingX import Bot
-from SharingX.helper.tools import strtobool, encode, decode, owner_admin
+from SharingX.modules.tools import owner_admin
+from SharingX.helper.tools import strtobool, encode, decode
 from SharingX.modules.db import (
     get_forcesub_button_mode,
     set_database_channel,

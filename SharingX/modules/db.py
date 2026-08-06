@@ -4,7 +4,7 @@ def _col(client, name: str) -> Collection:
     return client.db[name]
 
 # =========================
-# DATABASE CHANNEL
+# DATABASE CHANNEL (BOT)
 # =========================
 
 async def set_database_channel(client, chat_id: int):
@@ -26,7 +26,7 @@ async def del_database_channel(client):
     )
 
 # =========================
-# AUTO LINK
+# AUTO LINK (BOT)
 # =========================
 
 async def set_link_status(client, status: bool):
@@ -47,7 +47,7 @@ async def get_link_status(client):
     return data.get("enabled", True)
 
 # =========================
-# FORCE SUBSCRIBE
+# FORCE SUBSCRIBE (BOT)
 # =========================
 
 async def add_forcesub(client, chat_id: int):
@@ -76,7 +76,7 @@ async def del_forcesub(client, chat_id: int):
     )
 
 # =========================
-# BUTTONS
+# BUTTONS (BOT)
 # =========================
 
 async def add_button(client, text: str, url: str):
@@ -105,7 +105,7 @@ async def del_button(client, text: str):
     )
 
 # =========================
-# SETTINGS
+# SETTINGS (BOT)
 # =========================
 
 async def set_setting(client, key: str, value):
@@ -126,7 +126,7 @@ async def get_setting(client, key: str, default=None):
     return data.get("value", default)
 
 # =========================
-# MODE BUTTON FORCESUB
+# MODE BUTTON FORCESUB (BOT)
 # =========================
 
 async def set_forcesub_button_mode(client, mode: str):
@@ -153,11 +153,11 @@ async def get_forcesub_button_mode(client):
 
     return mode
 # =========================
-# BROADCAST
+# BROADCAST (BOT)
 # =========================
 
 async def add_user(client, user_id):
-    db = client.db["broadcast"]
+    db = client.db["broad"]
 
     db.update_one(
         {"user_id": user_id},

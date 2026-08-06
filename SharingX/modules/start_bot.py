@@ -232,7 +232,7 @@ async def protect_cmd(client, message: Message):
 
     protect = value == "true"
 
-    await add_protect(client, message.from_user.id, protect)
+    await add_protect(client, protect)
 
     await message.reply_text(
         f"✅ <b>Protect berhasil {'diaktifkan' if protect else 'dinonaktifkan'}.</b>"

@@ -17,10 +17,14 @@ from SharingX.modules.db import (
     add_forcesub,
     get_forcesubs,
     del_forcesub,
+    protect_info,
     get_user,
     add_user
 )
 
+def strtobool(val):
+    return str(val).lower() in ("true", "1", "yes", "y", "on")
+    
 async def encode(string):
     string_bytes = string.encode("ascii")
     base64_bytes = base64.urlsafe_b64encode(string_bytes)
@@ -114,6 +118,10 @@ async def start(client, message):
 
         data = await decode(token)
 
+        cckh = await protect_info(client)
+        
+        rkhw = strtobool(kk)
+        
         if data.startswith("get-"):
 
             msg_id = int(data.split("-")[1]) // chg
@@ -122,6 +130,7 @@ async def start(client, message):
                 chat_id=message.chat.id,
                 from_chat_id=database_channel,
                 message_id=msg_id,
+                protect_content=rkhw,
                 reply_markup=None
             )
 
@@ -138,6 +147,7 @@ async def start(client, message):
                         chat_id=message.chat.id,
                         from_chat_id=database_channel,
                         message_id=msg_id,
+                        protect_content=rkhw,
                         reply_markup=None
                     )
                 except:

@@ -1,6 +1,6 @@
 import base64
 from pyrogram import filters
-from SharingX.helper.database import is_owner, is_admin
+from SharingX.modules.db import is_owner, is_admin
 
 def strtobool(val):
     return str(val).lower() in ("true", "1", "yes", "y", "on")

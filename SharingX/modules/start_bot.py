@@ -20,6 +20,7 @@ from SharingX.modules.db import (
     get_forcesubs,
     del_forcesub,
     protect_info,
+    add_protect,
     is_admin,
     is_owner,
     get_user,
@@ -413,6 +414,7 @@ async def deldb(client, message):
 @Bot.on_message(
     filters.private
     & ~filters.command("start", "batch")
+    & owner_admin
     & (
         filters.photo
         | filters.video

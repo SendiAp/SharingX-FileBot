@@ -33,7 +33,7 @@ async def main():
                 owner = await get_owner(bt["bot_id"])
                 
                 if owner:
-                    await b.db["owner"].update_one(
+                    b.db["owner"].update_one(
                         {},
                         {
                             "$set": {

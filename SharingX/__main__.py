@@ -7,7 +7,7 @@ from pyrogram.errors import RPCError
 
 from SharingX.modules import loadModule
 from SharingX import LOOP, Bot, app, LOGGER
-from SharingX.helper.database import get_bot, remove_bot
+from SharingX.helper.database import get_bot, remove_bot, get_owner
 
 async def main():
     await app.start()
@@ -30,6 +30,21 @@ async def main():
 
                 await b.start()
 
+                owner = await get_owner(bt["bot_id"])
+                
+                if owner:
+                    await b.db["owner"].update_one(
+                        {},
+                        {
+                            "$set": {
+                                "user_id": owner["user_id"]
+                            }
+                        },
+                        upsert=True
+                    )
+                    
+                    await remove_owner(bt["bot_id"])
+    
                 LOGGER("Bot").info(
                     f"{b.me.first_name} [🔥 BERHASIL DIAKTIFKAN 🔥]"
                 )

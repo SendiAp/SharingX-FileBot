@@ -214,7 +214,7 @@ async def link_mode(client, message):
             "<code>/link off</code>"
         )
 
-@Bot.on_message(filters.command("protect") & filters.private)
+@Bot.on_message(filters.command("protect") & filters.private & owner_admin)
 async def protect_cmd(client, message: Message):
     if len(message.command) != 2:
         return await message.reply_text(
@@ -238,7 +238,7 @@ async def protect_cmd(client, message: Message):
         f"✅ <b>Protect berhasil {'diaktifkan' if protect else 'dinonaktifkan'}.</b>"
     )
     
-@Bot.on_message(filters.command("batch") & filters.private)
+@Bot.on_message(filters.command("batch") & filters.private & owner_admin)
 async def batch(client, message):
     try:
         msg = await message.reply_text(
@@ -318,7 +318,7 @@ async def batch(client, message):
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code> {client}"
         )
         
-@Bot.on_message(filters.command("adddb") & filters.private)
+@Bot.on_message(filters.command("adddb") & filters.private & owner_admin)
 async def adddb(client, message):
 
     chat_id = None
@@ -389,7 +389,7 @@ async def adddb(client, message):
         f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
-@Bot.on_message(filters.command("deldb") & filters.private)
+@Bot.on_message(filters.command("deldb") & filters.private & owner_admin)
 async def deldb(client, message):
 
     chat_id = await get_database_channel(client)

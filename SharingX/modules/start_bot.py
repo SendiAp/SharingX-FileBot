@@ -21,6 +21,8 @@ from SharingX.modules.db import (
     del_forcesub,
     protect_info,
     add_protect,
+    get_owners,
+    get_admins,
     add_admin,
     del_admin,
     is_admin,
@@ -480,26 +482,30 @@ async def del_admin_cmd(client, message):
 
 @Bot.on_message(filters.command(["listadmin", "admins"]) & filters.private & owner)
 async def list_admin_cmd(client, message):
-    owner_id = await get_owner(client)
-    admins = list(_col(client, "admin").find({}, {"_id": 0, "user_id": 1}))
+    owners = await get_owners(client)
+    admins = await get_admins(client)
 
     text = "<b>👥 Daftar Admin Bot</b>\n\n"
 
-    try:
-        owner_user = await client.get_users(owner_id)
-        text += f"👑 {owner_user.mention} <code>({owner_id})</code> <b>[Owner]</b>\n"
-    except Exception:
-        text += f"👑 <code>{owner_id}</code> <b>[Owner]</b>\n"
+    if owners:
+        text += "<b>👑 Owner:</b>\n"
+
+        for i, user_id in enumerate(owners, 1):
+            try:
+                user = await client.get_users(user_id)
+                text += f"{i}. 👑 {user.mention} <code>({user.id})</code>\n"
+            except Exception:
+                text += f"{i}. 👑 <code>{user_id}</code>\n"
 
     if admins:
         text += "\n<b>🛡 Admin:</b>\n"
 
-        for i, admin in enumerate(admins, 1):
+        for i, user_id in enumerate(admins, 1):
             try:
-                user = await client.get_users(admin["user_id"])
-                text += f"{i}. {user.mention} <code>({user.id})</code>\n"
+                user = await client.get_users(user_id)
+                text += f"{i}. 🛡 {user.mention} <code>({user.id})</code>\n"
             except Exception:
-                text += f"{i}. <code>{admin['user_id']}</code>\n"
+                text += f"{i}. 🛡 <code>{user_id}</code>\n"
     else:
         text += "\n<i>Belum ada admin.</i>"
 

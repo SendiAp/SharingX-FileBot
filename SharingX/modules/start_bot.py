@@ -473,32 +473,43 @@ async def add_admin_cmd(client, message):
     
 @Bot.on_message(filters.command(["deladmin", "rmadmin", "removeadmin"]) & filters.private & owner)
 async def del_admin_cmd(client, message):
-    target = None
-
     if message.reply_to_message and message.reply_to_message.from_user:
         target = message.reply_to_message.from_user
     elif len(message.command) > 1:
+        query = message.command[1].strip()
+
+        if query.startswith("@"):
+            query = query[1:]
+
         try:
-            target = await client.get_users(message.command[1])
+            if query.isdigit():
+                target = await client.get_users(int(query))
+            else:
+                target = await client.get_users(query)
         except Exception:
-            return await message.reply("❌ User tidak ditemukan.")
+            return await message.reply("<b>❌ User tidak ditemukan.</b>")
     else:
         return await message.reply(
             "<b>Gunakan:</b>\n"
-            "<code>/deladmin</code> (balas pesan)\n"
-            "<code>/deladmin user_id</code>\n"
-            "<code>/deladmin @username</code>"
+            "• Balas pesan dengan <code>/deladmin</code>\n"
+            "• <code>/deladmin user_id</code>\n"
+            "• <code>/deladmin @username</code>"
         )
 
+    if await is_owner(client, target.id):
+        return await message.reply("<b>❌ Owner tidak dapat dihapus dari admin.</b>")
+
     if not await is_admin(client, target.id):
-        return await message.reply("⚠️ User tersebut bukan admin.")
+        return await message.reply(
+            f"<b>⚠️ {target.mention} bukan admin.</b>"
+        )
 
     await del_admin(client, target.id)
 
     await message.reply(
-        f"✅ Berhasil menghapus {target.mention} <code>({target.id})</code> dari admin."
+        f"<b>✅ Berhasil menghapus {target.mention} <code>({target.id})</code> dari admin.</b>"
     )
-
+    
 @Bot.on_message(filters.command(["listadmin", "admins"]) & filters.private & owner)
 async def list_admin_cmd(client, message):
     owners = await get_owners(client)

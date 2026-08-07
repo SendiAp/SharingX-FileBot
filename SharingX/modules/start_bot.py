@@ -422,36 +422,55 @@ async def deldb(client, message):
 
 @Bot.on_message(filters.command(["addadmin", "aadmin"]) & filters.private & owner)
 async def add_admin_cmd(client, message):
-    target = None
-
     if message.reply_to_message and message.reply_to_message.from_user:
         target = message.reply_to_message.from_user
     elif len(message.command) > 1:
+        query = message.command[1].strip()
+
+        if query.startswith("@"):
+            query = query[1:]
+
         try:
-            target = await client.get_users(message.command[1])
+            if query.isdigit():
+                target = await client.get_users(int(query))
+            else:
+                target = await client.get_users(query)
         except Exception:
-            return await message.reply("❌ User tidak ditemukan.")
+            return await message.reply("<b>❌ User tidak ditemukan.</b>")
     else:
         return await message.reply(
             "<b>Gunakan:</b>\n"
-            "<code>/addadmin</code> (balas pesan)\n"
-            "<code>/addadmin user_id</code>\n"
-            "<code>/addadmin @username</code>"
+            "• Balas pesan dengan <code>/addadmin</code>\n"
+            "• <code>/addadmin user_id</code>\n"
+            "• <code>/addadmin @username</code>"
         )
 
+    if target.id == message.from_user.id:
+        return await message.reply("<b>❌ Anda tidak dapat menambahkan diri sendiri sebagai admin.</b>")
+
+    if await is_owner(client, target.id):
+        return await message.reply("<b>❌ Owner tidak dapat ditambahkan sebagai admin.</b>")
+
     if await is_admin(client, target.id):
-        return await message.reply("⚠️ User tersebut sudah menjadi admin.")
+        return await message.reply(
+            f"<b>⚠️ {target.mention} sudah menjadi admin.</b>"
+        )
 
     await add_admin(client, target.id)
-    await client.send_message(
-        target.id, 
-        "<b>🙌 Selamat Anda Menjadi Admin Dibot Ini!</b>\n__Tekan Perintah /help Untuk Melihat Semua Perintah Yang Berfungsi Dibot Ini.__"
+
+    try:
+        await client.send_message(
+            target.id,
+            "<b>🙌 Selamat! Anda telah ditambahkan sebagai Admin bot ini.</b>\n\n"
+            "Gunakan /help untuk melihat daftar perintah yang tersedia."
+        )
+    except Exception:
+        pass
+
+    await message.reply(
+        f"<b>✅ Berhasil menambahkan {target.mention} <code>({target.id})</code> sebagai admin.</b>"
     )
     
-    await message.reply(
-        f"✅ Berhasil menambahkan {target.mention} <code>({target.id})</code> sebagai admin."
-    )
-
 @Bot.on_message(filters.command(["deladmin", "rmadmin", "removeadmin"]) & filters.private & owner)
 async def del_admin_cmd(client, message):
     target = None

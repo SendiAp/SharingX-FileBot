@@ -240,6 +240,16 @@ async def is_owner(client, user_id):
     return await get_owner(client) == user_id
 
 
+async def get_owners(client):
+    data = []
+
+    for doc in _col(client, "owner").find({}, {"_id": 0, "user_id": 1}):
+        if "user_id" in doc:
+            data.append(doc["user_id"])
+
+    return data
+
+
 # =========================
 # ADMIN (BOT)
 # =========================
@@ -268,3 +278,13 @@ async def is_admin(client, user_id):
     )
 
     return data is not None
+
+
+async def get_admins(client):
+    data = []
+
+    for doc in _col(client, "admin").find({}, {"_id": 0, "user_id": 1}):
+        if "user_id" in doc:
+            data.append(doc["user_id"])
+
+    return data

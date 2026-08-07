@@ -21,6 +21,8 @@ from SharingX.modules.db import (
     del_forcesub,
     protect_info,
     add_protect,
+    add_admin,
+    del_admin,
     is_admin,
     is_owner,
     get_user,
@@ -416,6 +418,93 @@ async def deldb(client, message):
         f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
+@Bot.on_message(filters.command(["addadmin", "aadmin"]) & filters.private & owner)
+async def add_admin_cmd(client, message):
+    target = None
+
+    if message.reply_to_message and message.reply_to_message.from_user:
+        target = message.reply_to_message.from_user
+    elif len(message.command) > 1:
+        try:
+            target = await client.get_users(message.command[1])
+        except Exception:
+            return await message.reply("❌ User tidak ditemukan.")
+    else:
+        return await message.reply(
+            "<b>Gunakan:</b>\n"
+            "<code>/addadmin</code> (balas pesan)\n"
+            "<code>/addadmin user_id</code>\n"
+            "<code>/addadmin @username</code>"
+        )
+
+    if await is_admin(client, target.id):
+        return await message.reply("⚠️ User tersebut sudah menjadi admin.")
+
+    await add_admin(client, target.id)
+    await client.send_message(
+        target.id, 
+        "<b>🙌 Selamat Anda Menjadi Admin Dibot Ini!</b>\n__Tekan Perintah /help Untuk Melihat Semua Perintah Yang Berfungsi Dibot Ini.__"
+    )
+    
+    await message.reply(
+        f"✅ Berhasil menambahkan {target.mention} <code>({target.id})</code> sebagai admin."
+    )
+
+@Bot.on_message(filters.command(["deladmin", "rmadmin", "removeadmin"]) & filters.private & owner)
+async def del_admin_cmd(client, message):
+    target = None
+
+    if message.reply_to_message and message.reply_to_message.from_user:
+        target = message.reply_to_message.from_user
+    elif len(message.command) > 1:
+        try:
+            target = await client.get_users(message.command[1])
+        except Exception:
+            return await message.reply("❌ User tidak ditemukan.")
+    else:
+        return await message.reply(
+            "<b>Gunakan:</b>\n"
+            "<code>/deladmin</code> (balas pesan)\n"
+            "<code>/deladmin user_id</code>\n"
+            "<code>/deladmin @username</code>"
+        )
+
+    if not await is_admin(client, target.id):
+        return await message.reply("⚠️ User tersebut bukan admin.")
+
+    await del_admin(client, target.id)
+
+    await message.reply(
+        f"✅ Berhasil menghapus {target.mention} <code>({target.id})</code> dari admin."
+    )
+
+@Bot.on_message(filters.command(["listadmin", "admins"]) & filters.private & owner)
+async def list_admin_cmd(client, message):
+    owner_id = await get_owner(client)
+    admins = list(_col(client, "admin").find({}, {"_id": 0, "user_id": 1}))
+
+    text = "<b>👥 Daftar Admin Bot</b>\n\n"
+
+    try:
+        owner_user = await client.get_users(owner_id)
+        text += f"👑 {owner_user.mention} <code>({owner_id})</code> <b>[Owner]</b>\n"
+    except Exception:
+        text += f"👑 <code>{owner_id}</code> <b>[Owner]</b>\n"
+
+    if admins:
+        text += "\n<b>🛡 Admin:</b>\n"
+
+        for i, admin in enumerate(admins, 1):
+            try:
+                user = await client.get_users(admin["user_id"])
+                text += f"{i}. {user.mention} <code>({user.id})</code>\n"
+            except Exception:
+                text += f"{i}. <code>{admin['user_id']}</code>\n"
+    else:
+        text += "\n<i>Belum ada admin.</i>"
+
+    await message.reply(text)
+    
 @Bot.on_message(
     filters.private
     & ~filters.command("start", "batch")

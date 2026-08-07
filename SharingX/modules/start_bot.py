@@ -40,6 +40,11 @@ async def owner_admin_filter(_, client, message):
 
 owner_admin = filters.create(owner_admin_filter)
 
+async def owner_filter(_, client, message):
+    return await is_owner(client, message.from_user.id)
+
+owner = filters.create(owner_filter)
+
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 
@@ -318,7 +323,7 @@ async def batch(client, message):
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code> {client}"
         )
         
-@Bot.on_message(filters.command("adddb") & filters.private & owner_admin)
+@Bot.on_message(filters.command("adddb") & filters.private & owner)
 async def adddb(client, message):
 
     chat_id = None
@@ -389,7 +394,7 @@ async def adddb(client, message):
         f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
 
-@Bot.on_message(filters.command("deldb") & filters.private & owner_admin)
+@Bot.on_message(filters.command("deldb") & filters.private & owner)
 async def deldb(client, message):
 
     chat_id = await get_database_channel(client)

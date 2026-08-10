@@ -84,14 +84,28 @@ async def back_start(client, callback_query: CallbackQuery):
 @app.on_callback_query(filters.regex("^my_bots$"))
 async def my_bots(client, callback_query: CallbackQuery):
     try:
-        bots = await get_user_bots(callback_query.from_user.id)
+        user_id = callback_query from_user.id
+        
+        space = await get_bot_space(user_id)
 
-        if not bots:
+        if space <= 0:
             return await callback_query.edit_message_text(
-                "<b>⚠️ Kamu Belum Memiliki Bot, Silahkan Buat Terlebih Dahulu!</b>",
+                "<b>⚠️ Kamu Belum Memiliki Space Bot!</b>\n\n"
+                "Untuk membuat dan menjalankan bot, kamu harus "
+                "membeli <b>Space Bot</b> terlebih dahulu.",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("➕ Create Bot", callback_data="create_bot")],
-                    [InlineKeyboardButton("🔙 Kembali", callback_data="back_start")]
+                    [
+                        InlineKeyboardButton(
+                            "🛒 Beli Space Bot",
+                            callback_data="buy_space"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "🔙 Kembali",
+                            callback_data="back_start"
+                        )
+                    ]
                 ])
             )
 
@@ -102,6 +116,8 @@ async def my_bots(client, callback_query: CallbackQuery):
             "crash": ("⚫", "Crash")
         }
 
+        bots = await get_user_bots(callback_query.from_user.id)
+        
         count = dict(running=0, stopped=0, restart=0, crash=0)
         buttons = []
 
@@ -137,18 +153,27 @@ async def my_bots(client, callback_query: CallbackQuery):
 
         buttons.append([
             InlineKeyboardButton(
+                "➕ Create Bot",
+                callback_data="create_bot"
+            )
+        ])
+        
+        buttons.append([
+            InlineKeyboardButton(
                 "🔙 Kembali",
                 callback_data="back_start"
             )
         ])
 
+        used_space = len(bots)
+        
         text = (
             f"<b><u>• Daftar bot dan Space Terdaftar</u></b>\n\n"
             f"<b></u>• Running</u> |</b> {count['running']} bot\n"
             f"<b></u>• Stopped</u> |</b> {count['stopped']} bot\n"
             f"<b></u>• Restart</u> |</b> {count['restart']} bot\n"
             f"<b></u>• Crash</u> |</b> {count['crash']} bot\n\n"
-            "<b></u>Space</u> |</b> <pre>({len(bots)}/5)</pre>"
+            "<b></u>Space</u> |</b> <pre>({used_space}/{space})</pre>"
         )
 
         await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))

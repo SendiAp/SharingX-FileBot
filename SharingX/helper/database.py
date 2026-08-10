@@ -234,9 +234,13 @@ async def set_space_order(
     user_id,
     quantity=1,
     price=45000,
-    voucher=None
+    voucher=None,
+    discount=0
 ):
-    total = price * quantity
+    total = max(
+        0,
+        (price * quantity) - discount
+    )
 
     space_orderdb.update_one(
         {"user_id": user_id},
@@ -245,8 +249,9 @@ async def set_space_order(
                 "user_id": user_id,
                 "quantity": quantity,
                 "price": price,
+                "discount": discount,
+                "voucher_used": voucher,
                 "total": total,
-                "voucher": voucher,
                 "status": "pending"
             }
         },

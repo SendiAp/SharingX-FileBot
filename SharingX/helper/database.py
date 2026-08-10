@@ -6,8 +6,6 @@ mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 
 botdb = db["sharing"]
-ownerdb = db["owner"]
-userbotdb = db["mybot_users"]
 
 async def get_bot():
     data = []
@@ -66,6 +64,8 @@ async def get_bot_data(bot_id):
 # ==========================
 # MY BOT USERS
 # ==========================
+
+userbotdb = db["mybot_users"]
 
 async def add_user_bot(user_id, bot_id):
     userbotdb.update_one(
@@ -126,6 +126,12 @@ async def set_bot_status(bot_id, status):
         }
     )
 
+# ==========================
+# OWNER DB
+# ==========================
+
+ownerdb = db["owner"]
+
 async def add_owner(bot_id, user_id):
     ownerdb.update_one(
         {"bot_id": str(bot_id)},
@@ -146,4 +152,81 @@ async def get_owner(bot_id):
 async def remove_owner(bot_id):
     ownerdb.delete_one(
         {"bot_id": str(bot_id)}
+    )
+
+# ==========================
+# BOT SPACE
+# ==========================
+
+spacedb = db["bot_space"]
+
+async def init_bot_space(user_id):
+    spacedb.update_one(
+        {"user_id": user_id},
+        {
+            "$setOnInsert": {
+                "user_id": user_id,
+                "space": 0
+            }
+        },
+        upsert=True
+    )
+
+async def get_bot_space(user_id):
+    data = spacedb.find_one(
+        {"user_id": user_id}
+    )
+
+    if not data:
+        await init_bot_space(user_id)
+        return 0
+
+    return data.get("space", 0)
+
+async def set_bot_space(user_id, space):
+    spacedb.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "user_id": user_id,
+                "space": max(0, space)
+            }
+        },
+        upsert=True
+    )
+
+async def add_bot_space(user_id, amount=1):
+    await init_bot_space(user_id)
+
+    spacedb.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {
+                "space": amount
+            }
+        }
+    )
+
+async def remove_bot_space(user_id, amount=1):
+    await init_bot_space(user_id)
+
+    spacedb.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {
+                "space": -amount
+            }
+        }
+    )
+
+    spacedb.update_one(
+        {
+            "user_id": user_id,
+            "space": {"$lt": 0}
+        },
+        {
+            "$set": {
+                "space": 0
+            }
+        }
     )

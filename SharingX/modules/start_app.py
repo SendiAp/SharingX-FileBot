@@ -143,12 +143,12 @@ async def my_bots(client, callback_query: CallbackQuery):
         ])
 
         text = (
-            f"<b>🤖 Daftar Bot {callback_query.from_user.first_name} ({len(bots)}/5):</b>\n\n"
-            f"<b>🟢 Running :</b> __{count['running']} bot__\n"
-            f"<b>🔴 Stopped :</b> __{count['stopped']} bot__\n"
-            f"<b>🔄 Restart :</b> __{count['restart']} bot__\n"
-            f"<b>⚫ Crash :</b> __{count['crash']} bot__\n\n"
-            "<b>Silahkan Pilih Bot Yang Ingin Dikelola:</b>"
+            f"<b><u>• Daftar bot dan Space Terdaftar</u></b>\n\n"
+            f"<b></u>• Running</u> |</b> {count['running']} bot\n"
+            f"<b></u>• Stopped</u> |</b> {count['stopped']} bot\n"
+            f"<b></u>• Restart</u> |</b> {count['restart']} bot\n"
+            f"<b></u>• Crash</u> |</b> {count['crash']} bot\n\n"
+            "<b></u>Space</u> |</b> <pre>({len(bots)}/5)</pre>"
         )
 
         await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))

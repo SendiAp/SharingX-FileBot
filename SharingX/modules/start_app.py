@@ -210,7 +210,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 s = int(time.time() - robot.start_time)
                 h, s = divmod(s, 3600)
                 m, s = divmod(s, 60)
-                uptime = f"{h:02}H {m:02}M {s:02}S"
+                uptime = f"{h:02}<b>Jam</b> {m:02}<b>Menit</b> {s:02}<b>Detik</b>"
 
             try:
                 db = robot.db.command("dbStats")
@@ -223,17 +223,17 @@ async def bot_settings(client, callback_query: CallbackQuery):
             (
                 f"<b><u>• Bot information atau Statistik Bot</u></b>\n"
                 f"––––—––––———––•\n\n"
-                f"<b><u>Information Bot:</u></b>\n"
-                f"<b><u>• Name |</u></b> {name}\n"
-                f"<b><u>• ID Bot | </u></b> <code>{bot_id}</code>\n"
-                f"<b><u>• Status | </u></b> {status}\n\n"
-                f"<b><u>Real-time Sistem:</u></b>\n"
-                f"<b><u>• Ping |</u></b> {ping}\n"
-                f"<b><u>• Uptime |</u></b> {uptime}</u>\n\n"
-                f"<b><u>Database Real-time:</u></b>\n"
-                f"<b><u>• Name |</u></b> {data.get('database')}\n"
-                f"<b><u>• Collection |</u></b> {cols:,}\n"
-                f"<b><u>• Documents |</u></b> {docs:,}\n\n"
+                f"🤖 <b><u>Information Bot:</u></b>\n"
+                f"<b><u>• Name</u> |</b> {name}\n"
+                f"<b><u>• ID Bot</u> | </b> <code>{bot_id}</code>\n"
+                f"<b><u>• Status</u> | </b> {status}\n\n"
+                f"🗄️ <b><u>Real-time Sistem:</u></b>\n"
+                f"<b><u>• Ping</u> |</b> {ping}\n"
+                f"<b><u>• Uptime</u> |</b> {uptime}</u>\n\n"
+                f"📂 <b><u>Database Real-time:</u></b>\n"
+                f"<b><u>• Name</u> |</b> {data.get('database')}\n"
+                f"<b><u>• Collection</u> |</b> {cols:,}\n"
+                f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
                 f"<b>© Bot By SharingX</b>"
             ),
             disable_web_page_preview=True,

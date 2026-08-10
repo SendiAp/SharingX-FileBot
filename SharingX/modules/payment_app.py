@@ -21,18 +21,44 @@ async def buy_space(client, callback_query):
         quantity=1
     )
 
-
 async def space_buy_page(callback_query, quantity=1):
     user_id = callback_query.from_user.id
 
-    quantity = max(1, min(quantity, MAX_SPACE_BUY))
-
-    await set_space_order(
-        user_id,
-        quantity=quantity
+    quantity = max(
+        1,
+        min(quantity, MAX_SPACE_BUY)
     )
 
-    total = SPACE_PRICE * quantity
+    old_order = await get_space_order(user_id)
+
+    voucher_used = None
+    discount = 0
+
+    if old_order:
+        voucher_used = old_order.get("voucher_used")
+        discount = int(old_order.get("discount", 0))
+
+    if voucher_used:
+        voucher = discount_collection.find_one({
+            "code": voucher_used
+        })
+
+        if not voucher or not voucher.get("active", True):
+            voucher_used = None
+            discount = 0
+
+    total = max(
+        0,
+        (SPACE_PRICE * quantity) - discount
+    )
+
+    await set_space_order(
+        user_id=user_id,
+        quantity=quantity,
+        price=SPACE_PRICE,
+        voucher=voucher_used,
+        discount=discount
+    )
 
     buttons = [
         [
@@ -69,30 +95,49 @@ async def space_buy_page(callback_query, quantity=1):
         ]
     ]
 
-    text = (
-        "<b>╭┄┄┄ RINCIAN PESANAN ┄┄┄╮</b>\n"
-        "<b>┆ 📦 Harga</b>\n"
-        f"<b>┆  ╰┈➤ {format_rupiah(SPACE_PRICE)}/space</b>\n"
-        "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
-        "<b>┆ 🔢 Jumlah Beli</b>\n"
-        f"<b>┆ ╰┈➤ {quantity} space</b>\n"
-        "<b>┆ ✅ Total Pembayaran</b>\n"
-        f"<b>┆ ╰┈➤ {format_rupiah(total)}</b>\n"
-        "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
-        "<b>Kalau Sudah Selesai Semua Bisa 💳 "
-        "Lanjutkan Pembayaran Ya:</b>"
-    )
+    if voucher_used:
+        text = (
+            "<b>╭┄┄┄ RINCIAN PESANAN ┄┄┄╮</b>\n"
+            "<b>┆ 📦 Harga</b>\n"
+            f"<b>┆  ╰┈➤ {format_rupiah(SPACE_PRICE)}/space</b>\n"
+            "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
+            "<b>┆ 🔢 Jumlah Beli</b>\n"
+            f"<b>┆ ╰┈➤ {quantity} space</b>\n"
+            "<b>┆ 🎟️ Voucher</b>\n"
+            f"<b>┆ ╰┈➤ <code>{voucher_used}</code></b>\n"
+            "<b>┆ 💸 Potongan Harga</b>\n"
+            f"<b>┆ ╰┈➤ {format_rupiah(discount)}</b>\n"
+            "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
+            "<b>┆ ✅ Total Pembayaran</b>\n"
+            f"<b>┆ ╰┈➤ {format_rupiah(total)}</b>\n"
+            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
+            "<b>Kalau Sudah Selesai Semua Bisa 💳 "
+            "Lanjutkan Pembayaran Ya:</b>"
+        )
+
+    else:
+        text = (
+            "<b>╭┄┄┄ RINCIAN PESANAN ┄┄┄╮</b>\n"
+            "<b>┆ 📦 Harga</b>\n"
+            f"<b>┆  ╰┈➤ {format_rupiah(SPACE_PRICE)}/space</b>\n"
+            "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
+            "<b>┆ 🔢 Jumlah Beli</b>\n"
+            f"<b>┆ ╰┈➤ {quantity} space</b>\n"
+            "<b>┆ ✅ Total Pembayaran</b>\n"
+            f"<b>┆ ╰┈➤ {format_rupiah(total)}</b>\n"
+            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
+            "<b>Kalau Sudah Selesai Semua Bisa 💳 "
+            "Lanjutkan Pembayaran Ya:</b>"
+        )
 
     await callback_query.edit_message_text(
         text,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-
 # =========================
 # JUMLAH SPACE
 # =========================
-
 @app.on_callback_query(
     filters.regex(r"^space_qty_(\d+)$")
 )
@@ -110,13 +155,13 @@ async def space_quantity(client, callback_query):
 
         if quantity > MAX_SPACE_BUY:
             return await callback_query.answer(
-                f"❌ Maksimal pembelian {MAX_SPACE_BUY} Space.",
+                f"❌ Maksimal {MAX_SPACE_BUY} Space.",
                 show_alert=True
             )
 
         await space_buy_page(
             callback_query,
-            quantity=quantity
+            quantity
         )
 
     except Exception:
@@ -124,7 +169,6 @@ async def space_quantity(client, callback_query):
             "❌ Terjadi kesalahan.",
             show_alert=True
         )
-
 
 # =========================
 # BUTTON JUMLAH
@@ -135,21 +179,6 @@ async def space_quantity(client, callback_query):
 )
 async def space_noop(client, callback_query):
     await callback_query.answer()
-
-
-# =========================
-# CLAIM VOUCHER
-# =========================
-
-@app.on_callback_query(
-    filters.regex("^space_voucher$")
-)
-async def space_voucher(client, callback_query):
-    await callback_query.answer(
-        "🎟️ Fitur voucher belum tersedia.",
-        show_alert=True
-    )
-
 
 # =========================
 # LANJUTKAN PEMBAYARAN
@@ -205,3 +234,126 @@ async def space_payment(client, callback_query):
         text,
         reply_markup=InlineKeyboardMarkup(buttons)
   )
+
+# =========================
+# CLAIM VOUCHER
+# =========================
+
+@app.on_callback_query(
+    filters.regex("^space_voucher$")
+)
+async def space_voucher(client, callback_query):
+    user_id = callback_query.from_user.id
+
+    order = await get_space_order(user_id)
+
+    if not order:
+        return await callback_query.answer(
+            "❌ Pesanan tidak ditemukan.",
+            show_alert=True
+        )
+
+    old_voucher = order.get("voucher_used")
+
+    if old_voucher:
+        return await callback_query.answer(
+            f"⚠️ Voucher {old_voucher} sudah digunakan.",
+            show_alert=True
+        )
+
+    callback = await callback_query.edit_message_text(
+        "<b>🎟️ Silakan Masukan Kode Voucher?</b>\n\n"
+        "<i>Ketik /cancel untuk membatalkan.</i>"
+    )
+
+    while True:
+        try:
+            new_voucher_message = await client.listen(
+                user_id
+            )
+
+            if not new_voucher_message.text:
+                await new_voucher_message.delete()
+                continue
+
+            if new_voucher_message.text.startswith("/"):
+                await new_voucher_message.delete()
+
+                return await callback.edit(
+                    "<b>❌ Proses Input Voucher Dibatalkan!</b>",
+                    reply_markup=InlineKeyboardMarkup([
+                        [
+                            InlineKeyboardButton(
+                                "🔙 Kembali",
+                                callback_data="buy_space"
+                            )
+                        ]
+                    ])
+                )
+
+            voucher_code = (
+                new_voucher_message.text
+                .strip()
+                .upper()
+            )
+
+            voucher = discount_collection.find_one({
+                "code": voucher_code
+            })
+
+            if not voucher or not voucher.get("active", True):
+                await new_voucher_message.delete()
+
+                notice = await callback_query.message.reply_text(
+                    "<b>❌ Voucher tidak valid atau sudah tidak aktif.</b>"
+                )
+
+                await asyncio.sleep(2)
+
+                try:
+                    await notice.delete()
+                except Exception:
+                    pass
+
+                continue
+
+            discount = int(
+                voucher.get("discount", 0)
+            )
+
+            quantity = int(
+                order.get("quantity", 1)
+            )
+
+            price = int(
+                order.get("price", SPACE_PRICE)
+            )
+
+            total = max(
+                0,
+                (price * quantity) - discount
+            )
+
+            space_orderdb.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "voucher_used": voucher_code,
+                        "discount": discount,
+                        "total": total
+                    }
+                }
+            )
+
+            await new_voucher_message.delete()
+
+            return await space_buy_page(
+                callback_query,
+                quantity=quantity
+            )
+
+        except Exception as e:
+            return await callback.edit(
+                f"<b>❌ Terjadi Kesalahan:</b>\n"
+                f"<code>{e}</code>"
+        )

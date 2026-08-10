@@ -188,7 +188,23 @@ async def bot_settings(client, callback_query: CallbackQuery):
 
             t = time.perf_counter()
             await robot.get_me()
-            ping = f"{(time.perf_counter()-t)*1000:.0f} ms"
+            ping_ms = (time.perf_counter() - t) * 1000
+            ping_value = round(ping_ms)
+            
+            if ping_value < 100:
+                ping_status = "🟢 Sangat Baik"
+            elif ping_value < 200:
+                ping_status = "🟢 Baik"
+            elif ping_value < 300:
+                ping_status = "🟡 Normal"
+            elif ping_value < 500:
+                ping_status = "🟠 Lambat"
+            elif ping_value < 1000:
+                ping_status = "🔴 Buruk"
+            else:
+                ping_status = "🔴 Sangat Buruk"
+                
+            ping = f"{ping_status} ({ping_value} ms)"
 
             if robot.start_time:
                 s = int(time.time() - robot.start_time)
@@ -207,13 +223,13 @@ async def bot_settings(client, callback_query: CallbackQuery):
             (
                 f"<b><u>• Bot information atau Statistik Bot</u></b>\n"
                 f"––––—––––———––•\n\n"
-                f"<b><u>Information Bot:<u></b>\n"
+                f"<b><u>Information Bot:</u></b>\n"
                 f"<b><u>• Name |</u></b> {name}\n"
                 f"<b><u>• ID Bot | </u></b> <code>{bot_id}</code>\n"
                 f"<b><u>• Status | </u></b> {status}\n\n"
                 f"<b><u>Real-time Sistem:</u></b>\n"
-                f"<b><u>• Ping |</b> {ping}</u>\n"
-                f"<b><u>• Uptime |</b> {uptime}</u>\n\n"
+                f"<b><u>• Ping |</u></b> {ping}\n"
+                f"<b><u>• Uptime |</u></b> {uptime}</u>\n\n"
                 f"<b><u>Database Real-time:</u></b>\n"
                 f"<b><u>• Name |</u></b> {data.get('database')}\n"
                 f"<b><u>• Collection |</u></b> {cols:,}\n"

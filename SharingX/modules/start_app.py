@@ -40,7 +40,7 @@ async def start(client, message):
             f"<b>📜 Privacy Policy</b>",
             reply_markup = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("🤖 Add Bot", callback_data="create_bot"),
+                    InlineKeyboardButton("🤖 Space", callback_data="buy_space"),
                     InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
                 ],
                 [
@@ -67,7 +67,7 @@ async def back_start(client, callback_query: CallbackQuery):
             f"<b>📜 Privacy Policy</b>",
             reply_markup = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("🤖 Add Bot", callback_data="create_bot"),
+                    InlineKeyboardButton("🤖 Space", callback_data="buy_space"),
                     InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
                 ],
                 [

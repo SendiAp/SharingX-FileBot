@@ -211,7 +211,12 @@ async def remove_bot_space(user_id, amount=1):
     await init_bot_space(user_id)
 
     spacedb.update_one(
-        {"user_id": user_id},
+        {
+            "user_id": user_id,
+            "space": {
+                "$gte": amount
+            }
+        },
         {
             "$inc": {
                 "space": -amount
@@ -219,14 +224,51 @@ async def remove_bot_space(user_id, amount=1):
         }
     )
 
-    spacedb.update_one(
-        {
-            "user_id": user_id,
-            "space": {"$lt": 0}
-        },
+# ==========================
+# SPACE ORDER
+# ==========================
+
+space_orderdb = db["space_orders"]
+
+async def set_space_order(
+    user_id,
+    quantity=1,
+    price=45000,
+    voucher=None
+):
+    total = price * quantity
+
+    space_orderdb.update_one(
+        {"user_id": user_id},
         {
             "$set": {
-                "space": 0
+                "user_id": user_id,
+                "quantity": quantity,
+                "price": price,
+                "total": total,
+                "voucher": voucher,
+                "status": "pending"
+            }
+        },
+        upsert=True
+    )
+
+async def get_space_order(user_id):
+    return space_orderdb.find_one(
+        {"user_id": user_id}
+    )
+
+async def set_space_order_status(user_id, status):
+    return space_orderdb.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": status
             }
         }
+    )
+
+async def del_space_order(user_id):
+    return space_orderdb.delete_one(
+        {"user_id": user_id}
     )

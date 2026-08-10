@@ -25,7 +25,7 @@ from SharingX.modules import loadModule
 from pyrogram.enums import ButtonStyle
 
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -236,7 +236,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
                 f"<b>© Bot By SharingX</b>"
             ),
-            disable_web_page_preview=True,
+            link_preview_options=LinkPreviewOptions(is_disabled=True),
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(

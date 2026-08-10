@@ -84,7 +84,7 @@ async def back_start(client, callback_query: CallbackQuery):
 @app.on_callback_query(filters.regex("^my_bots$"))
 async def my_bots(client, callback_query: CallbackQuery):
     try:
-        user_id = callback_query from_user.id
+        user_id = callback_query.from_user.id
         
         space = await get_bot_space(user_id)
 

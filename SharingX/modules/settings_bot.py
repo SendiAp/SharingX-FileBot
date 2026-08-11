@@ -164,7 +164,7 @@ async def broadcast(client, message):
 
     await pls_wait.edit(status)
 
-@Bot.on_message(filters.command("help") & filters.private & owner_admin)
+@Bot.on_message(filters.command("help") & filters.private)
 async def help_cmd(client, message):
     text = (
         "<b>Last Updated: August 11, 2026</b>\n\n"

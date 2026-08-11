@@ -7,12 +7,12 @@ from pyrogram.errors import RPCError
 
 from SharingX.modules import loadModule
 from SharingX import LOOP, Bot, app, LOGGER
+from SharingX.modules.reminder_app import expiry_reminder_loop
 
 from SharingX.helper.database import (
     get_bot,
     remove_bot,
-    get_owner,
-    expiry_reminder_loop
+    get_owner
 )
 
 

@@ -19,7 +19,8 @@ from SharingX.helper.database import (
     get_bot_space,
     get_user_bots,
     set_bot_status,
-    remove_user_bot
+    remove_user_bot,
+    remove_bot_space
 )
 from SharingX.modules import loadModule
 

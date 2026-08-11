@@ -1,9 +1,20 @@
 import asyncio
+
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta, timezone
 
-from SharingX import app
-from SharingX.helper.database import botdb, ownerdb
+from SharingX import app, Bot, LOGGER
+
+from SharingX.helper.database import (
+    botdb,
+    ownerdb,
+    userbotdb,
+    set_expiry_reminder
+)
+
+# ==========================
+# EXPIRY LOOP
+# ==========================
 
 async def expiry_reminder_loop():
     while True:
@@ -13,11 +24,16 @@ async def expiry_reminder_loop():
             await check_terminate_bots()
 
         except Exception as e:
-            print(
+            LOGGER("Expiry").error(
                 f"[EXPIRY LOOP ERROR] {e}"
             )
 
         await asyncio.sleep(60)
+
+
+# ==========================
+# CHECK EXPIRED BOT
+# ==========================
 
 async def check_expired_bots():
     now = datetime.now(timezone.utc)
@@ -44,6 +60,16 @@ async def check_expired_bots():
         if now < expires_at:
             continue
 
+        # ==========================
+        # NOTIFICATION
+        # ==========================
+
+        await notify_bot_expired(bot_id)
+
+        # ==========================
+        # STOP BOT
+        # ==========================
+
         try:
             robot = Bot.get_instance(bot_id)
 
@@ -51,10 +77,14 @@ async def check_expired_bots():
                 await robot.stop()
 
         except Exception as e:
-            print(
+            LOGGER("Expiry").error(
                 f"[EXPIRED STOP ERROR] {bot_id}: {e}"
             )
-            
+
+        # ==========================
+        # UPDATE STATUS
+        # ==========================
+
         botdb.update_one(
             {
                 "bot_id": bot_id,
@@ -67,10 +97,11 @@ async def check_expired_bots():
             }
         )
 
-await notify_bot_expired(
-    bot_id
-)
-        
+
+# ==========================
+# CHECK REMINDER 3 DAYS
+# ==========================
+
 async def check_expiry_reminder():
     now = datetime.now(timezone.utc)
 
@@ -96,44 +127,103 @@ async def check_expiry_reminder():
 
         remaining = expires_at - now
 
-        if (
+        if not (
             remaining <= timedelta(days=3)
             and remaining > timedelta(0)
-            and not bot.get("expiry_reminder", False)
+            and not bot.get(
+                "expiry_reminder",
+                False
+            )
         ):
-            owner = ownerdb.find_one({
-                "bot_id": bot_id
-            })
+            continue
 
-            if not owner:
-                continue
+        # ==========================
+        # OWNER DARI DATABASE INDUK
+        # ==========================
 
-            owner_id = owner.get("user_id")
+        owner = ownerdb.find_one({
+            "bot_id": bot_id
+        })
 
-            if not owner_id:
-                continue
+        if not owner:
+            continue
 
-            try:
-                await app.send_message(
+        owner_id = owner.get("user_id")
+
+        if not owner_id:
+            continue
+
+        expires_text = (
+            expires_at
+            .astimezone(
+                ZoneInfo("Asia/Jakarta")
+            )
+            .strftime(
+                "%d-%m-%Y %H:%M:%S WIB"
+            )
+        )
+
+        text = (
+            "<b>⚠️ Peringatan Masa Aktif Bot</b>\n\n"
+            f"<b>🤖 Bot ID:</b> "
+            f"<code>{bot_id}</code>\n"
+            "<b>⏳ Masa aktif bot Anda akan "
+            "berakhir dalam 3 hari.</b>\n\n"
+            f"<b>📅 Expired:</b> "
+            f"<code>{expires_text}</code>\n\n"
+            "Silakan lakukan perpanjangan sebelum "
+            "masa aktif berakhir agar bot tetap "
+            "dapat digunakan."
+        )
+
+        # ==========================
+        # NOTIFIKASI DARI APP
+        # ==========================
+
+        try:
+            await app.send_message(
+                owner_id,
+                text
+            )
+
+        except Exception as e:
+            LOGGER("Expiry").warning(
+                f"[APP REMINDER ERROR] "
+                f"{bot_id}: {e}"
+            )
+
+        # ==========================
+        # NOTIFIKASI DARI BOT USER
+        # ==========================
+
+        try:
+            robot = Bot.get_instance(bot_id)
+
+            if robot:
+                await robot.send_message(
                     owner_id,
-                    "<b>⚠️ Peringatan Masa Aktif Bot</b>\n\n"
-                    f"<b>🤖 Bot ID:</b> <code>{bot_id}</code>\n"
-                    "<b>⏳ Masa aktif bot Anda akan berakhir dalam 3 hari.</b>\n\n"
-                    f"<b>📅 Expired:</b> "
-                    f"<code>{expires_at.astimezone(ZoneInfo('Asia/Jakarta')).strftime('%d-%m-%Y %H:%M:%S WIB')}</code>\n\n"
-                    "Silakan lakukan perpanjangan sebelum masa aktif berakhir "
-                    "agar bot tetap dapat digunakan."
+                    text
                 )
 
-                await set_expiry_reminder(
-                    bot_id,
-                    True
-                )
+        except Exception as e:
+            LOGGER("Expiry").warning(
+                f"[BOT REMINDER ERROR] "
+                f"{bot_id}: {e}"
+            )
 
-            except Exception as e:
-                print(
-                    f"[EXPIRY REMINDER ERROR] {bot_id}: {e}"
-                )
+        # ==========================
+        # REMINDER SUDAH DIKIRIM
+        # ==========================
+
+        await set_expiry_reminder(
+            bot_id,
+            True
+        )
+
+
+# ==========================
+# NOTIFY EXPIRED
+# ==========================
 
 async def notify_bot_expired(bot_id):
     bot_id = str(bot_id)
@@ -145,80 +235,9 @@ async def notify_bot_expired(bot_id):
     if not bot:
         return False
 
-    owner = ownerdb.find_one({
-        "bot_id": bot_id
-    })
-
-    if not owner:
-        return False
-
-    owner_id = owner.get("user_id")
-
-    if not owner_id:
-        return False
-
-    expires_at = bot.get("expires_at")
-
-    grace_until = bot.get("grace_until")
-
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(
-            tzinfo=timezone.utc
-        )
-
-    if grace_until and grace_until.tzinfo is None:
-        grace_until = grace_until.replace(
-            tzinfo=timezone.utc
-        )
-
-    expires_text = (
-        expires_at
-        .astimezone(ZoneInfo("Asia/Jakarta"))
-        .strftime("%d-%m-%Y %H:%M:%S WIB")
-        if expires_at
-        else "-"
-    )
-
-    grace_text = (
-        grace_until
-        .astimezone(ZoneInfo("Asia/Jakarta"))
-        .strftime("%d-%m-%Y %H:%M:%S WIB")
-        if grace_until
-        else "-"
-    )
-
-    try:
-        await app.send_message(
-            owner_id,
-            "<b>🔴 Bot Anda Telah Expired</b>\n\n"
-            f"<b>🤖 Bot ID:</b> <code>{bot_id}</code>\n"
-            f"<b>📅 Expired:</b> <code>{expires_text}</code>\n\n"
-            "<b>⚠️ Bot telah dihentikan sementara.</b>\n\n"
-            "<b>⏳ Masa perpanjangan:</b> 3 hari\n"
-            f"<b>📅 Batas akhir:</b> <code>{grace_text}</code>\n\n"
-            "Silakan lakukan perpanjangan sebelum batas waktu berakhir.\n\n"
-            "Jika tidak diperpanjang, bot akan "
-            "<b>dihapus secara permanen</b>."
-        )
-
-        return True
-
-    except Exception as e:
-        print(
-            f"[EXPIRED NOTIFY ERROR] {bot_id}: {e}"
-        )
-
-        return False
-
-async def notify_bot_expired(bot_id):
-    bot_id = str(bot_id)
-
-    bot = botdb.find_one({
-        "bot_id": bot_id
-    })
-
-    if not bot:
-        return False
+    # ==========================
+    # OWNER DATABASE INDUK
+    # ==========================
 
     owner = ownerdb.find_one({
         "bot_id": bot_id
@@ -247,42 +266,85 @@ async def notify_bot_expired(bot_id):
 
     expires_text = (
         expires_at
-        .astimezone(ZoneInfo("Asia/Jakarta"))
-        .strftime("%d-%m-%Y %H:%M:%S WIB")
+        .astimezone(
+            ZoneInfo("Asia/Jakarta")
+        )
+        .strftime(
+            "%d-%m-%Y %H:%M:%S WIB"
+        )
         if expires_at
         else "-"
     )
 
     grace_text = (
         grace_until
-        .astimezone(ZoneInfo("Asia/Jakarta"))
-        .strftime("%d-%m-%Y %H:%M:%S WIB")
+        .astimezone(
+            ZoneInfo("Asia/Jakarta")
+        )
+        .strftime(
+            "%d-%m-%Y %H:%M:%S WIB"
+        )
         if grace_until
         else "-"
     )
 
+    text = (
+        "<b>🔴 Bot Anda Telah Expired</b>\n\n"
+        f"<b>🤖 Bot ID:</b> "
+        f"<code>{bot_id}</code>\n"
+        f"<b>📅 Expired:</b> "
+        f"<code>{expires_text}</code>\n\n"
+        "<b>⚠️ Bot telah dihentikan sementara.</b>\n\n"
+        "<b>⏳ Masa perpanjangan:</b> 3 hari\n"
+        f"<b>📅 Batas akhir:</b> "
+        f"<code>{grace_text}</code>\n\n"
+        "Silakan lakukan perpanjangan sebelum "
+        "batas waktu berakhir.\n\n"
+        "Jika tidak diperpanjang, bot akan "
+        "<b>dihapus secara permanen</b>."
+    )
+
+    # ==========================
+    # NOTIFIKASI DARI APP
+    # ==========================
+
     try:
         await app.send_message(
             owner_id,
-            "<b>🔴 Bot Anda Telah Expired</b>\n\n"
-            f"<b>🤖 Bot ID:</b> <code>{bot_id}</code>\n"
-            f"<b>📅 Expired:</b> <code>{expires_text}</code>\n\n"
-            "<b>⚠️ Bot telah dihentikan sementara.</b>\n\n"
-            "<b>⏳ Masa perpanjangan:</b> 3 hari\n"
-            f"<b>📅 Batas akhir:</b> <code>{grace_text}</code>\n\n"
-            "Silakan lakukan perpanjangan sebelum batas waktu berakhir.\n\n"
-            "Jika tidak diperpanjang, bot akan "
-            "<b>dihapus secara permanen</b>."
+            text
         )
-
-        return True
 
     except Exception as e:
-        print(
-            f"[EXPIRED NOTIFY ERROR] {bot_id}: {e}"
+        LOGGER("Expiry").warning(
+            f"[APP EXPIRED NOTIFY ERROR] "
+            f"{bot_id}: {e}"
         )
 
-        return False
+    # ==========================
+    # NOTIFIKASI DARI BOT
+    # ==========================
+
+    try:
+        robot = Bot.get_instance(bot_id)
+
+        if robot:
+            await robot.send_message(
+                owner_id,
+                text
+            )
+
+    except Exception as e:
+        LOGGER("Expiry").warning(
+            f"[BOT EXPIRED NOTIFY ERROR] "
+            f"{bot_id}: {e}"
+        )
+
+    return True
+
+
+# ==========================
+# RENEW BOT
+# ==========================
 
 async def renew_bot(bot_id, days=30):
     bot_id = str(bot_id)
@@ -296,7 +358,10 @@ async def renew_bot(bot_id, days=30):
     if not bot:
         return False
 
-    if bot.get("status") not in ["running", "expired"]:
+    if bot.get("status") not in [
+        "running",
+        "expired"
+    ]:
         return False
 
     expires_at = bot.get("expires_at")
@@ -307,16 +372,19 @@ async def renew_bot(bot_id, days=30):
         )
 
     if expires_at and expires_at > now:
-        new_expires_at = expires_at + timedelta(
-            days=days
+        new_expires_at = (
+            expires_at +
+            timedelta(days=days)
         )
     else:
-        new_expires_at = now + timedelta(
-            days=days
+        new_expires_at = (
+            now +
+            timedelta(days=days)
         )
 
-    new_grace_until = new_expires_at + timedelta(
-        days=3
+    new_grace_until = (
+        new_expires_at +
+        timedelta(days=3)
     )
 
     result = botdb.update_one(
@@ -341,6 +409,11 @@ async def renew_bot(bot_id, days=30):
 
     return result.modified_count > 0
 
+
+# ==========================
+# RESTART RENEWED BOT
+# ==========================
+
 async def restart_renewed_bot(bot_id):
     bot_id = str(bot_id)
 
@@ -362,11 +435,17 @@ async def restart_renewed_bot(bot_id):
         return True
 
     except Exception as e:
-        print(
-            f"[RENEW BOT START ERROR] {bot_id}: {e}"
+        LOGGER("Expiry").error(
+            f"[RENEW BOT START ERROR] "
+            f"{bot_id}: {e}"
         )
 
         return False
+
+
+# ==========================
+# TERMINATE BOT
+# ==========================
 
 async def check_terminate_bots():
     now = datetime.now(timezone.utc)
@@ -380,7 +459,10 @@ async def check_terminate_bots():
 
     for bot in bots:
         bot_id = str(bot["bot_id"])
-        grace_until = bot.get("grace_until")
+
+        grace_until = bot.get(
+            "grace_until"
+        )
 
         if not grace_until:
             continue
@@ -393,6 +475,10 @@ async def check_terminate_bots():
         if now < grace_until:
             continue
 
+        # ==========================
+        # OWNER INDUK
+        # ==========================
+
         owner = ownerdb.find_one({
             "bot_id": bot_id
         })
@@ -403,40 +489,59 @@ async def check_terminate_bots():
             else None
         )
 
+        # ==========================
+        # STOP BOT
+        # ==========================
+
         try:
-            robot = Bot.get_instance(bot_id)
+            robot = Bot.get_instance(
+                bot_id
+            )
 
             if robot:
                 try:
                     await robot.stop()
+
                 except Exception:
                     pass
 
         except Exception:
             pass
 
+        # ==========================
+        # TERMINATE NOTIFICATION
+        # ==========================
+
         if owner_id:
+
+            text = (
+                "<b>⛔ Bot Telah Terminate</b>\n\n"
+                f"<b>🤖 Bot ID:</b> "
+                f"<code>{bot_id}</code>\n\n"
+                "Masa perpanjangan selama "
+                "<b>3 hari</b> telah berakhir.\n\n"
+                "Data bot telah dihapus secara permanen "
+                "dari database induk.\n\n"
+                "Jika ingin menggunakan bot kembali, "
+                "silakan membeli <b>Space Bot</b> baru "
+                "dan membuat bot kembali."
+            )
+
             try:
                 await app.send_message(
                     owner_id,
-                    "<b>⛔ Bot Telah Terminate</b>\n\n"
-                    f"<b>🤖 Bot ID:</b> <code>{bot_id}</code>\n\n"
-                    "Masa perpanjangan selama <b>3 hari</b> "
-                    "telah berakhir.\n\n"
-                    "Data bot telah dihapus secara permanen "
-                    "dari database.\n\n"
-                    "Jika ingin menggunakan bot kembali, "
-                    "silakan membeli <b>Space Bot</b> baru "
-                    "dan membuat bot kembali."
-                )
-            except Exception as e:
-                print(
-                    f"[TERMINATE NOTIFY ERROR] {bot_id}: {e}"
+                    text
                 )
 
-        ownerdb.delete_one({
-            "bot_id": bot_id
-        })
+            except Exception as e:
+                LOGGER("Expiry").warning(
+                    f"[TERMINATE NOTIFY ERROR] "
+                    f"{bot_id}: {e}"
+                )
+
+        # ==========================
+        # REMOVE FROM USER BOT
+        # ==========================
 
         userbotdb.update_many(
             {
@@ -449,7 +554,23 @@ async def check_terminate_bots():
             }
         )
 
+        # ==========================
+        # REMOVE OWNER INDUK
+        # ==========================
+
+        ownerdb.delete_one({
+            "bot_id": bot_id
+        })
+
+        # ==========================
+        # REMOVE BOT INDUK
+        # ==========================
+
         botdb.delete_one({
             "bot_id": bot_id
         })
 
+        LOGGER("Expiry").info(
+            f"Bot {bot_id} berhasil "
+            f"di-terminate."
+        )

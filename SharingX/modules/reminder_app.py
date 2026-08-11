@@ -537,23 +537,13 @@ async def check_terminate_bots():
 
             text = (
                 f"<b><u>Hai, {mention} 👋</u></b>\n\n"
-                f"__Kami ingin menginformasikan bahwa bot anda telah dihentikan sementara, karena anda belum melakukan perpanjangan pada bot.__\n\n"
+                f"__Kami ingin menginformasikan bahwa bot anda telah terminate, semua data sudah terhapus dalam database kami, tapi jangan kwatir.\n\n"
                 f"<b><u>🤖 Information Bot:</u></b>\n"
-                f"<b><u>• ID |</u></b> `{bot_id}`\n"
-                "💳 Kami akan memberikan waktu 3 hari untuk melakukan perpanjangan, kalau tidak bot anda akan dihentikan secara permanen.\n"
-                "⛔ Semua data akan terhapus ketika bot melati tanggal terminate, segera lakukan pembayaran.\n"
+                f"<b><u>• ID |</u></b> `{bot_id}`\n\n"
+                "<u>× Kami sarankan anda dapat membeli space lagi untuk menjalankan bot anda.</u>\n"
+                "<u>× Kami tidak menghapus data dari database anda, asalkan anda hafal nama database anda pertama anda buat.</u>\n"
+                "<u>× Data anda akan aman, ketika anda membuat bot baru lagi dilayanan kami.</u>\n\n"
                 "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
-                
-                "<b>⛔ Bot Telah Terminate</b>\n\n"
-                f"<b>🤖 Bot ID:</b> "
-                f"<code>{bot_id}</code>\n\n"
-                "Masa perpanjangan selama "
-                "<b>3 hari</b> telah berakhir.\n\n"
-                "Data bot telah dihapus secara permanen "
-                "dari database induk.\n\n"
-                "Jika ingin menggunakan bot kembali, "
-                "silakan membeli <b>Space Bot</b> baru "
-                "dan membuat bot kembali."
             )
 
             try:

@@ -13,9 +13,15 @@ from pyrogram.errors import (
 
 from SharingX import Bot
 from SharingX.modules.db import (
+    is_owner,
     get_user,
     del_user,
 )
+
+async def owner_filter(_, client, message):
+    return await is_owner(client, message.from_user.id)
+
+owner = filters.create(owner_filter)
 
 async def remove_duplicates(client, users):
     seen = set()
@@ -57,7 +63,7 @@ def format_duration(seconds):
 
     return result
 
-@Bot.on_message(filters.command(["broadcast", "gcast"]))
+@Bot.on_message(filters.command(["broadcast", "gcast"]) & filters.private & owner)
 async def broadcast(client, message):
 
     if not message.reply_to_message:

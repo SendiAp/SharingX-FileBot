@@ -98,6 +98,8 @@ async def space_buy_page(callback_query, quantity=1):
     if voucher_used:
         text = (
             "<b>╭┄┄┄ RINCIAN PESANAN ┄┄┄╮</b>\n"
+            "<b>┆ ⏰ Durasi</b>\n"
+            f"<b>┆  ╰┈➤ 30 Hari</b>\n"
             "<b>┆ 📦 Harga</b>\n"
             f"<b>┆  ╰┈➤ {format_rupiah(SPACE_PRICE)}/space</b>\n"
             "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
@@ -118,6 +120,8 @@ async def space_buy_page(callback_query, quantity=1):
     else:
         text = (
             "<b>╭┄┄┄ RINCIAN PESANAN ┄┄┄╮</b>\n"
+            "<b>┆ ⏰ Durasi</b>\n"
+            f"<b>┆  ╰┈➤ 30 Hari</b>\n"
             "<b>┆ 📦 Harga</b>\n"
             f"<b>┆  ╰┈➤ {format_rupiah(SPACE_PRICE)}/space</b>\n"
             "<b>┆ ┄┄┄┄┄┄┄┄┄┄</b>\n"
@@ -205,7 +209,7 @@ async def space_payment(client, callback_query):
     )
 
     text = (
-        "<b>╭┄┄┄ KONFIRMASI PEMBAYARAN ┄┄┄╮</b>\n"
+        "<b>╭┄┄┄ KONFIRMASI ┄┄┄╮</b>\n"
         f"<b>┆ 📦 Space</b>\n"
         f"<b>┆ ╰┈➤ {quantity} space</b>\n"
         f"<b>┆ 💰 Total</b>\n"

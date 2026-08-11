@@ -186,13 +186,18 @@ async def help_cmd(client, message):
         "<pre>• `/protect true` | <b>Mengaktifkan</b></pre>\n"
         "<pre>• `/protect false` | <b>Menonaktifkan</b></pre>\n\n"
 
-        "<b><u>4. Admin: [OWNER]</b>\n\n"
+        "<b><u>4. Forcesub Button: [OWNER & ADMIN]</b>\n\n"
+        "<b>Function:</b> __Untuk Memaksa Pengguna Memasuki Channel/Groups Anda.__\n\n"
+        "<pre>• `/addfc` | <b>ID - Username - Reply</b></pre>\n"
+        "<pre>• `/delfc` | <b>ID - Username - Reply</b></pre>\n\n"
+        
+        "<b><u>5. Admin: [OWNER]</b>\n\n"
         "<b>Function:</b> __Menambahkan Admin Untuk Menggunakan Beberapa Fitur.__\n\n"
         "<pre>• `/addadmin` | <b>ID - Username - Reply</b></pre>\n"
         "<pre>• `/deladmin` | <b>ID - Username - Reply</b></pre>\n"
         "<pre>• `/listadmin` | <b>Daftar Admin</b></pre>\n\n"
 
-        "<b><u>5. Broadcast: [OWNER]</b>\n\n"
+        "<b><u>6. Broadcast: [OWNER]</b>\n\n"
         "<b>Function:</b> __Mengirimkan Siaran, Seperti Text All Media, Bahakan Tombol.__\n\n"
         "<pre>• `/broadcast` | <b>Reply Pesan</b></pre>\n\n"
 

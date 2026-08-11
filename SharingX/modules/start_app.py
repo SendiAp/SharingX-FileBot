@@ -89,14 +89,15 @@ async def back_start(client, callback_query: CallbackQuery):
 async def my_bots(client, callback_query: CallbackQuery):
     try:
         user_id = callback_query.from_user.id
-        
-        space = await get_bot_space(user_id)
 
-        if space <= 0:
+        space = await get_bot_space(user_id)
+        bots = await get_user_bots(user_id)
+
+        if not bots and space <= 0:
             return await callback_query.edit_message_text(
                 "<b>⚠️ Kamu Belum Memiliki Space Bot!</b>\n\n"
-                "Untuk membuat dan menjalankan bot, kamu harus "
-                "membeli <b>Space Bot</b> terlebih dahulu.",
+                "Untuk membuat bot, kamu harus membeli "
+                "<b>Space Bot</b> terlebih dahulu.",
                 reply_markup=InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton(
@@ -117,35 +118,55 @@ async def my_bots(client, callback_query: CallbackQuery):
             "running": ("🟢", "Running"),
             "stopped": ("🔴", "Stopped"),
             "restart": ("🔄", "Restart"),
-            "crash": ("⚫", "Crash")
+            "crash": ("⚫", "Crash"),
+            "expired": ("⏳", "Expired"),
+            "terminated": ("⛔", "Terminated")
         }
 
-        bots = await get_user_bots(callback_query.from_user.id)
-        
-        count = dict(running=0, stopped=0, restart=0, crash=0)
+        count = {
+            "running": 0,
+            "stopped": 0,
+            "restart": 0,
+            "crash": 0,
+            "expired": 0,
+            "terminated": 0
+        }
+
         buttons = []
 
         for bot in bots:
-            bot_id = bot["bot_id"]
-            status = bot.get("status", "stopped")
+            bot_id = str(bot["bot_id"])
 
-            count[status] = count.get(status, 0) + 1
+            status = bot.get(
+                "status",
+                "stopped"
+            )
+
+            count[status] = count.get(
+                status,
+                0
+            ) + 1
 
             emoji, text_status = status_map.get(
                 status,
                 ("⚫", status.title())
             )
 
-            name = str(bot_id)
+            name = bot.get(
+                "name",
+                bot_id
+            )
 
             try:
-                if status == "running":
-                    robot = Bot.get_instance(bot_id)
-                    if robot:
-                        me = await robot.get_me()
-                        if me.username:
-                            name = f"@{me.username}"
-            except:
+                robot = Bot.get_instance(bot_id)
+
+                if robot:
+                    me = await robot.get_me()
+
+                    if me.username:
+                        name = f"@{me.username}"
+
+            except Exception:
                 pass
 
             buttons.append([
@@ -155,13 +176,24 @@ async def my_bots(client, callback_query: CallbackQuery):
                 )
             ])
 
-        buttons.append([
-            InlineKeyboardButton(
-                "➕ Create Bot",
-                callback_data="create_bot"
-            )
-        ])
-        
+        used_space = len(bots)
+
+        if space > used_space:
+            buttons.append([
+                InlineKeyboardButton(
+                    "➕ Create Bot",
+                    callback_data="create_bot"
+                )
+            ])
+
+        if space <= used_space:
+            buttons.append([
+                InlineKeyboardButton(
+                    "🛒 Beli Space Bot",
+                    callback_data="buy_space"
+                )
+            ])
+
         buttons.append([
             InlineKeyboardButton(
                 "🔙 Kembali",
@@ -169,22 +201,33 @@ async def my_bots(client, callback_query: CallbackQuery):
             )
         ])
 
-        used_space = len(bots)
-        
         text = (
-            f"<b><u>• Daftar bot dan Space Terdaftar</u></b>\n\n"
-            f"<b></u>• Running</u> |</b> {count['running']} bot\n"
-            f"<b></u>• Stopped</u> |</b> {count['stopped']} bot\n"
-            f"<b></u>• Restart</u> |</b> {count['restart']} bot\n"
-            f"<b></u>• Crash</u> |</b> {count['crash']} bot\n\n"
-            f"<b></u>Space</u> |</b> <pre>({used_space}/{space})</pre>"
+            "<b><u>• Daftar Bot dan Space Terdaftar</u></b>\n\n"
+            f"<b>• Running |</b> "
+            f"{count['running']} bot\n"
+            f"<b>• Stopped |</b> "
+            f"{count['stopped']} bot\n"
+            f"<b>• Restart |</b> "
+            f"{count['restart']} bot\n"
+            f"<b>• Crash |</b> "
+            f"{count['crash']} bot\n"
+            f"<b>• Expired |</b> "
+            f"{count['expired']} bot\n\n"
+            f"<b>• Space |</b> "
+            f"<pre>({used_space}/{space})</pre>"
         )
 
-        await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
+        await callback_query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
 
     except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-
+        await callback_query.edit_message_text(
+            f"<b>Terjadi Kesalahan:</b>\n"
+            f"<code>{str(e)}</code>"
+        )
+        
 @app.on_callback_query(filters.regex(r"^bot_(.+)$"))
 async def bot_settings(client, callback_query: CallbackQuery):
     try:

@@ -629,6 +629,11 @@ async def create_bot(client, callback_query: CallbackQuery):
         str(me.id),
         user_id
     )
+
+    await remove_bot_space(
+        user_id,
+        1
+    )
     
     await asyncio.sleep(2)
     

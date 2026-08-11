@@ -7,10 +7,21 @@ from pyrogram.errors import RPCError
 
 from SharingX.modules import loadModule
 from SharingX import LOOP, Bot, app, LOGGER
-from SharingX.helper.database import get_bot, remove_bot, get_owner, remove_owner
+
+from SharingX.helper.database import (
+    get_bot,
+    remove_bot,
+    get_owner,
+    expiry_reminder_loop
+)
+
 
 async def main():
     await app.start()
+
+    asyncio.create_task(
+        expiry_reminder_loop()
+    )
 
     bots = await get_bot()
 
@@ -24,14 +35,24 @@ async def main():
                     bot_token=bt["bot_token"]
                 )
 
-                mongo = MongoClient(bt["mongo_url"])
+                mongo = MongoClient(
+                    bt["mongo_url"]
+                )
+
                 b.mongo = mongo
-                b.db = mongo[bt.get("database", "sharingx")]
+                b.db = mongo[
+                    bt.get(
+                        "database",
+                        "sharingx"
+                    )
+                ]
 
                 await b.start()
 
-                owner = await get_owner(bt["bot_id"])
-                
+                owner = await get_owner(
+                    bt["bot_id"]
+                )
+
                 if owner:
                     b.db["owner"].update_one(
                         {},
@@ -42,23 +63,28 @@ async def main():
                         },
                         upsert=True
                     )
-                    
-                    await remove_owner(bt["bot_id"])
-    
+
                 LOGGER("Bot").info(
-                    f"{b.me.first_name} [🔥 BERHASIL DIAKTIFKAN 🔥]"
+                    f"{b.me.first_name} "
+                    f"[🔥 BERHASIL DIAKTIFKAN 🔥]"
                 )
 
             except RPCError:
-                await remove_bot(bt["bot_id"])
+                await remove_bot(
+                    bt["bot_id"]
+                )
+
                 LOGGER("Bot").warning(
-                    f"🗑️ {bt['bot_id']} Dihapus Dari Database."
+                    f"🗑️ {bt['bot_id']} "
+                    f"Dihapus Dari Database."
                 )
 
             except Exception as e:
                 LOGGER("Bot").error(
-                    f"Gagal Menjalankan Bot {bt['bot_id']} : {e}"
+                    f"Gagal Menjalankan Bot "
+                    f"{bt['bot_id']} : {e}"
                 )
+
     else:
         LOGGER("Bot").info(
             "⚠️ Bot Multi Client Tidak Ditemukan."
@@ -66,10 +92,14 @@ async def main():
 
     for mod in loadModule():
         importlib.reload(
-            importlib.import_module(f"SharingX.modules.{mod}")
+            importlib.import_module(
+                f"SharingX.modules.{mod}"
+            )
         )
 
-    LOGGER("Bot").info("[🔥 BERHASIL DIAKTIFKAN 🔥]")
+    LOGGER("Bot").info(
+        "[🔥 BERHASIL DIAKTIFKAN 🔥]"
+    )
 
     await idle()
 

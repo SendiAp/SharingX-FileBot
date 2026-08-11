@@ -149,7 +149,8 @@ async def check_expiry_reminder():
             continue
 
         owner_id = owner.get("user_id")
-
+        mention = (await app.get_users(owner_id)).mention
+        
         if not owner_id:
             continue
 
@@ -163,17 +164,38 @@ async def check_expiry_reminder():
             )
         )
 
+        for bot in botdb.find({
+            "grace_until": {
+                "$exists": True
+            }
+        }):
+        grace_until = bot.get("grace_until")
+        
+        if not grace_until:
+            continue
+            
+        if grace_until.tzinfo is None:
+            grace_until = grace_until.replace(
+                tzinfo=timezone.utc
+            )
+            
+        terminate_text = grace_until.astimezone(
+            ZoneInfo("Asia/Jakarta")
+        ).strftime(
+            "%d-%m-%Y %H:%M:%S WIB"
+        )
+
         text = (
-            "<b>⚠️ Peringatan Masa Aktif Bot</b>\n\n"
-            f"<b>🤖 Bot ID:</b> "
-            f"<code>{bot_id}</code>\n"
-            "<b>⏳ Masa aktif bot Anda akan "
-            "berakhir dalam 3 hari.</b>\n\n"
-            f"<b>📅 Expired:</b> "
-            f"<code>{expires_text}</code>\n\n"
-            "Silakan lakukan perpanjangan sebelum "
-            "masa aktif berakhir agar bot tetap "
-            "dapat digunakan."
+            f"<b><u>Hai, {mention} 👋</u></b>\n\n"
+            f"__Kami ingin mengingatkan bahwa bot yang anda sewa saat ini dalam jatuh tempo. Mohon segera lakukan perpanjangan agar bot tidak dihentikan.__\n\n"
+            f"<b><u>🤖 Details Penting:</u></b>\n"
+            f"<b><u>• ID |</u> `{bot_id}`</b>\n"
+            f"<b><u>• Expired |</u> {expires_text}}</b>\n"
+            f"<b><u>• Terminate |</u> {terminate_text}\n\n"
+            "🛑 Jika pembayaran tidak dilakukan sebelum jatuh tempo, bot anda akan dihentikan sementara.\n"
+            "⛔ Dan jika lewat dari tanggal terminate, data anda berisiko dihapus secara permanen.\n\n"
+            "💳 Segera lakukan pembayaran untuk memastikan bot anda tetap aktif dan data anda masih aman.\n\n"
+            "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
         )
 
         # ==========================

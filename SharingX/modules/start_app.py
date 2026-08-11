@@ -14,6 +14,7 @@ from SharingX.helper.database import (
     add_bot,
     add_owner,
     remove_bot,
+    del_reminder,
     add_reminder,
     add_user_bot,
     get_bot_data,
@@ -446,7 +447,7 @@ async def delete_bot(client, callback_query: CallbackQuery):
             await bot.stop()
 
         await remove_bot(bot_id)
-
+        await del_reminder(str(bot_id))
         await remove_user_bot(callback_query.from_user.id, bot_id)
 
         await callback_query.edit_message_text(

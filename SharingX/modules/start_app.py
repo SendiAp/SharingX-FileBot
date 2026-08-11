@@ -630,6 +630,11 @@ async def create_bot(client, callback_query: CallbackQuery):
         user_id
     )
 
+    await add_reminder(
+        str(media.me.id),
+        30
+    )
+    
     await remove_bot_space(
         user_id,
         1

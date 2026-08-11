@@ -41,6 +41,20 @@ async def add_reminder(bot_id, days=30):
 
     return True
 
+async def del_reminder(bot_id):
+    return botdb.update_one(
+        {
+            "bot_id": str(bot_id)
+        },
+        {
+            "$unset": {
+                "expires_at": "",
+                "grace_until": "",
+                "expiry_reminder": ""
+            }
+        }
+    )
+    
 async def get_bot_expiry(bot_id):
     return botdb.find_one(
         {

@@ -164,11 +164,6 @@ async def check_expiry_reminder():
             )
         )
 
-        for bot in botdb.find({
-            "grace_until": {
-                "$exists": True
-            }
-        }):
         grace_until = bot.get("grace_until")
         
         if not grace_until:

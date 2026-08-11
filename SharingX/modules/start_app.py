@@ -459,17 +459,6 @@ async def delete_bot(client, callback_query: CallbackQuery):
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
 
-    bots = await get_user_bots(callback_query.from_user.id)
-
-    if not bots:
-        return await callback_query.edit_message_text(
-            "<b>⚠️ Kamu Belum Memiliki Bot, Silahkan Buat Terlebih Dahulu!</b>",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("➕ Create Bot", callback_data="create_bot")],
-                [InlineKeyboardButton("🔙 Kembali", callback_data="back_start")]
-            ])
-        )
-
 @app.on_callback_query(filters.regex("create_bot"))
 async def create_bot(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
@@ -634,7 +623,7 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     await add_reminder(
         str(media.me.id),
-        30
+        3
     )
     
     await remove_bot_space(

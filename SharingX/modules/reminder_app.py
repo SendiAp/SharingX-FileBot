@@ -188,10 +188,10 @@ async def check_expiry_reminder():
         text = (
             f"<b><u>Hai, {mention} 👋</u></b>\n\n"
             f"__Kami ingin mengingatkan bahwa bot yang anda sewa saat ini dalam jatuh tempo. Mohon segera lakukan perpanjangan agar bot tidak dihentikan.__\n\n"
-            f"<b><u>🤖 Details Penting:</u></b>\n"
-            f"<b><u>• ID |</u> `{bot_id}`</b>\n"
-            f"<b><u>• Expired |</u> {expires_text}}</b>\n"
-            f"<b><u>• Terminate |</u> {terminate_text}\n\n"
+            f"<b><u>🤖 Information Bot:</u></b>\n"
+            f"<b><u>• ID |</u></b> `{bot_id}`\n"
+            f"<b><u>• Expired |</u></b> {expires_text}\n"
+            f"<b><u>• Terminate |</u></b> {terminate_text}\n\n"
             "🛑 Jika pembayaran tidak dilakukan sebelum jatuh tempo, bot anda akan dihentikan sementara.\n"
             "⛔ Dan jika lewat dari tanggal terminate, data anda berisiko dihapus secara permanen.\n\n"
             "💳 Segera lakukan pembayaran untuk memastikan bot anda tetap aktif dan data anda masih aman.\n\n"
@@ -269,7 +269,8 @@ async def notify_bot_expired(bot_id):
         return False
 
     owner_id = owner.get("user_id")
-
+    mention = (await app.get_users()).mention
+    
     if not owner_id:
         return False
 
@@ -311,19 +312,15 @@ async def notify_bot_expired(bot_id):
     )
 
     text = (
-        "<b>🔴 Bot Anda Telah Expired</b>\n\n"
-        f"<b>🤖 Bot ID:</b> "
-        f"<code>{bot_id}</code>\n"
-        f"<b>📅 Expired:</b> "
-        f"<code>{expires_text}</code>\n\n"
-        "<b>⚠️ Bot telah dihentikan sementara.</b>\n\n"
-        "<b>⏳ Masa perpanjangan:</b> 3 hari\n"
-        f"<b>📅 Batas akhir:</b> "
-        f"<code>{grace_text}</code>\n\n"
-        "Silakan lakukan perpanjangan sebelum "
-        "batas waktu berakhir.\n\n"
-        "Jika tidak diperpanjang, bot akan "
-        "<b>dihapus secara permanen</b>."
+        f"<b><u>Hai, {mention} 👋</u></b>\n\n"
+        f"__Kami ingin menginformasikan bahwa bot anda telah dihentikan sementara, karena anda belum melakukan perpanjangan pada bot.__\n\n"
+        f"<b><u>🤖 Information Bot:</u></b>\n"
+        f"<b><u>• ID |</u></b> `{bot_id}`\n"
+        f"<b><u>• Expired |</u></b> {expires_text}\n"
+        f"<b><u>• Terminate |</u></b> {grace_text}\n\n"
+        "💳 Kami akan memberikan waktu 3 hari untuk melakukan perpanjangan, kalau tidak bot anda akan dihentikan secara permanen.\n"
+        "⛔ Semua data akan terhapus ketika bot melati tanggal terminate, segera lakukan pembayaran.\n"
+        "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
     )
 
     # ==========================
@@ -511,6 +508,8 @@ async def check_terminate_bots():
             else None
         )
 
+        mention = (await app.get_users(user_id)).mention
+        
         # ==========================
         # STOP BOT
         # ==========================
@@ -537,6 +536,14 @@ async def check_terminate_bots():
         if owner_id:
 
             text = (
+                f"<b><u>Hai, {mention} 👋</u></b>\n\n"
+                f"__Kami ingin menginformasikan bahwa bot anda telah dihentikan sementara, karena anda belum melakukan perpanjangan pada bot.__\n\n"
+                f"<b><u>🤖 Information Bot:</u></b>\n"
+                f"<b><u>• ID |</u></b> `{bot_id}`\n"
+                "💳 Kami akan memberikan waktu 3 hari untuk melakukan perpanjangan, kalau tidak bot anda akan dihentikan secara permanen.\n"
+                "⛔ Semua data akan terhapus ketika bot melati tanggal terminate, segera lakukan pembayaran.\n"
+                "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
+                
                 "<b>⛔ Bot Telah Terminate</b>\n\n"
                 f"<b>🤖 Bot ID:</b> "
                 f"<code>{bot_id}</code>\n\n"

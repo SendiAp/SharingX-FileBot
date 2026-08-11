@@ -1,12 +1,73 @@
 from pymongo import MongoClient
 from SharingX.config import MONGO_DB_URL
+from datetime import datetime, timedelta, timezone
 
 mongo = MongoClient(MONGO_DB_URL)
 
 db = mongo["sharingx"]
 
+# ==========================
+# BOT EXPIRY
+# ==========================
+
 botdb = db["sharing"]
 
+async def add_reminder(bot_id, days=30):
+    now = datetime.now(timezone.utc)
+
+    bot = botdb.find_one({
+        "bot_id": str(bot_id)
+    })
+
+    if not bot:
+        return False
+
+    expires_at = now + timedelta(days=days)
+    grace_until = expires_at + timedelta(days=3)
+
+    botdb.update_one(
+        {
+            "bot_id": str(bot_id)
+        },
+        {
+            "$set": {
+                "expires_at": expires_at,
+                "grace_until": grace_until,
+                "status": "running",
+                "expiry_reminder": False
+            }
+        }
+    )
+
+    return True
+
+async def get_bot_expiry(bot_id):
+    return botdb.find_one(
+        {
+            "bot_id": str(bot_id)
+        },
+        {
+            "_id": 0,
+            "bot_id": 1,
+            "expires_at": 1,
+            "grace_until": 1,
+            "status": 1,
+            "expiry_reminder": 1
+        }
+    )
+
+async def set_expiry_reminder(bot_id, status):
+    botdb.update_one(
+        {
+            "bot_id": str(bot_id)
+        },
+        {
+            "$set": {
+                "expiry_reminder": status
+            }
+        }
+    )
+    
 async def get_bot():
     data = []
 

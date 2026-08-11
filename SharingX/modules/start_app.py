@@ -175,7 +175,7 @@ async def my_bots(client, callback_query: CallbackQuery):
             f"<b></u>• Stopped</u> |</b> {count['stopped']} bot\n"
             f"<b></u>• Restart</u> |</b> {count['restart']} bot\n"
             f"<b></u>• Crash</u> |</b> {count['crash']} bot\n\n"
-            "<b></u>Space</u> |</b> <pre>({used_space}/{space})</pre>"
+            f"<b></u>Space</u> |</b> <pre>({used_space}/{space})</pre>"
         )
 
         await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))

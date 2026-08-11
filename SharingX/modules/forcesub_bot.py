@@ -12,6 +12,8 @@ from pyrogram.types import (
 
 from SharingX import Bot
 from SharingX.modules.db import (
+    is_owner,
+    is_admin,
     add_forcesub,
     del_forcesub,
     get_forcesubs,
@@ -19,9 +21,22 @@ from SharingX.modules.db import (
     set_forcesub_button_mode,
 )
 
-BUTTON_PER_PAGE = 10
+BUTTON_PER_PAGE = 100
 
-@Bot.on_message(filters.command("addfc"))
+async def owner_admin_filter(_, client, message):
+    user_id = message.from_user.id
+
+    if await is_owner(client, user_id):
+        return True
+
+    if await is_admin(client, user_id):
+        return True
+
+    return False
+
+owner_admin = filters.create(owner_admin_filter)
+
+@Bot.on_message(filters.command("addfc") & filters.private & owner_admin)
 async def addforcesub_handler(client, message):
 
     chat_id = None

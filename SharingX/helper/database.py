@@ -175,9 +175,21 @@ async def remove_bot(bot_id):
 
 
 async def get_bot_data(bot_id):
-    return botdb.find_one({
-        "bot_id": str(bot_id)
+    bot_id = str(bot_id)
+
+    data = botdb.find_one({
+        "bot_id": bot_id
     })
+
+    if data:
+        return data
+
+    try:
+        return botdb.find_one({
+            "bot_id": int(bot_id)
+        })
+    except (ValueError, TypeError):
+        return None
 
 
 async def set_bot_status(bot_id, status):

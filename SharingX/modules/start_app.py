@@ -176,14 +176,6 @@ async def my_bots(client, callback_query: CallbackQuery):
                 )
             ])
             
-            if status == "crash":
-                buttons.append([
-                    InlineKeyboardButton(
-                        "📋 Logs",
-                        callback_data=f"bot_logs_{bot_id}"
-                    )
-                ])
-
         used_space = len(bots)
 
         if space > used_space:

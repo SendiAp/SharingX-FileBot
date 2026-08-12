@@ -11,6 +11,8 @@ from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBu
 
 from SharingX import app, Bot
 from SharingX.helper.database import (
+from SharingX.helper.database import (
+    botdb,
     add_bot,
     add_owner,
     remove_bot,
@@ -231,7 +233,7 @@ async def my_bots(client, callback_query: CallbackQuery):
 @app.on_callback_query(
     filters.regex(r"^bot_logs_(.+)$")
 )
-async def bot_logs(client, callback_query):
+async def bot_logs(client, callback_query: CallbackQuery):
     try:
         bot_id = callback_query.data.split(
             "bot_logs_",
@@ -248,19 +250,14 @@ async def bot_logs(client, callback_query):
                 show_alert=True
             )
 
-        if bot.get("status") != "crash":
-            return await callback_query.answer(
-                "⚠️ Bot tidak dalam status Crash.",
-                show_alert=True
-            )
-
         error = bot.get(
             "error",
             "Tidak ada informasi error."
         )
 
         text = (
-            "<b>📋 Crash Logs</b>\n\n"
+            "<b>📋 Bot Logs</b>\n"
+            "––––—––––———––•\n\n"
             f"<b>🤖 Bot ID:</b> "
             f"<code>{bot_id}</code>\n"
             f"<b>📊 Status:</b> ⚫ Crash\n\n"
@@ -268,13 +265,20 @@ async def bot_logs(client, callback_query):
             f"<pre>{error}</pre>"
         )
 
+        # Batas aman Telegram
+        if len(text) > 4000:
+            text = text[:3900] + "\n\n<code>...Log terlalu panjang.</code>"
+
         await callback_query.edit_message_text(
             text,
+            link_preview_options=LinkPreviewOptions(
+                is_disabled=True
+            ),
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
                         "🔙 Kembali",
-                        callback_data="my_bots"
+                        callback_data=f"bot_{bot_id}"
                     )
                 ]
             ])
@@ -349,25 +353,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
             except:
                 pass
 
-        await callback_query.edit_message_text(
-            (
-                f"<b><u>• Bot information atau Statistik Bot</u></b>\n"
-                f"––––—––––———––•\n\n"
-                f"🤖 <b><u>Information Bot:</u></b>\n"
-                f"<b><u>• Name</u> |</b> {name}\n"
-                f"<b><u>• ID Bot</u> | </b> <code>{bot_id}</code>\n"
-                f"<b><u>• Status</u> | </b> {status}\n\n"
-                f"🗄️ <b><u>Real-time Sistem:</u></b>\n"
-                f"<b><u>• Ping</u> |</b> {ping}\n"
-                f"<b><u>• Uptime</u> |</b> {uptime}</u>\n\n"
-                f"📂 <b><u>Database Real-time:</u></b>\n"
-                f"<b><u>• Name</u> |</b> {data.get('database')}\n"
-                f"<b><u>• Collection</u> |</b> {cols:,}\n"
-                f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
-                f"<b>© Bot By SharingX</b>"
-            ),
-            link_preview_options=LinkPreviewOptions(is_disabled=True),
-            reply_markup=InlineKeyboardMarkup([
+            buttons = [
                 [
                     InlineKeyboardButton(
                         "▶️ Start",
@@ -388,8 +374,15 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 ],
                 [
                     InlineKeyboardButton(
+                        "📋 Logs",
+                        callback_data=f"bot_logs_{bot_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
                         "🔗 Putuskan",
                         callback_data=f"deletebot_{bot_id}"
+
                     )
                 ],
                 [
@@ -398,8 +391,28 @@ async def bot_settings(client, callback_query: CallbackQuery):
                         callback_data="my_bots"
                     )
                 ]
-            ])
-        )
+            ]
+            
+            await callback_query.edit_message_text(
+                (
+                    f"<b><u>• Bot information atau Statistik Bot</u></b>\n"
+                    f"––––—––––———––•\n\n"
+                    f"🤖 <b><u>Information Bot:</u></b>\n"
+                    f"<b><u>• Name</u> |</b> {name}\n"
+                    f"<b><u>• ID Bot</u> | </b> <code>{bot_id}</code>\n"
+                    f"<b><u>• Status</u> | </b> {status}\n\n"
+                    f"🗄️ <b><u>Real-time Sistem:</u></b>\n"
+                    f"<b><u>• Ping</u> |</b> {ping}\n"
+                    f"<b><u>• Uptime</u> |</b> {uptime}\n\n"
+                    f"📂 <b><u>Database Real-time:</u></b>\n"
+                    f"<b><u>• Name</u> |</b> {data.get('database')}\n"
+                    f"<b><u>• Collection</u> |</b> {cols:,}\n"
+                    f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
+                    f"<b>© Bot By SharingX</b>"
+                ),
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
 
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")

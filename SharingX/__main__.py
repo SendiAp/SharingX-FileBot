@@ -11,10 +11,10 @@ from SharingX.modules.reminder_app import expiry_reminder_loop
 
 from SharingX.helper.database import (
     get_bot,
+    get_owner,
     remove_bot,
-    get_owner
+    set_bot_status
 )
-
 
 async def main():
     await app.start()
@@ -70,24 +70,18 @@ async def main():
                 )
 
             except RPCError:
-                await remove_bot(
-                    bt["bot_id"]
-                )
+                await remove_bot(bt["bot_id"])
 
                 LOGGER("Bot").warning(
-                    f"🗑️ {bt['bot_id']} "
-                    f"Dihapus Dari Database."
-                )
+                    f"🗑️ {bt['bot_id']} Berhasil Dari Database!")
 
             except Exception as e:
-                LOGGER("Bot").error(
-                    f"Gagal Menjalankan Bot "
-                    f"{bt['bot_id']} : {e}"
-                )
+                LOGGER("Bot").error(f"⛔ Crash Bot, Gagal Running ({bt['bot_id'])} | {e}")
+                await set_bot_status(bt['bot_id'], "crash")
 
     else:
         LOGGER("Bot").info(
-            "⚠️ Bot Multi Client Tidak Ditemukan."
+            "⚠️ Tidak Ada Bot Yang Diaktifkan!"
         )
 
     for mod in loadModule():

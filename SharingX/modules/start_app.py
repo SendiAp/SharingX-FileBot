@@ -175,6 +175,14 @@ async def my_bots(client, callback_query: CallbackQuery):
                     callback_data=f"bot_{bot_id}"
                 )
             ])
+            
+            if status == "crash":
+                buttons.append([
+                    InlineKeyboardButton(
+                        "📋 Logs",
+                        callback_data=f"bot_logs_{bot_id}"
+                    )
+                ])
 
         used_space = len(bots)
 
@@ -226,6 +234,64 @@ async def my_bots(client, callback_query: CallbackQuery):
         await callback_query.edit_message_text(
             f"<b>Terjadi Kesalahan:</b>\n"
             f"<code>{str(e)}</code>"
+        )
+
+@app.on_callback_query(
+    filters.regex(r"^bot_logs_(.+)$")
+)
+async def bot_logs(client, callback_query):
+    try:
+        bot_id = callback_query.data.split(
+            "bot_logs_",
+            1
+        )[1]
+
+        bot = botdb.find_one({
+            "bot_id": str(bot_id)
+        })
+
+        if not bot:
+            return await callback_query.answer(
+                "❌ Bot tidak ditemukan.",
+                show_alert=True
+            )
+
+        if bot.get("status") != "crash":
+            return await callback_query.answer(
+                "⚠️ Bot tidak dalam status Crash.",
+                show_alert=True
+            )
+
+        error = bot.get(
+            "error",
+            "Tidak ada informasi error."
+        )
+
+        text = (
+            "<b>📋 Crash Logs</b>\n\n"
+            f"<b>🤖 Bot ID:</b> "
+            f"<code>{bot_id}</code>\n"
+            f"<b>📊 Status:</b> ⚫ Crash\n\n"
+            "<b>❌ Error:</b>\n"
+            f"<pre>{error}</pre>"
+        )
+
+        await callback_query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 Kembali",
+                        callback_data="my_bots"
+                    )
+                ]
+            ])
+        )
+
+    except Exception as e:
+        await callback_query.answer(
+            f"❌ {str(e)}",
+            show_alert=True
         )
         
 @app.on_callback_query(filters.regex(r"^bot_(.+)$"))

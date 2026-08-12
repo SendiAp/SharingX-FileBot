@@ -14,7 +14,8 @@ from SharingX.helper.database import (
     get_bot,
     get_owner,
     remove_bot,
-    set_bot_status
+    set_bot_status,
+    add_bot_log
 )
 
 async def main():
@@ -28,6 +29,8 @@ async def main():
 
     if bots:
         for bt in bots:
+            bot_id = str(bt["bot_id"])
+
             try:
                 b = Bot(
                     name=bt["name"],
@@ -50,8 +53,19 @@ async def main():
 
                 await b.start()
 
+                await add_bot_log(
+                    bot_id,
+                    "start",
+                    f"Bot {b.me.first_name} berhasil diaktifkan."
+                )
+
+                await set_bot_status(
+                    bot_id,
+                    "running"
+                )
+
                 owner = await get_owner(
-                    bt["bot_id"]
+                    bot_id
                 )
 
                 if owner:
@@ -70,26 +84,46 @@ async def main():
                     f"[🔥 BERHASIL DIAKTIFKAN 🔥]"
                 )
 
-            except RPCError:
-                await remove_bot(bt["bot_id"])
+            except RPCError as e:
+                error_text = str(e)
+
+                await add_bot_log(
+                    bot_id,
+                    "error",
+                    f"RPCError: {error_text}"
+                )
+
+                await remove_bot(bot_id)
 
                 LOGGER("Bot").warning(
-                    f"🗑️ {bt['bot_id']} Berhasil Dari Database!")
+                    f"🗑️ {bot_id} Berhasil Dari Database!"
+                )
 
             except Exception as e:
                 error_text = str(e)
-                LOGGER("Bot").error(f"⛔ Crash Bot, Gagal Running {bt['bot_id']} | {e}")
+
+                await add_bot_log(
+                    bot_id,
+                    "crash",
+                    error_text
+                )
+
+                LOGGER("Bot").error(
+                    f"⛔ Crash Bot, Gagal Running "
+                    f"{bot_id} | {e}"
+                )
+
                 botdb.update_one(
                     {
-                        "bot_id": str(bt["bot_id"])
+                        "bot_id": bot_id
                     },
                     {
                         "$set": {
-                            "status": "crash",
-                            "error": error_text
+                            "status": "crash"
                         }
                     }
                 )
+
     else:
         LOGGER("Bot").info(
             "⚠️ Tidak Ada Bot Yang Diaktifkan!"

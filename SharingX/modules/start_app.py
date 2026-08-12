@@ -231,9 +231,7 @@ async def my_bots(client, callback_query: CallbackQuery):
             f"<code>{str(e)}</code>"
         )
 
-@app.on_callback_query(
-    filters.regex(r"^bot_logs_(.+)$")
-)
+@app.on_callback_query(filters.regex(r"^bot_logs_(.+)$"))
 async def bot_logs(client, callback_query: CallbackQuery):
     try:
         bot_id = callback_query.data.split(
@@ -603,133 +601,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
         except Exception:
             pass
             
-@app.on_callback_query(filters.regex(r"^hdjdjff_(.+)$"))
-async def bot_settings(client, callback_query: CallbackQuery):
-    try:
-        bot_id = callback_query.data.split("_", 1)[1]
-        data = await get_bot_data(bot_id)
-
-        if not data:
-            return await callback_query.answer(
-                "⚠️ Bot Tidak Ditemukan!",
-                show_alert=True
-            )
-
-        status = {
-            "running": "🟢 Running",
-            "stopped": "🔴 Stopped",
-            "restart": "🔄 Restarting",
-            "crash": "⚫ Crash"
-        }.get(data.get("status"), "⚫ Unknown")
-
-        name = "⚠️ Bot Sedang Offline"
-        ping = uptime = "-"
-        used = free = docs = cols = 0
-
-        if robot := Bot.get_instance(bot_id):
-            me = await robot.get_me()
-            name = (
-                f"[{me.first_name}](https://t.me/{me.username})"
-                if me.username else me.first_name
-            )
-
-            t = time.perf_counter()
-            await robot.get_me()
-            ping_ms = (time.perf_counter() - t) * 1000
-            ping_value = round(ping_ms)
-            
-            if ping_value < 100:
-                ping_status = "🟢 Sangat Baik"
-            elif ping_value < 200:
-                ping_status = "🟢 Baik"
-            elif ping_value < 300:
-                ping_status = "🟡 Normal"
-            elif ping_value < 500:
-                ping_status = "🟠 Lambat"
-            elif ping_value < 1000:
-                ping_status = "🔴 Buruk"
-            else:
-                ping_status = "🔴 Sangat Buruk"
-                
-            ping = f"{ping_status} ({ping_value} ms)"
-
-            if robot.start_time:
-                s = int(time.time() - robot.start_time)
-                h, s = divmod(s, 3600)
-                m, s = divmod(s, 60)
-                uptime = f"{h:02}<b>Jam</b> {m:02}<b>Menit</b> {s:02}<b>Detik</b>"
-
-            try:
-                db = robot.db.command("dbStats")
-                cols = db["collections"]
-                docs = db["objects"]
-            except:
-                pass
-
-            buttons = [
-                [
-                    InlineKeyboardButton(
-                        "▶️ Start",
-                        callback_data=f"startbot_{bot_id}",
-                        style=ButtonStyle.SUCCESS
-                    ),
-                    InlineKeyboardButton(
-                        "⏸ Stop",
-                        callback_data=f"stopbot_{bot_id}",
-                        style=ButtonStyle.DANGER
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "🔄 Restart",
-                        callback_data=f"restartbot_{bot_id}"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "📋 Logs",
-                        callback_data=f"bot_logs_{bot_id}"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "🔗 Putuskan",
-                        callback_data=f"deletebot_{bot_id}"
-
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "🔙 Kembali",
-                        callback_data="my_bots"
-                    )
-                ]
-            ]
-            
-            await callback_query.edit_message_text(
-                (
-                    f"<b><u>• Bot information atau Statistik Bot</u></b>\n"
-                    f"––––—––––———––•\n\n"
-                    f"🤖 <b><u>Information Bot:</u></b>\n"
-                    f"<b><u>• Name</u> |</b> {name}\n"
-                    f"<b><u>• ID Bot</u> | </b> <code>{bot_id}</code>\n"
-                    f"<b><u>• Status</u> | </b> {status}\n\n"
-                    f"🗄️ <b><u>Real-time Sistem:</u></b>\n"
-                    f"<b><u>• Ping</u> |</b> {ping}\n"
-                    f"<b><u>• Uptime</u> |</b> {uptime}\n\n"
-                    f"📂 <b><u>Database Real-time:</u></b>\n"
-                    f"<b><u>• Name</u> |</b> {data.get('database')}\n"
-                    f"<b><u>• Collection</u> |</b> {cols:,}\n"
-                    f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
-                    f"<b>© Bot By SharingX</b>"
-                ),
-                link_preview_options=LinkPreviewOptions(is_disabled=True),
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
-
-    except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-        
 @app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
 async def stop_bot(client, callback_query: CallbackQuery):
 

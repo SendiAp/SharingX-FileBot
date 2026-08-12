@@ -10,6 +10,7 @@ from SharingX import LOOP, Bot, app, LOGGER
 from SharingX.modules.reminder_app import expiry_reminder_loop
 
 from SharingX.helper.database import (
+    botdb,
     get_bot,
     get_owner,
     remove_bot,
@@ -76,9 +77,19 @@ async def main():
                     f"🗑️ {bt['bot_id']} Berhasil Dari Database!")
 
             except Exception as e:
+                error_text = str(e)
                 LOGGER("Bot").error(f"⛔ Crash Bot, Gagal Running {bt['bot_id']} | {e}")
-                await set_bot_status(bt['bot_id'], "crash")
-
+                botdb.update_one(
+                    {
+                        "bot_id": str(bt["bot_id"])
+                    },
+                    {
+                        "$set": {
+                            "status": "crash",
+                            "error": error_text
+                        }
+                    }
+                )
     else:
         LOGGER("Bot").info(
             "⚠️ Tidak Ada Bot Yang Diaktifkan!"

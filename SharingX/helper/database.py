@@ -352,3 +352,40 @@ async def del_space_order(user_id):
     return space_orderdb.delete_one(
         {"user_id": user_id}
     )
+
+# ==========================
+# BOT LOGS
+# ==========================
+
+bot_logsdb = db["bot_logs"]
+
+async def add_bot_log(bot_id, log_type, message):
+    bot_logsdb.insert_one({
+        "bot_id": str(bot_id),
+        "type": log_type,
+        "message": str(message),
+        "created_at": datetime.now(timezone.utc)
+    })
+
+async def get_bot_logs(bot_id, limit=20):
+    return list(
+        bot_logsdb.find(
+            {
+                "bot_id": str(bot_id)
+            },
+            {
+                "_id": 0,
+                "bot_id": 1,
+                "type": 1,
+                "message": 1,
+                "created_at": 1
+            }
+        )
+        .sort("created_at", -1)
+        .limit(limit)
+    )
+
+async def clear_bot_logs(bot_id):
+    return bot_logsdb.delete_many({
+        "bot_id": str(bot_id)
+    })

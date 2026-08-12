@@ -321,7 +321,6 @@ async def bot_logs(client, callback_query: CallbackQuery):
             f"{log_text}"
         )
 
-        # Telegram maksimal sekitar 4096 karakter
         if len(text) > 4000:
             text = (
                 text[:3900]
@@ -357,14 +356,9 @@ async def bot_logs(client, callback_query: CallbackQuery):
         )
 
     except Exception as e:
-        await callback_query.answer(
-            f"❌ {str(e)[:180]}",
-            show_alert=True
-        )
+        await callback_query.answer(f"❌ {str(e)[:180]}", show_alert=True)
 
-@app.on_callback_query(
-    filters.regex(r"^clear_logs_(.+)$")
-)
+@app.on_callback_query(filters.regex(r"^clear_logs_(.+)$"))
 async def clear_logs(client, callback_query: CallbackQuery):
     try:
         bot_id = callback_query.data.split(
@@ -387,21 +381,12 @@ async def clear_logs(client, callback_query: CallbackQuery):
             show_alert=True
         )
 
-        # Kembali ke halaman logs
-        await bot_logs(
-            client,
-            callback_query
-        )
+        await bot_logs(client, callback_query)
 
     except Exception as e:
-        await callback_query.answer(
-            f"❌ {str(e)[:180]}",
-            show_alert=True
-        )
+        await callback_query.answer(f"❌ {str(e)[:180]}", show_alert=True)
 
-@app.on_callback_query(
-    filters.regex(r"^bot_(?!logs_)(.+)$")
-)
+@app.on_callback_query(filters.regex(r"^bot_(?!logs_)(.+)$"))
 async def bot_settings(client, callback_query: CallbackQuery):
     try:
         bot_id = callback_query.data.split(
@@ -429,16 +414,11 @@ async def bot_settings(client, callback_query: CallbackQuery):
             "⚫ Unknown"
         )
 
-        # Default ketika bot offline/crash
         name = "⚠️ Bot Sedang Offline"
         ping = "-"
         uptime = "-"
         docs = 0
         cols = 0
-
-        # ==================================
-        # CEK BOT YANG SEDANG AKTIF
-        # ==================================
 
         robot = Bot.get_instance(
             bot_id
@@ -457,11 +437,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 )
             except Exception:
                 name = "⚠️ Tidak dapat mengambil nama bot"
-
-            # ==============================
-            # PING
-            # ==============================
-
+                
             try:
                 t = time.perf_counter()
 
@@ -501,10 +477,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
             except Exception:
                 ping = "⚫ Tidak tersedia"
 
-            # ==============================
-            # UPTIME
-            # ==============================
-
             try:
                 if robot.start_time:
 
@@ -532,10 +504,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
             except Exception:
                 uptime = "-"
 
-            # ==============================
-            # DATABASE STATS
-            # ==============================
-
             try:
                 stats = robot.db.command(
                     "dbStats"
@@ -554,10 +522,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
             except Exception:
                 pass
 
-        # ==================================
-        # TOMBOL SELALU DIBUAT
-        # ==================================
-
         buttons = [
             [
                 InlineKeyboardButton(
@@ -575,18 +539,20 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 InlineKeyboardButton(
                     "🔄 Restart",
                     callback_data=f"restartbot_{bot_id}"
+                ),
+                InlineKeyboardButton(
+                    "🔗 Putuskan",
+                    callback_data=f"deletebot_{bot_id}"
                 )
             ],
             [
                 InlineKeyboardButton(
                     "📋 Logs",
                     callback_data=f"bot_logs_{bot_id}"
-                )
-            ],
-            [
+                ),
                 InlineKeyboardButton(
-                    "🔗 Putuskan",
-                    callback_data=f"deletebot_{bot_id}"
+                    "📚 Config",
+                    callback_data=f"config_{bot_id}"
                 )
             ],
             [
@@ -597,9 +563,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
             ]
         ]
 
-        # ==================================
-        # TAMPILKAN SETTING
-        # ==================================
 
         await callback_query.edit_message_text(
             (
@@ -636,10 +599,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
 
     except Exception as e:
         try:
-            await callback_query.answer(
-                f"❌ {str(e)[:180]}",
-                show_alert=True
-            )
+            await callback_query.edit_message_text(f"❌ {str(e)[:180]}", show_alert=True)
         except Exception:
             pass
             

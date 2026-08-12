@@ -11,6 +11,7 @@ db = mongo["sharingx"]
 # ==========================
 
 botdb = db["sharing"]
+bot_logsdb = db["bot_logs"]
 
 async def add_reminder(bot_id, days=30):
     now = datetime.now(timezone.utc)
@@ -356,8 +357,6 @@ async def del_space_order(user_id):
 # ==========================
 # BOT LOGS
 # ==========================
-
-bot_logsdb = db["bot_logs"]
 
 async def add_bot_log(bot_id, log_type, message):
     bot_logsdb.insert_one({

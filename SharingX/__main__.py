@@ -76,7 +76,7 @@ async def main():
                     f"🗑️ {bt['bot_id']} Berhasil Dari Database!")
 
             except Exception as e:
-                LOGGER("Bot").error(f"⛔ Crash Bot, Gagal Running ({bt['bot_id'])} | {e}")
+                LOGGER("Bot").error(f"⛔ Crash Bot, Gagal Running {bt['bot_id']} | {e}")
                 await set_bot_status(bt['bot_id'], "crash")
 
     else:

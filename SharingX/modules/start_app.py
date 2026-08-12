@@ -11,7 +11,6 @@ from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBu
 
 from SharingX import app, Bot
 from SharingX.helper.database import (
-from SharingX.helper.database import (
     botdb,
     add_bot,
     add_owner,

@@ -3,8 +3,8 @@ import random
 import asyncio
 import requests
 
-from decimal import Decimal
 from datetime import datetime, timedelta, timezone
+from pytz import timezone as pytz_timezone
 
 from pyrogram import filters
 from pyrogram.types import (
@@ -618,12 +618,14 @@ async def renew_payment(client, callback_query):
 
         await callback_query.message.delete()
 
+        wib = pytz_timezone("Asia/Jakarta")
+        
         expires = (
-            datetime.now(timezone.utc)
+            datetime.now(wib)
             + timedelta(minutes=10)
         )
-
-        expires_text = expires.astimezone().strftime(
+        
+        expires_text = expires.strftime(
             "%H:%M:%S"
         )
 

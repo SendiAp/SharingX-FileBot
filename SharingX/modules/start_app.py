@@ -550,7 +550,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 ),
                 InlineKeyboardButton(
                     "📚 Config",
-                    callback_data=f"config_{bot_id}"
+                    callback_data=f"bot_config_{bot_id}"
                 )
             ],
             [
@@ -600,7 +600,44 @@ async def bot_settings(client, callback_query: CallbackQuery):
             await callback_query.edit_message_text(f"❌ {str(e)[:180]}", show_alert=True)
         except Exception:
             pass
-            
+
+@app.on_callback_query(filters.regex(r"^bot_config_(.+)$"))
+async def bot_config(client, callback_query):
+    bot_id = callback_query.data.split("_", 2)[2]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    text = (
+        "<b>⚙️ Bot Configuration</b>\n"
+        "––––—––––———––•\n\n"
+        "<pre>"
+        "{\n"
+        f'  "api_id": "{data.get("api_id", "")}",\n'
+        f'  "api_hash": "{data.get("api_hash", "")}",\n'
+        f'  "bot_token": "{data.get("bot_token", "")}",\n'
+        f'  "mongo_url": "{data.get("mongo_url", "")}"\n'
+        "}"
+        "</pre>"
+    )
+
+    await callback_query.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "🔙 Kembali",
+                    callback_data=f"bot_{bot_id}"
+                )
+            ]
+        ])
+    )
+    
 @app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
 async def stop_bot(client, callback_query: CallbackQuery):
     bot_id = callback_query.data.split("_", 1)[1]

@@ -737,20 +737,21 @@ async def check_renew_payment(
     expires
 ):
 
+    wib = pytz_timezone("Asia/Jakarta")
+
+    # Pastikan expires selalu timezone-aware dan menggunakan WIB
     if expires.tzinfo is None:
-        expires = expires.replace(
-            tzinfo=timezone.utc
-        )
+        expires = wib.localize(expires)
     else:
-        expires = expires.astimezone(
-            timezone.utc
-        )
+        expires = expires.astimezone(wib)
 
     while True:
 
         try:
 
-            if datetime.now(timezone.utc) >= expires:
+            now = datetime.now(wib)
+
+            if now >= expires:
 
                 try:
                     await qris_message.delete()
@@ -774,7 +775,8 @@ async def check_renew_payment(
                     user_id,
                     "<b>──────〔 EXPIRED 〕──────</b>\n\n"
                     "Pembayaran perpanjangan telah kadaluarsa.\n\n"
-                    f"<b>Invoice:</b> <code>{payment_ref}</code>",
+                    f"<b>Invoice:</b> "
+                    f"<code>{payment_ref}</code>",
                     reply_markup=InlineKeyboardMarkup([
                         [
                             InlineKeyboardButton(
@@ -815,9 +817,11 @@ async def check_renew_payment(
                 )
 
                 if not success:
+
                     LOGGER("Renew").error(
                         f"[RENEW FAILED] {bot_id}"
                     )
+
                     return
 
                 renew_orderdb.update_one(
@@ -856,9 +860,11 @@ async def check_renew_payment(
                     if not is_connected:
 
                         try:
+
                             await robot.start()
 
                         except Exception as e:
+
                             LOGGER("Renew").warning(
                                 f"[RENEW START ERROR] "
                                 f"{bot_id}: {e}"
@@ -867,12 +873,17 @@ async def check_renew_payment(
                 await app.send_message(
                     user_id,
                     "<b>╭┄┄┄ PEMBAYARAN BERHASIL ┄┄┄╮</b>\n\n"
-                    f"<b>🤖 Bot ID:</b> <code>{bot_id}</code>\n"
-                    f"<b>⏰ Durasi:</b> {order['days']} Hari\n"
-                    f"<b>💰 Pembayaran:</b> {format_rupiah(amount)}\n"
-                    f"<b>🧾 Invoice:</b> <code>{payment_ref}</code>\n\n"
+                    f"<b>🤖 Bot ID:</b> "
+                    f"<code>{bot_id}</code>\n"
+                    f"<b>⏰ Durasi:</b> "
+                    f"{order['days']} Hari\n"
+                    f"<b>💰 Pembayaran:</b> "
+                    f"{format_rupiah(amount)}\n"
+                    f"<b>🧾 Invoice:</b> "
+                    f"<code>{payment_ref}</code>\n\n"
                     "<b>✅ Bot berhasil diperpanjang.</b>\n"
-                    "<b>Terimakasih telah menggunakan layanan SharingX.</b>",
+                    "<b>Terimakasih telah menggunakan "
+                    "layanan SharingX.</b>",
                     reply_markup=InlineKeyboardMarkup([
                         [
                             InlineKeyboardButton(
@@ -895,11 +906,12 @@ async def check_renew_payment(
         except Exception as e:
 
             LOGGER("Renew").error(
-                f"[RENEW CHECK ERROR] {bot_id}: {e}"
+                f"[RENEW CHECK ERROR] "
+                f"{bot_id}: {e}"
             )
 
             await asyncio.sleep(20)
-            
+
 async def check_renew_payment_api(
     amount,
     api_url,

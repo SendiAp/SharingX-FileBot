@@ -7,7 +7,8 @@ from pymongo import MongoClient
 from io import BytesIO, StringIO
 
 from pyrogram import filters
-from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.enums import ButtonStyle
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
 
 from SharingX import app, Bot
 from SharingX.helper.database import (
@@ -28,11 +29,6 @@ from SharingX.helper.database import (
     remove_bot_space
 )
 from SharingX.modules import loadModule
-
-from pyrogram.enums import ButtonStyle
-
-from pyrogram import filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -603,8 +599,8 @@ async def bot_settings(client, callback_query: CallbackQuery):
 
 @app.on_callback_query(filters.regex(r"^config_(.+)$"))
 async def bot_config(client, callback_query):
-    bot_id = callback_query.data.split("_", 2)[2]
-
+    bot_id = callback_query.data.split("_", 1)[1]
+    
     data = await get_bot_data(bot_id)
 
     if not data:

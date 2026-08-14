@@ -907,12 +907,11 @@ async def check_renew_payment_api(
     try:
 
         response = await asyncio.to_thread(
-            requests.post,
+            requests.get,
             api_url,
-            json={
-                "username": merchant,
-                "token": token,
-                "amount": int(amount)
+            params={
+                "merchant": merchant,
+                "key": token
             },
             timeout=30
         )
@@ -922,43 +921,18 @@ async def check_renew_payment_api(
 
         data = response.json()
 
-        if isinstance(data, dict):
+        if (
+            data.get("status") == "success"
+            and data.get("data")
+        ):
 
-            if data.get("status") is True:
+            latest = data["data"][0]
+
+            api_amount = int(float(latest.get("amount", 0)))
+            renew_amount = int(amount)
+            
+            if api_amount == renew_amount:
                 return True
-
-            if data.get("success") is True:
-                return True
-
-            if str(
-                data.get("status", "")
-            ).lower() in (
-                "success",
-                "paid",
-                "settled"
-            ):
-                return True
-
-            result = data.get(
-                "data"
-            )
-
-            if isinstance(result, dict):
-
-                if result.get("status") is True:
-                    return True
-
-                if result.get("success") is True:
-                    return True
-
-                if str(
-                    result.get("status", "")
-                ).lower() in (
-                    "success",
-                    "paid",
-                    "settled"
-                ):
-                    return True
 
         return False
 

@@ -551,6 +551,16 @@ async def bot_settings(client, callback_query: CallbackQuery):
             ],
             [
                 InlineKeyboardButton(
+                    "🗄️ Perpanjang",
+                    callback_data=f"renew_{bot_id}"
+                ),
+                InlineKeyboardButton(
+                    "📚 Edit",
+                    callback_data=f"0"
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     "🔙 Kembali",
                     callback_data="my_bots"
                 )

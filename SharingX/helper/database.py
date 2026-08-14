@@ -11,11 +11,129 @@ mongo = MongoClient(MONGO_DB_URL)
 
 db = mongo["sharingx"]
 
-paymentdb = db["payment_config"]
 renew_orderdb = db["renew_orders"]
-renew_pricedb = db["renew_prices"]
 renew_voucherdb = db["renew_vouchers"]
+renew_pricedb = db["renew_prices"]
+paymentdb = db["payment_config"]
 
+async def get_renew_order(user_id, bot_id):
+    return renew_orderdb.find_one({
+        "user_id": user_id,
+        "bot_id": str(bot_id)
+    })
+
+
+async def set_renew_order(
+    user_id,
+    bot_id,
+    plan,
+    days,
+    price,
+    voucher=None,
+    discount=0
+):
+    total = max(
+        0,
+        int(price) - int(discount)
+    )
+
+    return renew_orderdb.update_one(
+        {
+            "user_id": user_id,
+            "bot_id": str(bot_id)
+        },
+        {
+            "$set": {
+                "user_id": user_id,
+                "bot_id": str(bot_id),
+                "plan": plan,
+                "days": days,
+                "price": int(price),
+                "discount": int(discount),
+                "voucher_used": voucher,
+                "total": total,
+                "payment_status": "pending"
+            }
+        },
+        upsert=True
+    )
+
+
+async def del_renew_order(user_id, bot_id):
+    return renew_orderdb.delete_one({
+        "user_id": user_id,
+        "bot_id": str(bot_id)
+    })
+
+
+async def get_renew_price(plan):
+    data = renew_pricedb.find_one({
+        "plan": plan
+    })
+
+    if not data:
+        return None
+
+    return data.get("price")
+
+
+async def set_renew_payment(
+    user_id,
+    bot_id,
+    payment_ref,
+    amount
+):
+    return renew_orderdb.update_one(
+        {
+            "user_id": user_id,
+            "bot_id": str(bot_id)
+        },
+        {
+            "$set": {
+                "payment_ref": payment_ref,
+                "payment_amount": int(amount),
+                "payment_status": "pending",
+                "payment_created_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+
+
+async def renew_bot(bot_id, days):
+    now = datetime.now(timezone.utc)
+
+    bot = botdb.find_one({
+        "bot_id": str(bot_id)
+    })
+
+    if not bot:
+        return False
+
+    expires_at = bot.get("expires_at")
+
+    if expires_at and expires_at > now:
+        new_expires = expires_at + timedelta(days=int(days))
+    else:
+        new_expires = now + timedelta(days=int(days))
+
+    grace_until = new_expires + timedelta(days=3)
+
+    botdb.update_one(
+        {
+            "bot_id": str(bot_id)
+        },
+        {
+            "$set": {
+                "expires_at": new_expires,
+                "grace_until": grace_until,
+                "status": "running",
+                "expiry_reminder_level": 0
+            }
+        }
+    )
+
+    return True
+    
 # ==========================================================
 # BOT DATABASE
 # ==========================================================

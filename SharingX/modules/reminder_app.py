@@ -60,15 +60,7 @@ async def check_expired_bots():
         if now < expires_at:
             continue
 
-        # ==========================
-        # NOTIFICATION
-        # ==========================
-
         await notify_bot_expired(bot_id)
-
-        # ==========================
-        # STOP BOT
-        # ==========================
 
         try:
             robot = Bot.get_instance(bot_id)
@@ -80,10 +72,6 @@ async def check_expired_bots():
             LOGGER("Expiry").error(
                 f"[EXPIRED STOP ERROR] {bot_id}: {e}"
             )
-
-        # ==========================
-        # UPDATE STATUS
-        # ==========================
 
         botdb.update_one(
             {
@@ -97,9 +85,8 @@ async def check_expired_bots():
             }
         )
 
-
 # ==========================
-# CHECK REMINDER 3 DAYS
+# CHECK REMINDER H-3 H-2 H-1
 # ==========================
 
 async def check_expiry_reminder():
@@ -125,21 +112,29 @@ async def check_expiry_reminder():
                 tzinfo=timezone.utc
             )
 
-        remaining = expires_at - now
+        reminder_level = bot.get(
+            "expiry_reminder_level",
+            0
+        )
 
-        if not (
-            remaining <= timedelta(days=3)
-            and remaining > timedelta(0)
-            and not bot.get(
-                "expiry_reminder",
-                False
-            )
-        ):
+        reminder_targets = {
+            1: expires_at - timedelta(days=3),
+            2: expires_at - timedelta(days=2),
+            3: expires_at - timedelta(days=1)
+        }
+
+        next_level = reminder_level + 1
+
+        if next_level not in reminder_targets:
             continue
 
-        # ==========================
-        # OWNER DARI DATABASE INDUK
-        # ==========================
+        target_time = reminder_targets[next_level]
+
+        if now < target_time:
+            continue
+
+        if now >= expires_at:
+            continue
 
         owner = ownerdb.find_one({
             "bot_id": bot_id
@@ -149,10 +144,16 @@ async def check_expiry_reminder():
             continue
 
         owner_id = owner.get("user_id")
-        mention = (await app.get_users(owner_id)).mention
-        
+
         if not owner_id:
             continue
+
+        try:
+            user = await app.get_users(owner_id)
+            mention = user.mention
+
+        except Exception:
+            mention = f"<code>{owner_id}</code>"
 
         expires_text = (
             expires_at
@@ -165,37 +166,58 @@ async def check_expiry_reminder():
         )
 
         grace_until = bot.get("grace_until")
-        
-        if not grace_until:
-            continue
-            
-        if grace_until.tzinfo is None:
-            grace_until = grace_until.replace(
-                tzinfo=timezone.utc
+
+        if grace_until:
+            if grace_until.tzinfo is None:
+                grace_until = grace_until.replace(
+                    tzinfo=timezone.utc
+                )
+
+            terminate_text = (
+                grace_until
+                .astimezone(
+                    ZoneInfo("Asia/Jakarta")
+                )
+                .strftime(
+                    "%d-%m-%Y %H:%M:%S WIB"
+                )
             )
-            
-        terminate_text = grace_until.astimezone(
-            ZoneInfo("Asia/Jakarta")
-        ).strftime(
-            "%d-%m-%Y %H:%M:%S WIB"
+
+        else:
+            terminate_text = "-"
+
+        reminder_text = {
+            1: "H-3",
+            2: "H-2",
+            3: "H-1"
+        }.get(
+            next_level,
+            "Reminder"
         )
 
         text = (
             f"<b><u>Hai, {mention} 👋</u></b>\n\n"
-            f"__Kami ingin mengingatkan bahwa bot yang anda sewa saat ini dalam jatuh tempo. Mohon segera lakukan perpanjangan agar bot tidak dihentikan.__\n\n"
+            f"__Kami ingin mengingatkan bahwa bot yang anda sewa "
+            f"saat ini akan segera jatuh tempo.__\n\n"
+
+            f"<b>⏰ Reminder {reminder_text}</b>\n\n"
+
             f"<b><u>🤖 Information Bot:</u></b>\n"
-            f"<b><u>• ID |</u></b> `{bot_id}`\n"
+            f"<b><u>• ID |</u></b> <code>{bot_id}</code>\n"
             f"<b><u>• Expired |</u></b> {expires_text}\n"
             f"<b><u>• Terminate |</u></b> {terminate_text}\n\n"
-            "🛑 Jika pembayaran tidak dilakukan sebelum jatuh tempo, bot anda akan dihentikan sementara.\n"
-            "⛔ Dan jika lewat dari tanggal terminate, data anda berisiko dihapus secara permanen.\n\n"
-            "💳 Segera lakukan pembayaran untuk memastikan bot anda tetap aktif dan data anda masih aman.\n\n"
+
+            "🛑 Jika pembayaran tidak dilakukan sebelum jatuh tempo, "
+            "bot anda akan dihentikan sementara.\n"
+
+            "⛔ Jika lewat dari tanggal terminate, "
+            "data anda berisiko dihapus secara permanen.\n\n"
+
+            "💳 Segera lakukan pembayaran untuk memastikan bot "
+            "anda tetap aktif dan data anda masih aman.\n\n"
+
             "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
         )
-
-        # ==========================
-        # NOTIFIKASI DARI APP
-        # ==========================
 
         try:
             await app.send_message(
@@ -208,10 +230,6 @@ async def check_expiry_reminder():
                 f"[APP REMINDER ERROR] "
                 f"{bot_id}: {e}"
             )
-
-        # ==========================
-        # NOTIFIKASI DARI BOT USER
-        # ==========================
 
         try:
             robot = Bot.get_instance(bot_id)
@@ -228,16 +246,23 @@ async def check_expiry_reminder():
                 f"{bot_id}: {e}"
             )
 
-        # ==========================
-        # REMINDER SUDAH DIKIRIM
-        # ==========================
-
-        await set_expiry_reminder(
-            bot_id,
-            True
+        botdb.update_one(
+            {
+                "bot_id": bot_id
+            },
+            {
+                "$set": {
+                    "expiry_reminder_level": next_level
+                }
+            }
         )
 
-
+        LOGGER("Expiry").info(
+            f"[REMINDER {reminder_text}] "
+            f"Bot {bot_id} | "
+            f"Expired: {expires_text}"
+        )
+        
 # ==========================
 # NOTIFY EXPIRED
 # ==========================
@@ -252,10 +277,6 @@ async def notify_bot_expired(bot_id):
     if not bot:
         return False
 
-    # ==========================
-    # OWNER DATABASE INDUK
-    # ==========================
-
     owner = ownerdb.find_one({
         "bot_id": bot_id
     })
@@ -264,7 +285,7 @@ async def notify_bot_expired(bot_id):
         return False
 
     owner_id = owner.get("user_id")
-    mention = (await app.get_users()).mention
+    mention = (await app.get_users(owner_id)).mention
     
     if not owner_id:
         return False
@@ -318,10 +339,6 @@ async def notify_bot_expired(bot_id):
         "<b>Terimakasih Atas Kerjasamanya, Team SharingX 🙌</b>"
     )
 
-    # ==========================
-    # NOTIFIKASI DARI APP
-    # ==========================
-
     try:
         await app.send_message(
             owner_id,
@@ -333,11 +350,7 @@ async def notify_bot_expired(bot_id):
             f"[APP EXPIRED NOTIFY ERROR] "
             f"{bot_id}: {e}"
         )
-
-    # ==========================
-    # NOTIFIKASI DARI BOT
-    # ==========================
-
+        
     try:
         robot = Bot.get_instance(bot_id)
 
@@ -423,7 +436,6 @@ async def renew_bot(bot_id, days=30):
 
     return result.modified_count > 0
 
-
 # ==========================
 # RESTART RENEWED BOT
 # ==========================
@@ -455,7 +467,6 @@ async def restart_renewed_bot(bot_id):
         )
 
         return False
-
 
 # ==========================
 # TERMINATE BOT
@@ -489,10 +500,6 @@ async def check_terminate_bots():
         if now < grace_until:
             continue
 
-        # ==========================
-        # OWNER INDUK
-        # ==========================
-
         owner = ownerdb.find_one({
             "bot_id": bot_id
         })
@@ -503,12 +510,8 @@ async def check_terminate_bots():
             else None
         )
 
-        mention = (await app.get_users(user_id)).mention
+        mention = (await app.get_users(owner_id)).mention
         
-        # ==========================
-        # STOP BOT
-        # ==========================
-
         try:
             robot = Bot.get_instance(
                 bot_id
@@ -523,10 +526,6 @@ async def check_terminate_bots():
 
         except Exception:
             pass
-
-        # ==========================
-        # TERMINATE NOTIFICATION
-        # ==========================
 
         if owner_id:
 

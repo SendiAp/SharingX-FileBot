@@ -11,6 +11,11 @@ mongo = MongoClient(MONGO_DB_URL)
 
 db = mongo["sharingx"]
 
+paymentdb = db["payment_config"]
+renew_orderdb = db["renew_orders"]
+renew_pricedb = db["renew_prices"]
+renew_voucherdb = db["renew_vouchers"]
+
 # ==========================================================
 # BOT DATABASE
 # ==========================================================

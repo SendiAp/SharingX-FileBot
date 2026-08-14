@@ -256,12 +256,6 @@ async def check_expiry_reminder():
                 }
             }
         )
-
-        LOGGER("Expiry").info(
-            f"[REMINDER {reminder_text}] "
-            f"Bot {bot_id} | "
-            f"Expired: {expires_text}"
-        )
         
 # ==========================
 # NOTIFY EXPIRED

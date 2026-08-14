@@ -8,7 +8,7 @@ from io import BytesIO, StringIO
 
 from pyrogram import filters
 from pyrogram.enums import ButtonStyle
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions, CallbackQuery
 
 from SharingX import app, Bot
 from SharingX.helper.database import (

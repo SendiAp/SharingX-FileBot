@@ -2,6 +2,7 @@ import time
 import random
 import asyncio
 import requests
+from decimal import Decimal
 
 from datetime import datetime, timedelta, timezone
 from pytz import timezone as pytz_timezone

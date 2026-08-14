@@ -5,6 +5,7 @@ import traceback
 import importlib
 from pymongo import MongoClient
 from io import BytesIO, StringIO
+from datetime import datetime, timezone
 
 from pyrogram import filters
 from pyrogram.enums import ButtonStyle
@@ -409,61 +410,65 @@ async def bot_settings(client, callback_query: CallbackQuery):
         )
 
         expires_at = data.get("expires_at")
-        terminated_at = data.get("terminated_at")
-
+        grace_until = data.get("grace_until")
+        
         expired_text = "-"
         remaining_text = "-"
         terminate_text = "-"
-
+        
         if expires_at:
             try:
                 if expires_at.tzinfo is None:
                     expires_at = expires_at.replace(
                         tzinfo=timezone.utc
                     )
-
-                expired_text = expires_at.astimezone().strftime(
-                    "%d-%m-%Y %H:%M:%S"
-                )
-
-                remaining = expires_at - datetime.now(timezone.utc)
-
-                if remaining.total_seconds() > 0:
-                    days = remaining.days
-                    hours, rem = divmod(
-                        remaining.seconds,
-                        3600
+                    
+                    expired_text = expires_at.astimezone().strftime(
+                        "%d-%m-%Y %H:%M:%S"
                     )
-                    minutes, seconds = divmod(
-                        rem,
-                        60
-                    )
-
-                    remaining_text = (
-                        f"{days} Hari "
-                        f"{hours} Jam "
-                        f"{minutes} Menit "
-                        f"{seconds} Detik"
-                    )
-                else:
-                    remaining_text = "⏳ Expired"
-
-            except Exception:
-                pass
-
-        if terminated_at:
+                    
+                    remaining = expires_at - datetime.now(timezone.utc)
+                    
+                    if remaining.total_seconds() > 0:
+                        days = remaining.days
+                        
+                        hours, rem = divmod(
+                            remaining.seconds,
+                            3600
+                        )
+                        
+                        minutes, seconds = divmod(
+                            rem,
+                            60
+                        )
+                        
+                        remaining_text = (
+                            f"{days} Hari "
+                            f"{hours} Jam "
+                            f"{minutes} Menit "
+                            f"{seconds} Detik"
+                        )
+                    
+                    else:
+                        remaining_text = "⏳ Expired"
+            
+            except Exception as e:
+                remaining_text = "-"
+                
+        if grace_until:
             try:
-                if terminated_at.tzinfo is None:
-                    terminated_at = terminated_at.replace(
+                if grace_until.tzinfo is None:
+                    grace_until = grace_until.replace(
                         tzinfo=timezone.utc
                     )
-
-                terminate_text = terminated_at.astimezone().strftime(
-                    "%d-%m-%Y %H:%M:%S"
-                )
+                    
+                    terminate_text = grace_until.astimezone().strftime(
+                        "%d-%m-%Y %H:%M:%S"
+                    )
+            
             except Exception:
-                pass
-                
+                terminate_text = "-"
+        
         name = "⚠️ Bot Sedang Offline"
         ping = "-"
         uptime = "-"

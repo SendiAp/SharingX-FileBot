@@ -550,7 +550,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 ),
                 InlineKeyboardButton(
                     "📚 Config",
-                    callback_data=f"bot_config_{bot_id}"
+                    callback_data=f"config_{bot_id}"
                 )
             ],
             [
@@ -601,7 +601,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
         except Exception:
             pass
 
-@app.on_callback_query(filters.regex(r"^bot_config_(.+)$"))
+@app.on_callback_query(filters.regex(r"^config_(.+)$"))
 async def bot_config(client, callback_query):
     bot_id = callback_query.data.split("_", 2)[2]
 

@@ -54,7 +54,7 @@ async def start(client, message):
                     InlineKeyboardButton("⚠️ Bantuan", callback_data="0")
                 ],
                 [
-                    InlineKeyboardButton("</> Command", callback_data="0")
+                    InlineKeyboardButton("</> Command", callback_data="command")
                 ]
             ])
         )
@@ -81,7 +81,7 @@ async def back_start(client, callback_query: CallbackQuery):
                     InlineKeyboardButton("⚠️ Bantuan", callback_data="0")
                 ],
                 [
-                    InlineKeyboardButton("</> Command", callback_data="0")
+                    InlineKeyboardButton("</> Command", callback_data="command")
                 ]
             ])
         )

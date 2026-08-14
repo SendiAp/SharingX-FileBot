@@ -66,6 +66,21 @@ async def del_renew_order(user_id, bot_id):
     })
 
 
+async def set_renew_price(plan, price):
+    return renew_pricedb.update_one(
+        {
+            "plan": plan
+        },
+        {
+            "$set": {
+                "plan": plan,
+                "price": int(price)
+            }
+        },
+        upsert=True
+    )
+
+
 async def get_renew_price(plan):
     data = renew_pricedb.find_one({
         "plan": plan

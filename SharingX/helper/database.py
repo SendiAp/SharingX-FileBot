@@ -11,7 +11,6 @@ mongo = MongoClient(MONGO_DB_URL)
 
 db = mongo["sharingx"]
 
-
 # ==========================================================
 # BOT DATABASE
 # ==========================================================
@@ -48,7 +47,7 @@ async def add_reminder(bot_id, days=30):
                 "expires_at": expires_at,
                 "grace_until": grace_until,
                 "status": "running",
-                "expiry_reminder": False
+                "expiry_reminder_level": 0
             }
         }
     )

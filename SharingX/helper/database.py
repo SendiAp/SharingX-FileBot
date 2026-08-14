@@ -113,7 +113,6 @@ async def set_renew_payment(
         }
     )
 
-
 async def renew_bot(bot_id, days):
     now = datetime.now(timezone.utc)
 
@@ -126,12 +125,35 @@ async def renew_bot(bot_id, days):
 
     expires_at = bot.get("expires_at")
 
-    if expires_at and expires_at > now:
-        new_expires = expires_at + timedelta(days=int(days))
-    else:
-        new_expires = now + timedelta(days=int(days))
+    if expires_at:
 
-    grace_until = new_expires + timedelta(days=3)
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(
+                tzinfo=timezone.utc
+            )
+        else:
+            expires_at = expires_at.astimezone(
+                timezone.utc
+            )
+
+    if expires_at and expires_at > now:
+
+        new_expires = (
+            expires_at
+            + timedelta(days=int(days))
+        )
+
+    else:
+
+        new_expires = (
+            now
+            + timedelta(days=int(days))
+        )
+
+    grace_until = (
+        new_expires
+        + timedelta(days=3)
+    )
 
     botdb.update_one(
         {

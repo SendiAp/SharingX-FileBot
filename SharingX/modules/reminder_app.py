@@ -86,7 +86,7 @@ async def check_expired_bots():
         )
 
 # ==========================
-# CHECK REMINDER H-3 H-2 H-1
+# CHECK REMINDER
 # ==========================
 
 async def check_expiry_reminder():
@@ -429,7 +429,7 @@ async def renew_bot(bot_id, days=30):
                 "expires_at": new_expires_at,
                 "grace_until": new_grace_until,
                 "status": "running",
-                "expiry_reminder": False
+                "expiry_reminder_level": 0
             }
         }
     )

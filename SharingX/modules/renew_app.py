@@ -910,8 +910,8 @@ async def check_renew_payment_api(
             requests.get,
             api_url,
             params={
-                "merchant": merchant,
-                "key": token
+                "username": merchant,
+                "token": token
             },
             timeout=30
         )

@@ -726,7 +726,6 @@ async def renew_cancel(client, callback_query):
         ])
     )
 
-
 async def check_renew_payment(
     user_id,
     bot_id,
@@ -735,6 +734,15 @@ async def check_renew_payment(
     qris_message,
     expires
 ):
+
+    if expires.tzinfo is None:
+        expires = expires.replace(
+            tzinfo=timezone.utc
+        )
+    else:
+        expires = expires.astimezone(
+            timezone.utc
+        )
 
     while True:
 
@@ -847,9 +855,11 @@ async def check_renew_payment(
 
                         try:
                             await robot.start()
+
                         except Exception as e:
                             LOGGER("Renew").warning(
-                                f"[RENEW START ERROR] {bot_id}: {e}"
+                                f"[RENEW START ERROR] "
+                                f"{bot_id}: {e}"
                             )
 
                 await app.send_message(
@@ -887,7 +897,7 @@ async def check_renew_payment(
             )
 
             await asyncio.sleep(20)
-
+            
 async def check_renew_payment_api(
     amount,
     api_url,

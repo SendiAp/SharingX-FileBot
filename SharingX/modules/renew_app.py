@@ -539,7 +539,7 @@ async def renew_payment(client, callback_query):
     )
 
     payment_api_url = payment_config.get(
-        "payment_api_url"
+        "api_url"
     )
 
     if not qris_code:
@@ -910,7 +910,7 @@ async def check_renew_payment_api(
             requests.post,
             api_url,
             json={
-                "merchant": merchant,
+                "username": merchant,
                 "token": token,
                 "amount": int(amount)
             },

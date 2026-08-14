@@ -133,6 +133,72 @@ async def renew_bot(bot_id, days):
     )
 
     return True
+
+async def add_qris_config(
+    qris_code,
+    merchant,
+    token,
+    api_url
+):
+    return paymentdb.update_one(
+        {
+            "_id": "renew_payment"
+        },
+        {
+            "$set": {
+                "qris_code": qris_code,
+                "merchant": merchant,
+                "token": token,
+                "api_url": api_url
+            }
+        },
+        upsert=True
+    )
+
+
+async def get_qris_config():
+    return paymentdb.find_one({
+        "_id": "renew_payment"
+    })
+
+
+async def del_qris_config():
+    return paymentdb.delete_one({
+        "_id": "renew_payment"
+    })
+
+
+async def update_qris_config(
+    qris_code=None,
+    merchant=None,
+    token=None,
+    api_url=None
+):
+    data = {}
+
+    if qris_code is not None:
+        data["qris_code"] = qris_code
+
+    if merchant is not None:
+        data["merchant"] = merchant
+
+    if token is not None:
+        data["token"] = token
+
+    if api_url is not None:
+        data["api_url"] = api_url
+
+    if not data:
+        return False
+
+    return paymentdb.update_one(
+        {
+            "_id": "renew_payment"
+        },
+        {
+            "$set": data
+        }
+    )
     
 # ==========================================================
 # BOT DATABASE

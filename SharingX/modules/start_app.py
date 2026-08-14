@@ -603,42 +603,88 @@ async def bot_settings(client, callback_query: CallbackQuery):
             
 @app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
 async def stop_bot(client, callback_query: CallbackQuery):
-
     bot_id = callback_query.data.split("_", 1)[1]
 
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
 
     bot = Bot.get_instance(bot_id)
 
     if bot is None:
+        status = data.get("status", "stopped")
+
+        if status == "expired":
+            return await callback_query.answer(
+                "⚠️ Kamu Memiliki Masa Sewa Yang Jatuh Tempo, Bot Sudah Terhenti Silahkan Melakukan Perpanjangan.",
+                show_alert=True
+            )
+
+        if status == "crash":
+            return await callback_query.answer(
+                "⚫ Bot Anda Sudah Terhenti, Karena Crash Kegagalan Menjalankan Bot, Periksa Log Lalu Lapor Ke Developer.",
+                show_alert=True
+            )
+
         await set_bot_status(bot_id, "stopped")
 
-        return await callback_query.answer("🔴 Bot Sudah Berhenti!.", show_alert=True)
+        return await callback_query.answer(
+            "🔴 Bot Sudah Berhenti!",
+            show_alert=True
+        )
 
     try:
         await bot.stop()
         await set_bot_status(bot_id, "stopped")
-        await callback_query.answer("🔴 Bot Berhasil Dihentikan!", show_alert=True)
+
+        await callback_query.answer(
+            "🔴 Bot Berhasil Dihentikan!",
+            show_alert=True
+        )
+
     except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-        
+        return await callback_query.edit_message_text(
+            f"<b>Terjadi Kesalahan:</b>\n"
+            f"<code>{str(e)}</code>"
+        )
+
     await bot_settings(client, callback_query)
     
 @app.on_callback_query(filters.regex(r"^startbot_(.+)$"))
 async def start_bot(client, callback_query: CallbackQuery):
-
     bot_id = callback_query.data.split("_", 1)[1]
 
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    status = data.get("status", "stopped")
+
+    if status == "expired":
+        return await callback_query.answer(
+            "⚠️ Kamu Tidak Bisa Menjalankan Bot Ini, Karena Kamu Memiliki Masa Sewa Bot Yang Telah Jatuh Tempo, Silahkan Lakukan Perpanjangan, Sebelum Bot Terminate.",
+            show_alert=True
+        )
+
+    if status == "crash":
+        return await callback_query.answer(
+            "⚫ Kamu Tidak Bisa Menjalankan Bot Ini, Karena Bot Ini Telah Crash Atau Bot Error Tidak Dapat Dijalankan, Silahkan Lihat Log, Lalu Dapat Menghubungi Developer.",
+            show_alert=True
+        )
 
     if Bot.get_instance(bot_id):
-        return await callback_query.answer("🟢 Bot Sudah Berjalan!", show_alert=True)
+        return await callback_query.answer(
+            "🟢 Bot Sudah Berjalan!",
+            show_alert=True
+        )
 
     try:
         media = Bot(
@@ -661,42 +707,87 @@ async def start_bot(client, callback_query: CallbackQuery):
                     f"SharingX.modules.{mod}"
                 )
             )
-            
-        await set_bot_status(bot_id, "running")
 
-        await callback_query.answer("🟢 Bot Berhasil Dijalankan!", show_alert=True)
+        await set_bot_status(
+            bot_id,
+            "running"
+        )
+
+        await callback_query.answer(
+            "🟢 Bot Berhasil Dijalankan!",
+            show_alert=True
+        )
 
     except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        await set_bot_status(
+            bot_id,
+            "crash"
+        )
 
-    await bot_settings(client, callback_query)
+        return await callback_query.edit_message_text(
+            f"<b>Terjadi Kesalahan:</b>\n"
+            f"<code>{str(e)}</code>"
+        )
 
+    await bot_settings(
+        client,
+        callback_query
+    )
+    
 @app.on_callback_query(filters.regex(r"^restartbot_(.+)$"))
 async def restart_bot(client, callback_query: CallbackQuery):
-
     bot_id = callback_query.data.split("_", 1)[1]
 
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!")
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    status = data.get("status", "stopped")
+
+    if status == "expired":
+        return await callback_query.answer(
+            "⚠️ Kamu Tidak Bisa Merestart Bot Ini, Karena Kamu Memiliki Masa Sewa Bot Yang Telah Jatuh Tempo, Silahkan Lakukan Perpanjangan, Sebelum Bot Terminate.",
+            show_alert=True
+        )
+
+    if status == "crash":
+        return await callback_query.answer(
+            "⚫ Kamu Tidak Bisa Merestart Bot Ini, Karena Bot Ini Telah Crash Atau Bot Error Tidak Dapat Dijalankan, Silahkan Lihat Log, Lalu Dapat Menghubungi Developer.",
+            show_alert=True
+        )
 
     old_bot = Bot.get_instance(bot_id)
 
     if old_bot is None:
-        return await callback_query.answer("⚠️ Bot Sedang Tidak Berjalan!")
+        return await callback_query.answer(
+            "⚠️ Bot Sedang Tidak Berjalan!",
+            show_alert=True
+        )
 
     try:
-        await set_bot_status(bot_id, "restart")
+        await set_bot_status(
+            bot_id,
+            "restart"
+        )
 
-        await callback_query.answer("🔄 Bot Berhasil Direstart!", show_alert=True)
+        await callback_query.answer(
+            "🔄 Bot Berhasil Direstart!",
+            show_alert=True
+        )
 
-        await bot_settings(client, callback_query)
-        
+        await bot_settings(
+            client,
+            callback_query
+        )
+
         await old_bot.stop()
 
         await asyncio.sleep(10)
-        
+
         media = Bot(
             name=str(data["bot_id"]),
             api_id=data["api_id"],
@@ -704,10 +795,17 @@ async def restart_bot(client, callback_query: CallbackQuery):
             bot_token=data["bot_token"]
         )
 
-        mongo = MongoClient(data["mongo_url"])
+        mongo = MongoClient(
+            data["mongo_url"]
+        )
 
         media.mongo = mongo
-        media.db = mongo[data.get("database", "sharingx")]
+        media.db = mongo[
+            data.get(
+                "database",
+                "sharingx"
+            )
+        ]
 
         await media.start()
 
@@ -717,14 +815,28 @@ async def restart_bot(client, callback_query: CallbackQuery):
                     f"SharingX.modules.{mod}"
                 )
             )
-            
-        await set_bot_status(bot_id, "running")
+
+        await set_bot_status(
+            bot_id,
+            "running"
+        )
 
     except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        await set_bot_status(
+            bot_id,
+            "crash"
+        )
+
+        return await callback_query.edit_message_text(
+            f"<b>Terjadi Kesalahan:</b>\n"
+            f"<code>{str(e)}</code>"
+        )
 
     try:
-        await bot_settings(client, callback_query)
+        await bot_settings(
+            client,
+            callback_query
+        )
     except Exception:
         pass
         

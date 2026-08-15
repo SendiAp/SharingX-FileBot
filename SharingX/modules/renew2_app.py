@@ -110,7 +110,7 @@ async def renew_payment(client, callback_query):
                 show_alert=True
             )
 
-        qr_image = create_qris(
+        qr_image = await create_qris(
             qris_string,
             total_payment
         )

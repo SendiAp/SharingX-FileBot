@@ -18,9 +18,12 @@ from SharingX.helper.database import (
 )
 
 from SharingX.helper.casaku import (
+    generate_qris,
     check_payment_status,
     cancel_payment_status
 )
+
+from SharingX.helper.qris import create_qris
 
 from .renew1_app import format_rupiah
 
@@ -63,13 +66,7 @@ async def renew_payment(client, callback_query):
 
     try:
 
-        from SharingX.helper.casaku import generate_qris
-
-        unique_fee = 0
-
-        payment_amount = (
-            total + unique_fee
-        )
+        payment_amount = total
 
         res = await generate_qris(
             payment_amount
@@ -113,10 +110,9 @@ async def renew_payment(client, callback_query):
                 show_alert=True
             )
 
-        from SharingX.helper.qris import create_qris
-
         qr_image = create_qris(
-            qris_string, total_payment
+            qris_string,
+            total_payment
         )
 
         payment_ref = (
@@ -154,7 +150,7 @@ async def renew_payment(client, callback_query):
             f"<b>┆ ╰┈➤ <code>{payment_ref}</code></b>\n"
             f"<b>┆ ⏳ Expired</b>\n"
             f"<b>┆ ╰┈➤ {expired_time} Menit</b>\n"
-            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
+            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
             "<b>Silakan scan QRIS di atas untuk melakukan pembayaran.</b>"
         )
 
@@ -210,6 +206,25 @@ async def renew_cancel(client, callback_query):
 
     user_id = callback_query.from_user.id
 
+    order = renew_orderdb.find_one({
+        "user_id": user_id,
+        "bot_id": str(bot_id),
+        "payment_ref": payment_ref
+    })
+
+    if order:
+        transaction_id = order.get(
+            "transaction_id"
+        )
+
+        if transaction_id:
+            try:
+                await cancel_payment_status(
+                    transaction_id
+                )
+            except Exception:
+                pass
+
     renew_orderdb.update_one(
         {
             "user_id": user_id,
@@ -222,13 +237,6 @@ async def renew_cancel(client, callback_query):
             }
         }
     )
-
-    try:
-        await cancel_payment_status(
-            payment_ref
-        )
-    except Exception:
-        pass
 
     try:
         await callback_query.message.delete()

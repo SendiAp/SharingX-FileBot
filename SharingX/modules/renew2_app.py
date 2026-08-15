@@ -1,6 +1,8 @@
 import asyncio
+import random
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from pytz import timezone as pytz_timezone
 
 from pyrogram import filters
 from pyrogram.types import (
@@ -19,8 +21,7 @@ from SharingX.helper.database import (
 
 from SharingX.helper.casaku import (
     generate_qris,
-    check_payment_status,
-    cancel_payment_status
+    check_payment_status
 )
 
 from SharingX.helper.qris import create_qris
@@ -66,7 +67,14 @@ async def renew_payment(client, callback_query):
 
     try:
 
-        payment_amount = total
+        unique_fee = random.randint(
+            1,
+            1000
+        )
+
+        payment_amount = (
+            total + unique_fee
+        )
 
         res = await generate_qris(
             payment_amount
@@ -112,13 +120,24 @@ async def renew_payment(client, callback_query):
 
         qr_image = await create_qris(
             qris_string,
-            total_payment
+            int(total_payment)
         )
 
         payment_ref = (
             f"RNW"
             f"{user_id}"
             f"{int(datetime.now().timestamp())}"
+        )
+
+        wib = pytz_timezone(
+            "Asia/Jakarta"
+        )
+
+        expires_at = (
+            datetime.now(wib)
+            + timedelta(
+                minutes=int(expired_time)
+            )
         )
 
         renew_orderdb.update_one(
@@ -131,7 +150,8 @@ async def renew_payment(client, callback_query):
                     "payment_ref": payment_ref,
                     "transaction_id": transaction_id,
                     "payment_status": "pending",
-                    "payment_amount": int(total_payment)
+                    "payment_amount": int(total_payment),
+                    "payment_expires_at": expires_at
                 }
             }
         )
@@ -149,8 +169,8 @@ async def renew_payment(client, callback_query):
             f"<b>┆ 🧾 Invoice</b>\n"
             f"<b>┆ ╰┈➤ <code>{payment_ref}</code></b>\n"
             f"<b>┆ ⏳ Expired</b>\n"
-            f"<b>┆ ╰┈➤ {expired_time} Menit</b>\n"
-            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
+            f"<b>┆ ╰┈➤ {expires_at.strftime('%H:%M:%S')} WIB</b>\n"
+            "<b>╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯</b>\n\n"
             "<b>Silakan scan QRIS di atas untuk melakukan pembayaran.</b>"
         )
 
@@ -175,7 +195,8 @@ async def renew_payment(client, callback_query):
                 payment_ref,
                 int(total_payment),
                 qris_message,
-                transaction_id
+                transaction_id,
+                expires_at
             )
         )
 
@@ -206,25 +227,6 @@ async def renew_cancel(client, callback_query):
 
     user_id = callback_query.from_user.id
 
-    order = renew_orderdb.find_one({
-        "user_id": user_id,
-        "bot_id": str(bot_id),
-        "payment_ref": payment_ref
-    })
-
-    if order:
-        transaction_id = order.get(
-            "transaction_id"
-        )
-
-        if transaction_id:
-            try:
-                await cancel_payment_status(
-                    transaction_id
-                )
-            except Exception:
-                pass
-
     renew_orderdb.update_one(
         {
             "user_id": user_id,
@@ -245,11 +247,14 @@ async def renew_cancel(client, callback_query):
 
     await app.send_message(
         user_id,
-        "<b>❌ Pembayaran dibatalkan.</b>",
+        "<b>──────〔 CANCEL 〕──────</b>\n\n"
+        "Pembayaran perpanjangan dibatalkan.\n\n"
+        f"<b>Invoice:</b> "
+        f"<code>{payment_ref}</code>",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
-                    "🔄 Kembali",
+                    "💳 Buat Pembayaran Baru",
                     callback_data=f"renew_{bot_id}"
                 )
             ]
@@ -263,27 +268,34 @@ async def check_renew_payment(
     payment_ref,
     amount,
     qris_message,
-    transaction_id
+    transaction_id,
+    expires_at
 ):
 
     while True:
 
         try:
 
-            res = await check_payment_status(
-                transaction_id
+            order = await get_renew_order(
+                user_id,
+                bot_id
             )
 
-            data = res.get(
-                "data",
-                {}
+            if not order:
+                return
+
+            if order.get(
+                "payment_status"
+            ) != "pending":
+                return
+
+            wib = pytz_timezone(
+                "Asia/Jakarta"
             )
 
-            status = data.get(
-                "status"
-            )
+            now = datetime.now(wib)
 
-            if status == "cancel":
+            if now >= expires_at:
 
                 renew_orderdb.update_one(
                     {
@@ -293,7 +305,7 @@ async def check_renew_payment(
                     },
                     {
                         "$set": {
-                            "payment_status": "cancelled"
+                            "payment_status": "expired"
                         }
                     }
                 )
@@ -305,8 +317,8 @@ async def check_renew_payment(
 
                 await app.send_message(
                     user_id,
-                    "<b>──────〔 CANCEL 〕──────</b>\n\n"
-                    "Pembayaran perpanjangan dibatalkan.\n\n"
+                    "<b>──────〔 EXPIRED 〕──────</b>\n\n"
+                    "Pembayaran perpanjangan telah kadaluarsa.\n\n"
                     f"<b>Invoice:</b> "
                     f"<code>{payment_ref}</code>",
                     reply_markup=InlineKeyboardMarkup([
@@ -320,6 +332,19 @@ async def check_renew_payment(
                 )
 
                 return
+
+            res = await check_payment_status(
+                transaction_id
+            )
+
+            data = res.get(
+                "data",
+                {}
+            )
+
+            status = data.get(
+                "status"
+            )
 
             if status == "expired":
 

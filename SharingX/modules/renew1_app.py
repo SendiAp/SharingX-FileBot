@@ -21,7 +21,6 @@ from SharingX.helper.database import (
     renew_orderdb,
     renew_voucherdb,
     renew_pricedb,
-    paymentdb,
     get_bot_data,
     get_renew_order,
     set_renew_order,

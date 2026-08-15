@@ -113,10 +113,10 @@ async def renew_payment(client, callback_query):
                 show_alert=True
             )
 
-        from SharingX.helper.qris import create_qris_image
+        from SharingX.helper.qris import create_qris
 
         qr_image = create_qris(
-            qris_string
+            qris_string, totalAmount
         )
 
         payment_ref = (

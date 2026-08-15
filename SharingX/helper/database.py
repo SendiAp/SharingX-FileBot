@@ -12,8 +12,9 @@ mongo = MongoClient(MONGO_DB_URL)
 db = mongo["sharingx"]
 
 renew_orderdb = db["renew_orders"]
-renew_voucherdb = db["renew_vouchers"]
 renew_pricedb = db["renew_prices"]
+renew_voucherdb = db["renew_vouchers"]
+renew_paymentdb = db["renew_payment_config"]
 
 
 async def get_renew_order(user_id, bot_id):
@@ -171,6 +172,63 @@ async def renew_bot(bot_id, days):
     )
 
     return True
+
+
+async def set_renew_casaku(
+    qr_id,
+    license
+):
+    try:
+        result = renew_paymentdb.update_one(
+            {
+                "_id": "casaku"
+            },
+            {
+                "$set": {
+                    "qr_id": qr_id,
+                    "license": license
+                }
+            },
+            upsert=True
+        )
+
+        return (
+            result.modified_count > 0
+            or result.upserted_id is not None
+        )
+
+    except Exception:
+        return False
+
+
+async def get_renew_casaku():
+    try:
+        data = renew_paymentdb.find_one({
+            "_id": "casaku"
+        })
+
+        if not data:
+            return None
+
+        return {
+            "qr_id": data.get("qr_id"),
+            "license": data.get("license")
+        }
+
+    except Exception:
+        return None
+
+
+async def del_renew_casaku():
+    try:
+        result = renew_paymentdb.delete_one({
+            "_id": "casaku"
+        })
+
+        return result.deleted_count > 0
+
+    except Exception:
+        return False
 
 
 # ==========================================================

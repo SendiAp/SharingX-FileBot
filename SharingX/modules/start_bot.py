@@ -126,7 +126,6 @@ async def start(client, message):
     try:
         token = message.command[1]
 
-        # Jika /start start, tampilkan pesan start seperti /start biasa
         if token == "start":
             forcesubs = await get_forcesubs(client)
             mode = await get_forcesub_button_mode(client)

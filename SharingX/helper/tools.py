@@ -1,6 +1,38 @@
 import base64
+import asyncio
 from pyrogram import filters
 
+async def get_messages(c, message_ids, database_channel):
+    messages = []
+    total_messages = 0
+
+    while total_messages != len(message_ids):
+        temb_ids = message_ids[
+            total_messages : total_messages + 200
+        ]
+
+        try:
+            msgs = await c.get_messages(
+                database_channel,
+                temb_ids
+            )
+
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+
+            msgs = await c.get_messages(
+                database_channel,
+                temb_ids
+            )
+
+        except BaseException:
+            msgs = []
+
+        total_messages += len(temb_ids)
+        messages.extend(msgs)
+
+    return messages
+    
 def strtobool(val):
     return str(val).lower() in ("true", "1", "yes", "y", "on")
     

@@ -2,8 +2,8 @@ import asyncio
 import importlib
 
 from pyrogram import idle
-from pymongo import MongoClient
 from pyrogram.errors import RPCError
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from SharingX.modules import loadModule
 from SharingX import LOOP, Bot, app, LOGGER
@@ -39,7 +39,7 @@ async def main():
                     bot_token=bt["bot_token"]
                 )
 
-                mongo = MongoClient(
+                mongo = AsyncIOMotorClient(
                     bt["mongo_url"]
                 )
 

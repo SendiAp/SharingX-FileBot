@@ -1,4 +1,6 @@
 import base64
+from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
 from pyrogram import filters
 from pyrogram.types import (
@@ -8,6 +10,7 @@ from pyrogram.types import (
 )
 
 from SharingX import Bot
+from SharingX.helper.database import botdb
 from SharingX.helper.tools import strtobool, encode, decode
 from SharingX.modules.db import (
     get_forcesub_button_mode,
@@ -174,7 +177,131 @@ async def start(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
-        
+
+@Bot.on_message(
+    filters.command("stats") & filters.private & owner
+)
+async def stats(client, message):
+
+    users = await get_user(
+        client
+    )
+
+    total_user = len(
+        set(users or [])
+    )
+
+    bot_id = str(
+        client.me.id
+    )
+
+    data = botdb.find_one({
+        "bot_id": bot_id
+    })
+
+    expired_text = "-"
+    remaining_text = "-"
+    terminated_text = "-"
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    if data:
+
+        expires_at = data.get(
+            "expires_at"
+        )
+
+        grace_until = data.get(
+            "grace_until"
+        )
+
+        if expires_at:
+
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(
+                    tzinfo=timezone.utc
+                )
+            else:
+                expires_at = expires_at.astimezone(
+                    timezone.utc
+                )
+
+            expired_text = expires_at.astimezone(
+                ZoneInfo("Asia/Jakarta")
+            ).strftime(
+                "%d-%m-%Y %H:%M"
+            )
+
+            remaining = (
+                expires_at - now
+            )
+
+            if remaining.total_seconds() > 0:
+
+                total_seconds = int(
+                    remaining.total_seconds()
+                )
+
+                days, remainder = divmod(
+                    total_seconds,
+                    86400
+                )
+
+                hours, remainder = divmod(
+                    remainder,
+                    3600
+                )
+
+                minutes, seconds = divmod(
+                    remainder,
+                    60
+                )
+
+                remaining_text = (
+                    f"{days} Hari "
+                    f"{hours} Jam "
+                    f"{minutes} Menit "
+                    f"{seconds} Detik"
+                )
+
+            else:
+                remaining_text = "Expired"
+
+        if grace_until:
+
+            if grace_until.tzinfo is None:
+                grace_until = grace_until.replace(
+                    tzinfo=timezone.utc
+                )
+            else:
+                grace_until = grace_until.astimezone(
+                    timezone.utc
+                )
+
+            terminated_text = grace_until.astimezone(
+                ZoneInfo("Asia/Jakarta")
+            ).strftime(
+                "%d-%m-%Y %H:%M"
+            )
+
+    text = (
+        "<b>📊 Statistics</b>\n\n"
+        f"<b>Total User :</b> "
+        f"<code>{total_user}</code>\n"
+        f"<b>Expired :</b> "
+        f"<code>{expired_text}</code>\n"
+        f"<b>Remaining :</b> "
+        f"<code>{remaining_text}</code>\n"
+        f"<b>Terminated :</b> "
+        f"<code>{terminated_text}</code>"
+    )
+
+    await message.reply_text(
+        text
+    )
+    
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):
     try:
@@ -182,7 +309,7 @@ async def close_callback(client, callback_query):
         await callback_query.answer()
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-    
+
 @Bot.on_message(filters.command("link") & filters.private & owner_admin)
 async def link_mode(client, message):
 

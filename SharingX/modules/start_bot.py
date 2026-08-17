@@ -113,7 +113,8 @@ async def start(client, message):
             ]]
 
         return await message.reply_text(
-            "<b>📁 Kirim file ke bot ini untuk membuat Link Sharing.</b>",
+            f"ʜᴇʟʟᴏ {message.from_user.mention}\n\n"
+            f"<b>sᴀʏᴀ ᴅᴀᴘᴀᴛ ᴍᴇɴʏɪᴍᴘᴀɴ ғɪʟᴇ ᴘʀɪʙᴀᴅɪ ᴅɪ ᴄʜᴀɴɴᴇʟ ᴛᴇʀᴛᴇɴᴛᴜ ᴅᴀɴ ᴘᴇɴɢɢᴜɴᴀ ʟᴀɪɴ ᴅᴀᴘᴀᴛ ᴍᴇɴɢᴀᴋsᴇsɴʏᴀ ᴅᴀʀɪ ʟɪɴᴋ ᴋʜᴜsᴜs.</b>",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
 

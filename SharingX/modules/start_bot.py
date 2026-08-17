@@ -143,48 +143,77 @@ async def start(client, message):
         if data.startswith("get-"):
             
             argument = data.split("-")
-            
-            start = int(int(argument[1]) / abs(chg))
-            end = int(int(argument[2]) / abs(chg))
-            
-            if start <= end:
-                ids = range(start, end + 1)
-            else:
-                ids = []
-                i = start
-                
-                while True:
-                    ids.append(i)
-                    i -= 1
-                    
-                    if i < end:
-                        break
-                        
-            mes = await get_messages(
-                client,
-                list(ids),
-                database_channel
-            )
-            
-            for msg in mes:
+
+            if len(argument) == 2:
+
+                msg_id = int(int(argument[1]) / abs(chg))
+
                 try:
-                    await msg.copy(
-                        message.chat.id,
+                    await client.copy_message(
+                        chat_id=message.chat.id,
+                        from_chat_id=database_channel,
+                        message_id=msg_id,
                         protect_content=rkhw,
                         reply_markup=None
                     )
-                    
+
                 except FloodWait as e:
                     await asyncio.sleep(e.value)
-                    
-                    await msg.copy(
-                        message.chat.id,
+
+                    await client.copy_message(
+                        chat_id=message.chat.id,
+                        from_chat_id=database_channel,
+                        message_id=msg_id,
                         protect_content=rkhw,
                         reply_markup=None
                     )
+
+            elif len(argument) == 3:
+
+                start = int(int(argument[1]) / abs(chg))
+                end = int(int(argument[2]) / abs(chg))
+                
+                if start <= end:
+                    ids = range(start, end + 1)
+                else:
+                    ids = []
+                    i = start
                     
-                except:
-                    pass
+                    while True:
+                        ids.append(i)
+                        i -= 1
+                        
+                        if i < end:
+                            break
+                            
+                mes = await get_messages(
+                    client,
+                    list(ids),
+                    database_channel
+                )
+                
+                for msg in mes:
+                    try:
+                        await msg.copy(
+                            message.chat.id,
+                            protect_content=rkhw,
+                            reply_markup=None
+                        )
+                        
+                    except FloodWait as e:
+                        await asyncio.sleep(e.value)
+                        
+                        await msg.copy(
+                            message.chat.id,
+                            protect_content=rkhw,
+                            reply_markup=None
+                        )
+                        
+                    except:
+                        pass
+
+            else:
+                raise Exception("⚠️ Link Tidak Valid!")
         
         elif data.startswith("batch-"):
             
@@ -238,7 +267,7 @@ async def start(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
-
+        
 @Bot.on_message(
     filters.command("stats") & filters.private & owner
 )

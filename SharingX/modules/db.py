@@ -170,24 +170,43 @@ async def get_forcesub_button_mode(client):
 # BROADCAST (BOT)
 # =========================
 
-async def add_user(client, user_id):
+async def add_user(client, bot_id, user_id):
     _col(client, "broad").update_one(
-        {"user_id": user_id},
-        {"$set": {"user_id": user_id}},
+        {
+            "bot_id": str(bot_id),
+            "user_id": user_id
+        },
+        {
+            "$set": {
+                "bot_id": str(bot_id),
+                "user_id": user_id
+            }
+        },
         upsert=True
     )
 
 
-async def get_user(client):
+async def get_user(client, bot_id):
     return [
         doc["user_id"]
-        for doc in _col(client, "broad").find({}, {"_id": 0, "user_id": 1})
+        for doc in _col(client, "broad").find(
+            {
+                "bot_id": str(bot_id)
+            },
+            {
+                "_id": 0,
+                "user_id": 1
+            }
+        )
     ]
 
 
-async def del_user(client, user_id):
+async def del_user(client, bot_id, user_id):
     _col(client, "broad").delete_one(
-        {"user_id": user_id}
+        {
+            "bot_id": str(bot_id),
+            "user_id": user_id
+        }
     )
 
 

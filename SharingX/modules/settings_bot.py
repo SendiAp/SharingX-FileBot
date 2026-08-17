@@ -190,7 +190,8 @@ async def help_cmd(client, message):
         "<b>Function:</b> __Untuk Memaksa Pengguna Memasuki Channel/Groups Anda.__\n\n"
         "<pre>• `/addfc` | <b>ID - Username - Reply</b></pre>\n"
         "<pre>• `/delfc` | <b>ID - Username - Reply</b></pre>\n"
-        "<pre>• `/listfc` | <b>ID - Username - Reply</b></pre>\n\n"
+        "<pre>• `/listfc` | <b>ID - Username - Reply</b></pre>\n"
+        "<pre>• `/modefc` | <b>Mengubah Penampilan Tombol Forcesub Menjadi Nama Channel, Text Default, Username Channel</b></pre>\n\n"
         
         "<b><u>5. Admin: [OWNER]</b>\n\n"
         "<b>Function:</b> __Menambahkan Admin Untuk Menggunakan Beberapa Fitur.__\n\n"

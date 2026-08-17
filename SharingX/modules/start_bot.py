@@ -141,16 +141,50 @@ async def start(client, message):
         rkhw = strtobool(cckh)
         
         if data.startswith("get-"):
-
-            msg_id = int(data.split("-")[1]) // chg
-
-            await client.copy_message(
-                chat_id=message.chat.id,
-                from_chat_id=database_channel,
-                message_id=msg_id,
-                protect_content=rkhw,
-                reply_markup=None
+            
+            argument = data.split("-")
+            
+            start = int(int(argument[1]) / abs(chg))
+            end = int(int(argument[2]) / abs(chg))
+            
+            if start <= end:
+                ids = range(start, end + 1)
+            else:
+                ids = []
+                i = start
+                
+                while True:
+                    ids.append(i)
+                    i -= 1
+                    
+                    if i < end:
+                        break
+                        
+            mes = await get_messages(
+                client,
+                list(ids),
+                database_channel
             )
+            
+            for msg in mes:
+                try:
+                    await msg.copy(
+                        message.chat.id,
+                        protect_content=rkhw,
+                        reply_markup=None
+                    )
+                    
+                except FloodWait as e:
+                    await asyncio.sleep(e.value)
+                    
+                    await msg.copy(
+                        message.chat.id,
+                        protect_content=rkhw,
+                        reply_markup=None
+                    )
+                    
+                except:
+                    pass
         
         elif data.startswith("batch-"):
             

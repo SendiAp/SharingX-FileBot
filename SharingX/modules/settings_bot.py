@@ -14,9 +14,23 @@ from pyrogram.errors import (
 from SharingX import Bot
 from SharingX.modules.db import (
     is_owner,
+    is_admin,
     get_user,
     del_user,
 )
+
+async def owner_admin_filter(_, client, message):
+    user_id = message.from_user.id
+
+    if await is_owner(client, user_id):
+        return True
+
+    if await is_admin(client, user_id):
+        return True
+
+    return False
+
+owner_admin = filters.create(owner_admin_filter)
 
 async def owner_filter(_, client, message):
     return await is_owner(client, message.from_user.id)
@@ -63,7 +77,7 @@ def format_duration(seconds):
 
     return result
 
-@Bot.on_message(filters.command(["broadcast", "gcast"]) & filters.private & owner)
+@Bot.on_message(filters.command(["broadcast", "gcast"]) & filters.private & owner_admin)
 async def broadcast(client, message):
 
     if not message.reply_to_message:

@@ -179,15 +179,15 @@ async def get_forcesub_button_mode(client):
 async def add_user(client, user_id):
     bot_id = client.me.id
 
-    await _col(client, "broad").update_one(
+    _col(client, "broad").update_one(
         {
-            "bot_id": bot_id,
-            "user_id": user_id
+            "user_id": bot_id,
+            "user": user_id
         },
         {
             "$set": {
-                "bot_id": bot_id,
-                "user_id": user_id
+                "user_id": bot_id,
+                "user": user_id
             }
         },
         upsert=True
@@ -197,27 +197,27 @@ async def add_user(client, user_id):
 async def get_user(client):
     bot_id = client.me.id
 
-    cursor = _col(client, "broad").find(
-        {"bot_id": bot_id},
-        {
-            "_id": 0,
-            "user_id": 1
-        }
-    )
-
     return [
-        doc["user_id"]
-        async for doc in cursor
+        doc["user"]
+        async for doc in _col(client, "broad").find(
+            {
+                "user_id": bot_id
+            },
+            {
+                "_id": 0,
+                "user": 1
+            }
+        )
     ]
 
 
 async def del_user(client, user_id):
     bot_id = client.me.id
 
-    await _col(client, "broad").delete_one(
+    _col(client, "broad").delete_one(
         {
-            "bot_id": bot_id,
-            "user_id": user_id
+            "user_id": bot_id,
+            "user": user_id
         }
     )
 

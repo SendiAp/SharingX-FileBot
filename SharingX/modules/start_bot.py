@@ -529,83 +529,98 @@ async def protect_cmd(client, message: Message):
     
 @Bot.on_message(filters.command("batch") & filters.private & owner_admin)
 async def batch(client, message):
-    try:
-        msg = await message.reply_text(
-            "<b>🤖 Silahkan kirim Link Awal dari Database Channel Anda.</b>\n\n"
-            "/cancel - Untuk membatalkan."
-        )
+    while True:
+        try:
+            first_message = await client.ask(
+                message.from_user.id,
+                "<b>Silahkan Teruskan Pesan/File Pertama dari Channel Database. (Forward with Qoute)</b>\n\n<b>atau Kirim Link Postingan dari Channel Database</b>",
+                filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+                timeout=60,
+            )
+        except BaseException:
+            return
 
-        first = await client.listen(message.chat.id)
-
-        if not first or not first.text:
-            return await msg.edit("<b>❌ Input tidak valid.</b>")
-
-        if first.text.startswith("/"):
-            await client.delete_messages(message.chat.id, first.id)
-            return await msg.edit("<b>❌ Proses dibatalkan.</b>")
-
-        start_link = first.text.strip()
-        await client.delete_messages(message.chat.id, first.id)
-
-        await msg.edit(
-            "<b>🤖 Silahkan kirim Link Akhir dari Database Channel Anda.</b>\n\n"
-            "/cancel - Untuk membatalkan."
-        )
-
-        second = await client.listen(message.chat.id)
-
-        if not second or not second.text:
-            return await msg.edit("<b>❌ Input tidak valid.</b>")
-
-        if second.text.startswith("/"):
-            await client.delete_messages(message.chat.id, second.id)
-            return await msg.edit("<b>❌ Proses dibatalkan.</b>")
-
-        end_link = second.text.strip()
-        await client.delete_messages(message.chat.id, second.id)
-
-        start_id = (
-            int(start_link)
-            if start_link.isdigit()
-            else int(start_link.rstrip("/").split("/")[-1])
-        )
-
-        end_id = (
-            int(end_link)
-            if end_link.isdigit()
-            else int(end_link.rstrip("/").split("/")[-1])
-        )
-
-        if start_id > end_id:
-            return await msg.edit(
-                "<b>❌ ID awal harus lebih kecil dari ID akhir.</b>"
+        if first_message.text and first_message.text.startswith("/"):
+            await first_message.delete()
+            return await message.reply(
+                "<b>❌ Proses dibatalkan.</b>"
             )
 
-        db_channel = await get_database_channel(client)
-        chg = abs(db_channel)
-        
-        string = f"batch-{start_id * chg}-{end_id * chg}"
-        token = await encode(string)
-        
-        me = client.me or await client.get_me()
-        link = f"https://t.me/{me.username}?start={token}"
-
-        await msg.edit(
-            f"<b>✅ Link Batch Berhasil Dibuat</b>\n\n{link}",
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "Copy Link",
-                        copy_text=link
-                    )
-                ]
-            ])
+        f_msg_id = await get_message_id(
+            client,
+            first_message
         )
 
-    except Exception as e:
-        await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code> {client}"
+        if f_msg_id:
+            break
+
+        await first_message.reply(
+            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>",
+            quote=True,
         )
+
+    while True:
+        try:
+            second_message = await client.ask(
+                message.from_user.id,
+                "<b>Silahkan Teruskan Pesan/File Terakhir dari Channel DataBase. (Forward with Qoute)</b>\n\n<b>atau Kirim Link Postingan dari Channel Database</b>",
+                filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+                timeout=60,
+            )
+        except BaseException:
+            return
+
+        if second_message.text and second_message.text.startswith("/"):
+            await second_message.delete()
+            return await message.reply(
+                "<b>❌ Proses dibatalkan.</b>"
+            )
+
+        s_msg_id = await get_message_id(
+            client,
+            second_message
+        )
+
+        if s_msg_id:
+            break
+
+        await second_message.reply(
+            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>",
+            quote=True,
+        )
+
+    database_channel = await get_database_channel(client)
+
+    if not database_channel:
+        return await message.reply(
+            "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
+        )
+
+    chg = abs(database_channel)
+
+    string = f"get-{f_msg_id * chg}-{s_msg_id * chg}"
+    base64_string = await encode(string)
+
+    me = client.me or await client.get_me()
+
+    link = f"https://t.me/{me.username}?start={base64_string}"
+
+    reply_markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Bagikan Tautan",
+                    url=f"https://telegram.me/share/url?url={link}"
+                )
+            ]
+        ]
+    )
+
+    await second_message.reply_text(
+        f"<b>Link Sharing File Berhasil Di Buat:</b>\n\n{link}",
+        quote=True,
+        reply_markup=reply_markup,
+    )
         
 @Bot.on_message(filters.command("adddb") & filters.private & owner_admin)
 async def adddb(client, message):

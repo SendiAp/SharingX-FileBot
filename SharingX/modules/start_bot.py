@@ -55,9 +55,9 @@ owner = filters.create(owner_filter)
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
 
-    users = await get_user(client)
+    users = await get_user(client, client.me.id)
     if message.from_user.id not in users:
-        await add_user(client, message.from_user.id)
+        await add_user(client, client.me.id, message.from_user.id)
 
     if len(message.command) < 2:
 
@@ -184,7 +184,7 @@ async def start(client, message):
 async def stats(client, message):
 
     users = await get_user(
-        client
+        client, client.me.id
     )
 
     total_user = len(

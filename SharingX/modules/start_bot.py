@@ -12,7 +12,7 @@ from pyrogram.types import (
 
 from SharingX import Bot
 from SharingX.helper.database import botdb
-from SharingX.helper.tools import strtobool, encode, decode
+from SharingX.helper.tools import strtobool, encode, decode, get_messages
 from SharingX.modules.db import (
     get_forcesub_button_mode,
     set_database_channel,
@@ -151,7 +151,6 @@ async def start(client, message):
                 protect_content=rkhw,
                 reply_markup=None
             )
-
         
         elif data.startswith("batch-"):
             
@@ -173,12 +172,24 @@ async def start(client, message):
                     if i < end_id:
                         break
                         
-            for msg_id in ids:
+            mes = await get_messages(
+                client,
+                list(ids),
+                database_channel
+            )
+            
+            for msg in mes:
                 try:
-                    await client.copy_message(
-                        chat_id=message.chat.id,
-                        from_chat_id=database_channel,
-                        message_id=msg_id,
+                    await msg.copy(
+                        message.chat.id,
+                        protect_content=rkhw,
+                        reply_markup=None
+                    )
+                except FloodWait as e:
+                    await asyncio.sleep(e.value)
+                    
+                    await msg.copy(
+                        message.chat.id,
                         protect_content=rkhw,
                         reply_markup=None
                     )

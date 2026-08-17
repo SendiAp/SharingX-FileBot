@@ -13,7 +13,7 @@ from pyrogram.types import (
 
 from SharingX import Bot
 from SharingX.helper.database import botdb
-from SharingX.helper.tools import strtobool, encode, decode, get_messages
+from SharingX.helper.tools import strtobool, encode, decode, get_messages, get_message_id
 from SharingX.modules.db import (
     get_forcesub_button_mode,
     set_database_channel,

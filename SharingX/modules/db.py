@@ -1,7 +1,7 @@
-from pymongo.collection import Collection
+from motor.motor_asyncio import AsyncIOMotorCollection
 
 
-def _col(client, name: str) -> Collection:
+def _col(client, name: str) -> AsyncIOMotorCollection:
     return client.db[name]
 
 
@@ -10,7 +10,7 @@ def _col(client, name: str) -> Collection:
 # =========================
 
 async def set_database_channel(client, chat_id: int):
-    _col(client, "database_channel").update_one(
+    await _col(client, "database_channel").update_one(
         {"_id": "database"},
         {"$set": {"chat_id": chat_id}},
         upsert=True
@@ -18,14 +18,14 @@ async def set_database_channel(client, chat_id: int):
 
 
 async def get_database_channel(client):
-    data = _col(client, "database_channel").find_one(
+    data = await _col(client, "database_channel").find_one(
         {"_id": "database"}
     )
     return data.get("chat_id") if data else None
 
 
 async def del_database_channel(client):
-    _col(client, "database_channel").delete_one(
+    await _col(client, "database_channel").delete_one(
         {"_id": "database"}
     )
 
@@ -35,7 +35,7 @@ async def del_database_channel(client):
 # =========================
 
 async def set_link_status(client, status: bool):
-    _col(client, "link_mode").update_one(
+    await _col(client, "link_mode").update_one(
         {"_id": "link_mode"},
         {"$set": {"enabled": status}},
         upsert=True
@@ -43,7 +43,7 @@ async def set_link_status(client, status: bool):
 
 
 async def get_link_status(client):
-    data = _col(client, "link_mode").find_one(
+    data = await _col(client, "link_mode").find_one(
         {"_id": "link_mode"}
     )
 
@@ -58,7 +58,7 @@ async def get_link_status(client):
 # =========================
 
 async def add_forcesub(client, chat_id: int):
-    _col(client, "forcesub").update_one(
+    await _col(client, "forcesub").update_one(
         {"_id": chat_id},
         {"$set": {"chat_id": chat_id}},
         upsert=True
@@ -68,8 +68,16 @@ async def add_forcesub(client, chat_id: int):
 async def get_forcesubs(client):
     data = []
 
-    for doc in _col(client, "forcesub").find({}, {"_id": 1, "chat_id": 1}):
-        chat_id = doc.get("chat_id", doc.get("_id"))
+    cursor = _col(client, "forcesub").find(
+        {},
+        {"_id": 1, "chat_id": 1}
+    )
+
+    async for doc in cursor:
+        chat_id = doc.get(
+            "chat_id",
+            doc.get("_id")
+        )
 
         if isinstance(chat_id, int):
             data.append(chat_id)
@@ -78,7 +86,7 @@ async def get_forcesubs(client):
 
 
 async def del_forcesub(client, chat_id: int):
-    _col(client, "forcesub").delete_one(
+    await _col(client, "forcesub").delete_one(
         {"_id": chat_id}
     )
 
@@ -88,7 +96,7 @@ async def del_forcesub(client, chat_id: int):
 # =========================
 
 async def add_button(client, text: str, url: str):
-    _col(client, "buttons").update_one(
+    await _col(client, "buttons").update_one(
         {"text": text},
         {
             "$set": {
@@ -101,16 +109,14 @@ async def add_button(client, text: str, url: str):
 
 
 async def get_buttons(client):
-    return list(
-        _col(client, "buttons").find(
-            {},
-            {"_id": 0}
-        )
-    )
+    return await _col(client, "buttons").find(
+        {},
+        {"_id": 0}
+    ).to_list(length=None)
 
 
 async def del_button(client, text: str):
-    _col(client, "buttons").delete_one(
+    await _col(client, "buttons").delete_one(
         {"text": text}
     )
 
@@ -120,7 +126,7 @@ async def del_button(client, text: str):
 # =========================
 
 async def set_setting(client, key: str, value):
-    _col(client, "settings").update_one(
+    await _col(client, "settings").update_one(
         {"_id": key},
         {"$set": {"value": value}},
         upsert=True
@@ -128,7 +134,7 @@ async def set_setting(client, key: str, value):
 
 
 async def get_setting(client, key: str, default=None):
-    data = _col(client, "settings").find_one(
+    data = await _col(client, "settings").find_one(
         {"_id": key}
     )
 
@@ -143,7 +149,7 @@ async def get_setting(client, key: str, default=None):
 # =========================
 
 async def set_forcesub_button_mode(client, mode: str):
-    _col(client, "forcesub_settings").update_one(
+    await _col(client, "forcesub_settings").update_one(
         {"_id": "button_mode"},
         {"$set": {"mode": mode}},
         upsert=True
@@ -151,7 +157,7 @@ async def set_forcesub_button_mode(client, mode: str):
 
 
 async def get_forcesub_button_mode(client):
-    data = _col(client, "forcesub_settings").find_one(
+    data = await _col(client, "forcesub_settings").find_one(
         {"_id": "button_mode"}
     )
 
@@ -173,7 +179,7 @@ async def get_forcesub_button_mode(client):
 async def add_user(client, user_id):
     bot_id = str(client.me.id)
 
-    _col(client, "broad").update_one(
+    await _col(client, "broad").update_one(
         {
             "bot_id": bot_id,
             "user_id": user_id
@@ -191,22 +197,24 @@ async def add_user(client, user_id):
 async def get_user(client):
     bot_id = str(client.me.id)
 
+    cursor = _col(client, "broad").find(
+        {"bot_id": bot_id},
+        {
+            "_id": 0,
+            "user_id": 1
+        }
+    )
+
     return [
         doc["user_id"]
-        for doc in _col(client, "broad").find(
-            {"bot_id": bot_id},
-            {
-                "_id": 0,
-                "user_id": 1
-            }
-        )
+        async for doc in cursor
     ]
 
 
 async def del_user(client, user_id):
     bot_id = str(client.me.id)
 
-    _col(client, "broad").delete_one(
+    await _col(client, "broad").delete_one(
         {
             "bot_id": bot_id,
             "user_id": user_id
@@ -219,7 +227,7 @@ async def del_user(client, user_id):
 # =========================
 
 async def add_protect(client, protect: bool):
-    _col(client, "protect").update_one(
+    await _col(client, "protect").update_one(
         {"_id": "protect"},
         {"$set": {"enabled": protect}},
         upsert=True
@@ -227,7 +235,7 @@ async def add_protect(client, protect: bool):
 
 
 async def protect_info(client):
-    data = _col(client, "protect").find_one(
+    data = await _col(client, "protect").find_one(
         {"_id": "protect"}
     )
 
@@ -235,14 +243,14 @@ async def protect_info(client):
         return True
 
     return data.get("enabled", True)
-    
+
 
 # =========================
 # OWNER (BOT)
 # =========================
 
 async def add_owner(client, user_id):
-    _col(client, "owner").update_one(
+    await _col(client, "owner").update_one(
         {},
         {
             "$set": {
@@ -254,7 +262,7 @@ async def add_owner(client, user_id):
 
 
 async def get_owner(client):
-    data = _col(client, "owner").find_one({})
+    data = await _col(client, "owner").find_one({})
 
     return data["user_id"] if data else None
 
@@ -266,7 +274,12 @@ async def is_owner(client, user_id):
 async def get_owners(client):
     data = []
 
-    for doc in _col(client, "owner").find({}, {"_id": 0, "user_id": 1}):
+    cursor = _col(client, "owner").find(
+        {},
+        {"_id": 0, "user_id": 1}
+    )
+
+    async for doc in cursor:
         if "user_id" in doc:
             data.append(doc["user_id"])
 
@@ -278,7 +291,7 @@ async def get_owners(client):
 # =========================
 
 async def add_admin(client, user_id):
-    _col(client, "admin").update_one(
+    await _col(client, "admin").update_one(
         {"user_id": user_id},
         {
             "$set": {
@@ -290,13 +303,13 @@ async def add_admin(client, user_id):
 
 
 async def del_admin(client, user_id):
-    _col(client, "admin").delete_one(
+    await _col(client, "admin").delete_one(
         {"user_id": user_id}
     )
 
 
 async def is_admin(client, user_id):
-    data = _col(client, "admin").find_one(
+    data = await _col(client, "admin").find_one(
         {"user_id": user_id}
     )
 
@@ -306,7 +319,12 @@ async def is_admin(client, user_id):
 async def get_admins(client):
     data = []
 
-    for doc in _col(client, "admin").find({}, {"_id": 0, "user_id": 1}):
+    cursor = _col(client, "admin").find(
+        {},
+        {"_id": 0, "user_id": 1}
+    )
+
+    async for doc in cursor:
         if "user_id" in doc:
             data.append(doc["user_id"])
 

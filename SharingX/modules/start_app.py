@@ -938,33 +938,3 @@ async def restart_bot(client, callback_query: CallbackQuery):
         )
     except Exception:
         pass
-        
-@app.on_callback_query(filters.regex(r"^deletebot_(.+)$"))
-async def delete_bot(client, callback_query: CallbackQuery):
-
-    bot_id = callback_query.data.split("_", 1)[1]
-
-    data = await get_bot_data(bot_id)
-
-    if not data:
-        return await callback_query.answer("⚠️ Bot Tidak Ditemukan!")
-
-    try:
-        bot = Bot.get_instance(bot_id)
-
-        if bot:
-            await bot.stop()
-
-        await remove_bot(bot_id)
-        await del_reminder(str(bot_id))
-        await remove_user_bot(callback_query.from_user.id, bot_id)
-
-        await callback_query.edit_message_text(
-            "<b>✅ Bot Berhasil Diputuskan!",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Kembali", callback_data="back_start")]
-            ])
-        )
-
-    except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")

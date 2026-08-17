@@ -181,8 +181,9 @@ async def start(client, message):
                         protect_content=rkhw,
                         reply_markup=None
                     )
-                    except:
-                        pass
+                    
+                except:
+                    pass
 
         else:
             raise Exception("⚠️ Link Tidak Valid!")

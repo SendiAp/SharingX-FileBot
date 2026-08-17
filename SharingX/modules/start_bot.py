@@ -1,8 +1,6 @@
 import sys
 import base64
 import traceback
-from zoneinfo import ZoneInfo
-from io import BytesIO, StringIO
 from datetime import datetime, timezone
 
 from pyrogram import filters
@@ -458,7 +456,7 @@ async def batch(client, message):
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code> {client}"
         )
         
-@Bot.on_message(filters.command("adddb") & filters.private & owner)
+@Bot.on_message(filters.command("adddb") & filters.private & owner_admin)
 async def adddb(client, message):
 
     chat_id = None
@@ -746,127 +744,3 @@ async def store_file(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>"
     )
-
-async def aexec(code, client, message):
-
-    exec(
-        "async def __aexec(client, message):"
-        + "\n chat = message.chat.id"
-        + "\n r = message.reply_to_message"
-        + "\n c = client"
-        + "\n m = message"
-        + "\n p = print"
-        + "".join(
-            f"\n {line}"
-            for line in code.split("\n")
-        )
-    )
-
-    return await locals()["__aexec"](
-        client,
-        message
-    )
-
-
-@Bot.on_message(
-    filters.command("eval")
-)
-async def _(client, message):
-
-    if len(message.command) < 2:
-        return await message.reply(
-            "<b>❌ Silahkan kombinasikan dengan kode.</b>"
-        )
-
-    cmd = message.text.split(
-        " ",
-        maxsplit=1
-    )[1]
-
-    status_message = await message.reply_text(
-        "Processing ..."
-    )
-
-    reply_to_ = message
-
-    if message.reply_to_message:
-        reply_to_ = message.reply_to_message
-
-    old_stderr = sys.stderr
-    old_stdout = sys.stdout
-
-    redirected_output = StringIO()
-    redirected_error = StringIO()
-
-    sys.stdout = redirected_output
-    sys.stderr = redirected_error
-
-    stdout = None
-    stderr = None
-    exc = None
-
-    try:
-
-        await aexec(
-            cmd,
-            client,
-            message
-        )
-
-    except Exception:
-
-        exc = traceback.format_exc()
-
-    finally:
-
-        stdout = redirected_output.getvalue()
-        stderr = redirected_error.getvalue()
-
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
-
-    if exc:
-        evaluation = exc
-
-    elif stderr:
-        evaluation = stderr
-
-    elif stdout:
-        evaluation = stdout
-
-    else:
-        evaluation = "Success"
-
-    final_output = (
-        f"<b>EVAL</b>:\n"
-        f"<pre>{cmd}</pre>\n\n"
-        f"<b>OUTPUT</b>:\n"
-        f"<pre>{evaluation.strip()}</pre>"
-    )
-
-    if len(final_output) > 4096:
-
-        with BytesIO(
-            str.encode(final_output)
-        ) as out_file:
-
-            out_file.name = "eval.txt"
-
-            await reply_to_.reply_document(
-                document=out_file,
-                caption=cmd[:1000],
-                disable_notification=True,
-                quote=True
-            )
-
-    else:
-
-        await reply_to_.reply_text(
-            final_output,
-            quote=True
-        )
-
-    try:
-        await status_message.delete()
-    except Exception:
-        pass

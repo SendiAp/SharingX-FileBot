@@ -1,6 +1,7 @@
 import sys
 import base64
 import traceback
+from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 
 from pyrogram import filters

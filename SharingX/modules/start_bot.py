@@ -153,13 +153,26 @@ async def start(client, message):
             )
 
         elif data.startswith("batch-"):
-
+            
             _, start_id, end_id = data.split("-")
-
+            
             start_id = int(start_id) // chg
             end_id = int(end_id) // chg
-
-            for msg_id in range(start_id, end_id + 1):
+            
+            if start_id <= end_id:
+                ids = range(start_id, end_id + 1)
+            else:
+                ids = []
+                i = start_id
+                
+                while True:
+                    ids.append(i)
+                    i -= 1
+                    
+                    if i < end_id:
+                        break
+                        
+            for msg_id in ids:
                 try:
                     await client.copy_message(
                         chat_id=message.chat.id,
@@ -168,8 +181,8 @@ async def start(client, message):
                         protect_content=rkhw,
                         reply_markup=None
                     )
-                except:
-                    pass
+                    except:
+                        pass
 
         else:
             raise Exception("⚠️ Link Tidak Valid!")

@@ -125,6 +125,68 @@ async def start(client, message):
     try:
         token = message.command[1]
 
+        # Jika /start start, tampilkan pesan start seperti /start biasa
+        if token == "start":
+            forcesubs = await get_forcesubs(client)
+            mode = await get_forcesub_button_mode(client)
+
+            buttons, row = [], []
+
+            for chat_id in forcesubs:
+                try:
+                    chat = await client.get_chat(chat_id)
+
+                    if chat.username:
+                        url = f"https://t.me/{chat.username}"
+                    else:
+                        invite = chat.invite_link
+                        if not invite:
+                            try:
+                                invite = await client.create_chat_invite_link(chat.id)
+                                invite = invite.invite_link
+                            except:
+                                continue
+                        url = invite
+
+                    if mode == "text":
+                        text = (
+                            "Join Channel"
+                            if chat.type.name.lower() == "channel"
+                            else "Join Groups"
+                        )
+                    elif mode == "username":
+                        text = f"@{chat.username}" if chat.username else "Join"
+                    else:
+                        text = chat.title
+
+                    row.append(
+                        InlineKeyboardButton(text, url=url)
+                    )
+
+                    if len(row) == 2:
+                        buttons.append(row)
+                        row = []
+
+                except:
+                    pass
+
+            if row:
+                buttons.append(row)
+
+            if not buttons:
+                buttons = [[
+                    InlineKeyboardButton(
+                        "Tutup",
+                        callback_data="close"
+                    )
+                ]]
+
+            return await message.reply_text(
+                f"ʜᴇʟʟᴏ {message.from_user.mention}\n\n"
+                f"<b>sᴀʏᴀ ᴅᴀᴘᴀᴛ ᴍᴇɴʏɪᴍᴘᴀɴ ғɪʟᴇ ᴘʀɪʙᴀᴅɪ ᴅɪ ᴄʜᴀɴɴᴇʟ ᴛᴇʀᴛᴇɴᴛᴜ ᴅᴀɴ ᴘᴇɴɢɢᴜɴᴀ ʟᴀɪɴ ᴅᴀᴘᴀᴛ ᴍᴇɴɢᴀᴋsᴇsɴʏᴀ ᴅᴀʀɪ ʟɪɴᴋ ᴋʜᴜsᴜs.</b>",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
         database_channel = await get_database_channel(client)
 
         if not database_channel:

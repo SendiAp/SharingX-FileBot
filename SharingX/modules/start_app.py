@@ -313,7 +313,7 @@ async def bot_logs(client, callback_query: CallbackQuery):
             f"<b>📊 Status:</b> {status}\n"
             f"<b>📚 Total ditampilkan:</b> "
             f"{len(logs)}\n\n"
-            f"{log_text}"
+            f"<pre>{log_text}</pre>"
         )
 
         if len(text) > 4000:
@@ -594,10 +594,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 InlineKeyboardButton(
                     "🔄 Restart",
                     callback_data=f"restartbot_{bot_id}"
-                ),
-                InlineKeyboardButton(
-                    "🔗 Putuskan",
-                    callback_data=f"deletebot_{bot_id}"
                 )
             ],
             [
@@ -614,10 +610,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 InlineKeyboardButton(
                     "🗄️ Perpanjang",
                     callback_data=f"renew_{bot_id}"
-                ),
-                InlineKeyboardButton(
-                    "📚 Edit",
-                    callback_data=f"0"
                 )
             ],
             [

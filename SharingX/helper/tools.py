@@ -3,7 +3,7 @@ import base64
 import asyncio
 from pyrogram import filters
 
-from . database import get_database_channel
+from SharingX.modules.db import get_database_channel
 
 async def get_messages(c, message_ids, database_channel):
     messages = []

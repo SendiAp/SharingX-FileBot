@@ -152,12 +152,13 @@ async def start(client, message):
                 reply_markup=None
             )
 
+        
         elif data.startswith("batch-"):
             
             _, start_id, end_id = data.split("-")
             
-            start_id = int(start_id) // chg
-            end_id = int(end_id) // chg
+            start_id = int(int(start_id) / abs(chg))
+            end_id = int(int(end_id) / abs(chg))
             
             if start_id <= end_id:
                 ids = range(start_id, end_id + 1)
@@ -184,7 +185,7 @@ async def start(client, message):
                     
                 except:
                     pass
-
+            
         else:
             raise Exception("⚠️ Link Tidak Valid!")
 

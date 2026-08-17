@@ -177,7 +177,7 @@ async def get_forcesub_button_mode(client):
 # =========================
 
 async def add_user(client, user_id):
-    bot_id = str(client.me.id)
+    bot_id = client.me.id
 
     await _col(client, "broad").update_one(
         {
@@ -195,7 +195,7 @@ async def add_user(client, user_id):
 
 
 async def get_user(client):
-    bot_id = str(client.me.id)
+    bot_id = client.me.id
 
     cursor = _col(client, "broad").find(
         {"bot_id": bot_id},
@@ -212,7 +212,7 @@ async def get_user(client):
 
 
 async def del_user(client, user_id):
-    bot_id = str(client.me.id)
+    bot_id = client.me.id
 
     await _col(client, "broad").delete_one(
         {

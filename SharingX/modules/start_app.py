@@ -974,13 +974,30 @@ async def create_bot(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
 
     callback = await callback_query.edit_message_text(
-        "<b>🤖 Masukkan API ID Anda:</b>\n\n"
-        "__Dapatkan di web [my.telegram.org](https://my.telegram.org)__"
+        "<b>🤖 Bot:</b> Masukkan API ID Anda?\n\n"
+        "__Dapatkan di web [my.telegram.org](https://my.telegram.org)__\n\n"
+        "Tahap <pre>1/5</pre>\n\n"
+        "/cancel - Untuk Membatalkan!"
     )
 
     while True:
         user_msg = await app.listen(user_id)
 
+        if user_msg.text and user_msg.text.startswith("/"):
+            await user_msg.delete()
+            await callback.edit(
+                "<b>❌ Pembuatan Bot Dibatalkan.</b>",
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton(
+                            "🔙 Kembali",
+                            callback_data="my_bots"
+                        )
+                    ]
+                ])
+            )
+            return
+            
         try:
             api_id = int(user_msg.text)
             await user_msg.delete()
@@ -998,46 +1015,113 @@ async def create_bot(client, callback_query: CallbackQuery):
             await warn.delete()
 
     await callback.edit(
-        "<b>🤖 Masukkan API HASH Anda:</b>\n\n"
-        "__Dapatkan di web [my.telegram.org](https://my.telegram.org)__"
+        "<b>🤖 Bot:</b> Masukkan API HASH Anda?\n\n"
+        "__Dapatkan di web [my.telegram.org](https://my.telegram.org)__\n\n"
+        "Tahap <pre>2/5</pre>\n\n"
+        "/cancel - Untuk Membatalkan!"
     )
 
     user_msg = await app.listen(user_id)
-
+    
+    if user_msg.text and user_msg.text.startswith("/"):
+        await user_msg.delete()
+        await callback.edit(
+            "<b>❌ Pembuatan Bot Dibatalkan.</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 Kembali",
+                        callback_data="my_bots"
+                    )
+                ]
+            ])
+        )
+        return
+        
     api_hash = user_msg.text.strip()
 
     await user_msg.delete()
 
     await callback.edit(
-        "<b>🤖 Masukkan BOT TOKEN Anda:</b>\n\n"
-        "__Dapatkan di BOT @BotFather__"
+        "<b>🤖 Bot:</b> Masukkan BOT TOKEN Anda?\n\n"
+        "__Dapatkan di BOT @BotFather__\n\n"
+        "Tahap <pre>3/5</pre>\n\n"
+        "/cancel - Untuk Membatalkan!"
     )
 
     user_msg = await app.listen(user_id)
 
+    if user_msg.text and user_msg.text.startswith("/"):
+        await user_msg.delete()
+        await callback.edit(
+            "<b>❌ Pembuatan Bot Dibatalkan.</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 Kembali",
+                        callback_data="my_bots"
+                    )
+                ]
+            ])
+        )
+        return
+        
     bot_token = user_msg.text.strip()
 
     await user_msg.delete()
 
     await callback.edit(
-        "<b>🗄 Masukkan MongoDB URL:</b>\n\n"
-        "Contoh:\n"
-        "<code>mongodb+srv://user:pass@cluster.mongodb.net/</code>"
+        "<b>🤖 Bot:</b> Masukkan MongoDB URL Anda?\n\n"
+        "__Contoh: mongodb+srv://user:pass@cluster.mongodb.net/__\n\n"
+        "Tahap <pre>4/5</pre>\n\n"
+        "/cancel - Untuk Membatalkan!"
     )
 
     user_msg = await app.listen(user_id)
-
+    
+    if user_msg.text and user_msg.text.startswith("/"):
+        await user_msg.delete()
+        await callback.edit(
+            "<b>❌ Pembuatan Bot Dibatalkan.</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 Kembali",
+                        callback_data="my_bots"
+                    )
+                ]
+            ])
+        )
+        return
+        
     mongo_url = user_msg.text.strip()
 
     await user_msg.delete()
 
     await callback.edit(
-        "<b>📂 Masukkan Nama Database:</b>\n\n"
-        "Default: <code>sharingx</code>"
+        "<b>🤖 Bot:</b> Masukkan Nama Database?\n\n"
+        "Default: <code>sharingx</code>\n\n"
+        "Tahap <pre>5/5</pre>\n\n"
+        "/cancel - Untuk Membatalkan!"
     )
 
     user_msg = await app.listen(user_id)
 
+    if user_msg.text and user_msg.text.startswith("/"):
+        await user_msg.delete()
+        await callback.edit(
+            "<b>❌ Pembuatan Bot Dibatalkan.</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 Kembali",
+                        callback_data="my_bots"
+                    )
+                ]
+            ])
+        )
+        return
+        
     database = user_msg.text.strip()
 
     await user_msg.delete()
@@ -1046,7 +1130,7 @@ async def create_bot(client, callback_query: CallbackQuery):
         database = "sharingx"
 
     await callback.edit(
-        "<b>⏳ Mengecek data bot...</b>"
+        "<b>⏳ Sedang Melihat Data Bot, Mohon Tunggu...</b>"
     )
 
     bot_id = bot_token.split(":")[0]
@@ -1066,10 +1150,10 @@ async def create_bot(client, callback_query: CallbackQuery):
         me = await media.get_me()
 
         await callback.edit(
-            f"<b>✅ Bot berhasil ditemukan!</b>\n\n"
+            f"<b>✅ Bot Berhasil Ditemukan!</b>\n\n"
             f"<b>• Nama:</b> {me.first_name}\n"
             f"<b>• Username:</b> @{me.username}\n\n"
-            f"<b>⏳ Menyimpan konfigurasi...</b>"
+            f"<b>⏳ Menyimpan Konfigurasi...</b>"
         )
 
     except Exception as e:
@@ -1133,7 +1217,7 @@ async def create_bot(client, callback_query: CallbackQuery):
 
     await add_reminder(
         str(media.me.id),
-        3
+        4
     )
     
     await remove_bot_space(
@@ -1144,9 +1228,10 @@ async def create_bot(client, callback_query: CallbackQuery):
     await asyncio.sleep(2)
     
     await callback.edit(
-        "<b>✅ Bot Anda Berhasil Diaktifkan!</b>\n\n"
+        "<b>✅ Bot Anda Berhasil Disimpan!</b>\n\n"
         f"<b>• Username:</b> @{me.username}\n"
-        f"<b>• Database:</b> <code>{database}</code>",
+        f"<b>• Database:</b> <code>{database}</code>\n\n"
+        "__Untuk Melihat Status Bot Anda Silahkan Pergi Ke Start Dibot Ini.__",
         reply_markup=InlineKeyboardMarkup(
             [
                 [

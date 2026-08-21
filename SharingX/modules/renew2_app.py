@@ -1,5 +1,7 @@
-import asyncio
+import os
+import sys
 import random
+import asyncio
 
 from datetime import datetime, timezone, timedelta
 from pytz import timezone as pytz_timezone
@@ -529,6 +531,10 @@ async def check_renew_payment(
                             f"dibuat ulang dan dinyalakan."
                         )
 
+                        os.execv(
+                            sys.executable,
+                            [sys.executable, "-m", "SharingX"]
+                        )
                     except Exception as e:
 
                         LOGGER("Renew").error(

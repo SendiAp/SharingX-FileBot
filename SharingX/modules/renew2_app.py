@@ -3,6 +3,7 @@ import random
 
 from datetime import datetime, timezone, timedelta
 from pytz import timezone as pytz_timezone
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from pyrogram import filters
 from pyrogram.types import (
@@ -16,7 +17,9 @@ from SharingX.helper.database import (
     renew_orderdb,
     get_renew_order,
     del_renew_order,
-    renew_bot
+    renew_bot,
+    get_bot_data,
+    set_bot_status
 )
 
 from SharingX.helper.casaku import (
@@ -430,6 +433,8 @@ async def check_renew_payment(
                 except Exception:
                     pass
 
+                bot_started = False
+
                 robot = Bot.get_instance(
                     str(bot_id)
                 )
@@ -442,17 +447,106 @@ async def check_renew_payment(
                         False
                     )
 
-                    if not is_connected:
+                    if is_connected:
+
+                        bot_started = True
+
+                        LOGGER("Renew").info(
+                            f"[RENEW] Bot {bot_id} masih aktif."
+                        )
+
+                    else:
 
                         try:
+
                             await robot.start()
+
+                            bot_started = True
+
+                            await set_bot_status(
+                                bot_id,
+                                "running"
+                            )
+
+                            LOGGER("Renew").info(
+                                f"[RENEW] Bot {bot_id} berhasil "
+                                f"dinyalakan kembali."
+                            )
 
                         except Exception as e:
 
-                            LOGGER("Renew").warning(
+                            LOGGER("Renew").error(
                                 f"[RENEW START ERROR] "
                                 f"{bot_id}: {e}"
                             )
+
+                else:
+
+                    try:
+
+                        bot_data = await get_bot_data(
+                            bot_id
+                        )
+
+                        if not bot_data:
+                            raise Exception(
+                                "Data bot tidak ditemukan."
+                            )
+
+                        robot = Bot(
+                            name=str(bot_id),
+                            api_id=bot_data["api_id"],
+                            api_hash=bot_data["api_hash"],
+                            bot_token=bot_data["bot_token"]
+                        )
+
+                        robot.in_memory = False
+
+                        mongo = AsyncIOMotorClient(
+                            bot_data["mongo_url"]
+                        )
+
+                        robot.mongo = mongo
+
+                        robot.db = mongo[
+                            bot_data.get(
+                                "database",
+                                "sharingx"
+                            )
+                        ]
+
+                        await robot.start()
+
+                        bot_started = True
+
+                        await set_bot_status(
+                            bot_id,
+                            "running"
+                        )
+
+                        LOGGER("Renew").info(
+                            f"[RENEW] Bot {bot_id} berhasil "
+                            f"dibuat ulang dan dinyalakan."
+                        )
+
+                    except Exception as e:
+
+                        LOGGER("Renew").error(
+                            f"[RENEW RESTART ERROR] "
+                            f"{bot_id}: {e}"
+                        )
+
+                if not bot_started:
+
+                    await set_bot_status(
+                        bot_id,
+                        "expired"
+                    )
+
+                    LOGGER("Renew").warning(
+                        f"[RENEW] Bot {bot_id} berhasil "
+                        f"diperpanjang tetapi gagal dinyalakan."
+                    )
 
                 await app.send_message(
                     user_id,
@@ -465,9 +559,18 @@ async def check_renew_payment(
                     f"{format_rupiah(amount)}\n"
                     f"<b>🧾 Invoice:</b> "
                     f"<code>{payment_ref}</code>\n\n"
-                    "<b>✅ Bot berhasil diperpanjang.</b>\n"
-                    "<b>Terimakasih telah menggunakan "
-                    "layanan SharingX.</b>",
+                    + (
+                        "<b>✅ Bot berhasil diperpanjang dan "
+                        "dinyalakan kembali.</b>\n"
+                        if bot_started
+                        else
+                        "<b>⚠️ Bot berhasil diperpanjang, "
+                        "tetapi gagal dinyalakan.</b>\n"
+                    )
+                    + (
+                        "<b>Terimakasih telah menggunakan "
+                        "layanan SharingX.</b>"
+                    ),
                     reply_markup=InlineKeyboardMarkup([
                         [
                             InlineKeyboardButton(

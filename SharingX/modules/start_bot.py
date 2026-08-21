@@ -555,8 +555,7 @@ async def batch(client, message):
             break
 
         await first_message.reply(
-            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>",
-            quote=True,
+            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>"
         )
 
     while True:
@@ -585,8 +584,7 @@ async def batch(client, message):
             break
 
         await second_message.reply(
-            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>",
-            quote=True,
+            "❌ <b>ERROR</b>\n\n<b>Postingan yang Diforward ini bukan dari Channel Database saya</b>"
         )
 
     database_channel = await get_database_channel(client)
@@ -609,8 +607,8 @@ async def batch(client, message):
         [
             [
                 InlineKeyboardButton(
-                    "Bagikan Tautan",
-                    url=f"https://telegram.me/share/url?url={link}"
+                    "Copy Link",
+                    copy_text=link
                 )
             ]
         ]
@@ -618,8 +616,7 @@ async def batch(client, message):
 
     await second_message.reply_text(
         f"<b>Link Sharing File Berhasil Di Buat:</b>\n\n{link}",
-        quote=True,
-        reply_markup=reply_markup,
+        reply_markup=reply_markup
     )
         
 @Bot.on_message(filters.command("adddb") & filters.private & owner_admin)

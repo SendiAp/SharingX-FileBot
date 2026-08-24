@@ -32,11 +32,13 @@ UPTIME_URL = (
 
 UPTIME_SECRET = "BottyCu-Uptime-2026-Rahasia"
 
-
 async def uptime_heartbeat(
     bot,
-    bot_id
+    bot_id,
+    display_name
 ):
+
+    online_logged = False
 
     while True:
 
@@ -44,7 +46,7 @@ async def uptime_heartbeat(
 
             start = time.perf_counter()
 
-            me = await bot.get_me()
+            await bot.get_me()
 
             latency = round(
                 (
@@ -66,14 +68,10 @@ async def uptime_heartbeat(
                             str(bot_id),
 
                         "name":
-                            me.first_name,
+                            display_name,
 
                         "username":
-                            (
-                                f"@{me.username}"
-                                if me.username
-                                else None
-                            ),
+                            "-",
 
                         "latency":
                             latency
@@ -94,12 +92,17 @@ async def uptime_heartbeat(
 
                     if response.status == 200:
 
-                        print(
-                            f"[UPTIME] "
-                            f"{me.first_name} "
-                            f"ONLINE | "
-                            f"{latency}ms"
-                        )
+                        if not online_logged:
+
+                            print(
+                                f"[UPTIME] "
+                                f"{display_name} "
+                                f"ONLINE | "
+                                f"{latency}ms"
+                            )
+
+                            online_logged = True
+
 
                     else:
 
@@ -110,17 +113,20 @@ async def uptime_heartbeat(
                             f"{await response.text()}"
                         )
 
+                        online_logged = False
+
 
         except Exception as e:
 
             print(
                 f"[UPTIME] "
-                f"{bot_id} ERROR: {e}"
+                f"{display_name} ERROR: {e}"
             )
+
+            online_logged = False
 
 
         await asyncio.sleep(30)
-
 
 # ==========================================
 # MAIN
@@ -190,13 +196,13 @@ async def main():
                 # START UPTIME MONITORING
                 # ==========================
 
+                display_name = f"RM{bots.index(bt) + 1}"
                 asyncio.create_task(
-
                     uptime_heartbeat(
                         b,
-                        bot_id
+                        bot_id,
+                        display_name
                     )
-
                 )
 
 

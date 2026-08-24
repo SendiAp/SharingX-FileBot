@@ -71,7 +71,7 @@ async def uptime_heartbeat(
                             display_name,
 
                         "username":
-                            "-",
+                            "Penting",
 
                         "latency":
                             latency

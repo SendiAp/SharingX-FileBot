@@ -94,34 +94,15 @@ async def uptime_heartbeat(
 
                         if not online_logged:
 
-                            print(
-                                f"[UPTIME] "
-                                f"{display_name} "
-                                f"ONLINE | "
-                                f"{latency}ms"
-                            )
-
                             online_logged = True
 
 
                     else:
 
-                        print(
-                            f"[UPTIME] "
-                            f"ERROR "
-                            f"{response.status}: "
-                            f"{await response.text()}"
-                        )
-
                         online_logged = False
 
 
         except Exception as e:
-
-            print(
-                f"[UPTIME] "
-                f"{display_name} ERROR: {e}"
-            )
 
             online_logged = False
 
@@ -184,17 +165,7 @@ async def main():
                     )
                 ]
 
-
-                # ==========================
-                # START BOT
-                # ==========================
-
                 await b.start()
-
-
-                # ==========================
-                # START UPTIME MONITORING
-                # ==========================
 
                 display_name = f"RM{bots.index(bt) + 1}"
                 asyncio.create_task(

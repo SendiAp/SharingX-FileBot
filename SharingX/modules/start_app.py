@@ -383,141 +383,249 @@ async def clear_logs(client, callback_query: CallbackQuery):
 
 @app.on_callback_query(filters.regex(r"^bot_(?!logs_)(.+)$"))
 async def bot_settings(client, callback_query: CallbackQuery):
-try:
-bot_id = callback_query.data.split("_", 1)[1]
-data = await get_bot_data(bot_id)
-if not data:
-return await callback_query.answer("⚠️ Bot Tidak Ditemukan!", show_alert=True)
-
-    WIB = timezone(timedelta(hours=7))
-    status = {
-        "running": "🟢 Running", "stopped": "🔴 Stopped",
-        "restart": "🔄 Restarting", "crash": "⚫ Crash",
-        "expired": "⏳ Expired", "terminated": "⛔ Terminated"
-    }.get(data.get("status"), "⚫ Unknown")
-
-    expires_at = data.get("expires_at")
-    grace_until = data.get("grace_until")
-    expired_text = remaining_text = terminate_text = "-"
-
-    if expires_at:
-        try:
-            if expires_at.tzinfo is None:
-                expires_at = expires_at.replace(tzinfo=timezone.utc)
-
-            expired_text = expires_at.astimezone(WIB).strftime("%d-%m-%Y %H:%M:%S WIB")
-            remaining = expires_at - datetime.now(timezone.utc)
-
-            if remaining.total_seconds() > 0:
-                days = remaining.days
-                hours, rem = divmod(remaining.seconds, 3600)
-                minutes, seconds = divmod(rem, 60)
-                remaining_text = f"{days} Hari {hours} Jam {minutes} Menit {seconds} Detik"
-            else:
-                remaining_text = "⏳ Expired"
-        except Exception:
-            pass
-
-    if grace_until:
-        try:
-            if grace_until.tzinfo is None:
-                grace_until = grace_until.replace(tzinfo=timezone.utc)
-            terminate_text = grace_until.astimezone(WIB).strftime("%d-%m-%Y %H:%M:%S WIB")
-        except Exception:
-            pass
-
-    name, ping, uptime, docs, cols = "⚠️ Bot Sedang Offline", "-", "-", 0, 0
-    robot = Bot.get_instance(bot_id)
-
-    if robot:
-        try:
-            me = await robot.get_me()
-            name = f"[{me.first_name}](https://t.me/{me.username})" if me.username else me.first_name
-        except Exception:
-            name = "⚠️ Tidak dapat mengambil nama bot"
-
-        try:
-            t = time.perf_counter()
-            await robot.get_me()
-            ping_value = round((time.perf_counter() - t) * 1000)
-
-            if ping_value < 100:
-                ping_status = "🟢 Sangat Baik"
-            elif ping_value < 200:
-                ping_status = "🟢 Baik"
-            elif ping_value < 300:
-                ping_status = "🟡 Normal"
-            elif ping_value < 500:
-                ping_status = "🟠 Lambat"
-            elif ping_value < 1000:
-                ping_status = "🔴 Buruk"
-            else:
-                ping_status = "🔴 Sangat Buruk"
-
-            ping = f"{ping_status} ({ping_value} ms)"
-        except Exception:
-            ping = "⚫ Tidak tersedia"
-
-        try:
-            if robot.start_time:
-                seconds = int(time.time() - robot.start_time)
-                h, seconds = divmod(seconds, 3600)
-                m, seconds = divmod(seconds, 60)
-                uptime = f"{h:02}<b>Jam</b> {m:02}<b>Menit</b> {seconds:02}<b>Detik</b>"
-        except Exception:
-            pass
-
-        try:
-            stats = robot.db.command("dbStats")
-            cols, docs = stats.get("collections", 0), stats.get("objects", 0)
-        except Exception:
-            pass
-
-    buttons = [
-        [
-            InlineKeyboardButton("▶️ Start", callback_data=f"startbot_{bot_id}", style=ButtonStyle.SUCCESS),
-            InlineKeyboardButton("⏸ Stop", callback_data=f"stopbot_{bot_id}", style=ButtonStyle.DANGER)
-        ],
-        [InlineKeyboardButton("🔄 Restart", callback_data=f"restartbot_{bot_id}", style=ButtonStyle.PRIMARY)],
-        [
-            InlineKeyboardButton("📋 Logs", callback_data=f"bot_logs_{bot_id}"),
-            InlineKeyboardButton("📚 Config", callback_data=f"config_{bot_id}")
-        ],
-        [InlineKeyboardButton("🗄️ Perpanjang", callback_data=f"renew_{bot_id}")],
-        [InlineKeyboardButton("🔙 Kembali", callback_data="my_bots")]
-    ]
-
-    text = (
-        "<b><u>• Bot Information atau Statistik Bot</u></b>\n"
-        "––––—––––———––•\n\n"
-        "🤖 <b><u>Information Bot:</u></b>\n"
-        f"<b><u>• Name</u> |</b> {name}\n"
-        f"<b><u>• ID Bot</u> |</b> <code>{bot_id}</code>\n"
-        f"<b><u>• Status</u> |</b> {status}\n"
-        f"<b><u>• Expired</u> |</b> {expired_text}\n"
-        f"<b><u>• Remaining</u> |</b> {remaining_text}\n"
-        f"<b><u>• Terminate</u> |</b> {terminate_text}\n\n"
-        "🗄️ <b><u>Real-time Sistem:</u></b>\n"
-        f"<b><u>• Ping</u> |</b> {ping}\n"
-        f"<b><u>• Uptime</u> |</b> {uptime}\n\n"
-        "📂 <b><u>Database Real-time:</u></b>\n"
-        f"<b><u>• Name</u> |</b> {data.get('database', 'sharingx')}\n"
-        f"<b><u>• Collection</u> |</b> {cols:,}\n"
-        f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
-        "<b>© Bot By SharingX</b>"
-    )
-
-    await callback_query.edit_message_text(
-        text, link_preview_options=LinkPreviewOptions(is_disabled=True),
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-
-except Exception as e:
     try:
-        await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> {str(e)[:180]}")
-    except Exception:
-        pass
+        bot_id = callback_query.data.split("_", 1)[1]
+        data = await get_bot_data(bot_id)
 
+        if not data:
+            return await callback_query.answer(
+                "⚠️ Bot Tidak Ditemukan!",
+                show_alert=True
+            )
+
+        WIB = timezone(timedelta(hours=7))
+
+        status = {
+            "running": "🟢 Running",
+            "stopped": "🔴 Stopped",
+            "restart": "🔄 Restarting",
+            "crash": "⚫ Crash",
+            "expired": "⏳ Expired",
+            "terminated": "⛔ Terminated"
+        }.get(data.get("status"), "⚫ Unknown")
+
+        expires_at = data.get("expires_at")
+        grace_until = data.get("grace_until")
+
+        expired_text = "-"
+        remaining_text = "-"
+        terminate_text = "-"
+
+        if expires_at:
+            try:
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+                expired_text = expires_at.astimezone(WIB).strftime(
+                    "%d-%m-%Y %H:%M:%S WIB"
+                )
+
+                remaining = expires_at - datetime.now(timezone.utc)
+
+                if remaining.total_seconds() > 0:
+                    days = remaining.days
+                    hours, rem = divmod(remaining.seconds, 3600)
+                    minutes, seconds = divmod(rem, 60)
+
+                    remaining_text = (
+                        f"{days} Hari "
+                        f"{hours} Jam "
+                        f"{minutes} Menit "
+                        f"{seconds} Detik"
+                    )
+                else:
+                    remaining_text = "⏳ Expired"
+
+            except Exception:
+                pass
+
+        if grace_until:
+            try:
+                if grace_until.tzinfo is None:
+                    grace_until = grace_until.replace(tzinfo=timezone.utc)
+
+                terminate_text = grace_until.astimezone(WIB).strftime(
+                    "%d-%m-%Y %H:%M:%S WIB"
+                )
+
+            except Exception:
+                pass
+
+        name = "⚠️ Bot Sedang Offline"
+        ping = "-"
+        uptime = "-"
+        docs = 0
+        cols = 0
+
+        robot = Bot.get_instance(bot_id)
+
+        if robot:
+            try:
+                me = await robot.get_me()
+
+                name = (
+                    f'<a href="https://t.me/{me.username}">{me.first_name}</a>'
+                    if me.username
+                    else me.first_name
+                )
+
+            except Exception:
+                name = "⚠️ Tidak dapat mengambil nama bot"
+
+            try:
+                t = time.perf_counter()
+
+                await robot.get_me()
+
+                ping_value = round(
+                    (time.perf_counter() - t) * 1000
+                )
+
+                if ping_value < 100:
+                    ping_status = "🟢 Sangat Baik"
+                elif ping_value < 200:
+                    ping_status = "🟢 Baik"
+                elif ping_value < 300:
+                    ping_status = "🟡 Normal"
+                elif ping_value < 500:
+                    ping_status = "🟠 Lambat"
+                elif ping_value < 1000:
+                    ping_status = "🔴 Buruk"
+                else:
+                    ping_status = "🔴 Sangat Buruk"
+
+                ping = f"{ping_status} ({ping_value} ms)"
+
+            except Exception:
+                ping = "⚫ Tidak tersedia"
+
+            try:
+                if robot.start_time:
+                    total_seconds = int(
+                        time.time() - robot.start_time
+                    )
+
+                    days, total_seconds = divmod(
+                        total_seconds, 86400
+                    )
+
+                    hours, total_seconds = divmod(
+                        total_seconds, 3600
+                    )
+
+                    minutes, seconds = divmod(
+                        total_seconds, 60
+                    )
+
+                    if days > 0:
+                        uptime = (
+                            f"{days} Hari "
+                            f"{hours:02} Jam "
+                            f"{minutes:02} Menit "
+                            f"{seconds:02} Detik"
+                        )
+                    else:
+                        uptime = (
+                            f"{hours:02} Jam "
+                            f"{minutes:02} Menit "
+                            f"{seconds:02} Detik"
+                        )
+
+            except Exception:
+                pass
+
+            try:
+                stats = await robot.db.command("dbStats")
+
+                cols = stats.get("collections", 0)
+                docs = stats.get("objects", 0)
+
+            except Exception:
+                pass
+
+        buttons = [
+            [
+                InlineKeyboardButton(
+                    "▶️ Start",
+                    callback_data=f"startbot_{bot_id}",
+                    style=ButtonStyle.SUCCESS
+                ),
+                InlineKeyboardButton(
+                    "⏸ Stop",
+                    callback_data=f"stopbot_{bot_id}",
+                    style=ButtonStyle.DANGER
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🔄 Restart",
+                    callback_data=f"restartbot_{bot_id}",
+                    style=ButtonStyle.PRIMARY
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📋 Logs",
+                    callback_data=f"bot_logs_{bot_id}"
+                ),
+                InlineKeyboardButton(
+                    "📚 Config",
+                    callback_data=f"config_{bot_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🗄️ Perpanjang",
+                    callback_data=f"renew_{bot_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🔙 Kembali",
+                    callback_data="my_bots"
+                )
+            ]
+        ]
+
+        text = (
+            "<b><u>• Bot Information atau Statistik Bot</u></b>\n"
+            "––––—––––———––•\n\n"
+
+            "🤖 <b><u>Information Bot:</u></b>\n"
+            f"<b><u>• Name</u> |</b> {name}\n"
+            f"<b><u>• ID Bot</u> |</b> <code>{bot_id}</code>\n"
+            f"<b><u>• Status</u> |</b> {status}\n"
+            f"<b><u>• Expired</u> |</b> {expired_text}\n"
+            f"<b><u>• Remaining</u> |</b> {remaining_text}\n"
+            f"<b><u>• Terminate</u> |</b> {terminate_text}\n\n"
+
+            "🗄️ <b><u>Real-time Sistem:</u></b>\n"
+            f"<b><u>• Ping</u> |</b> {ping}\n"
+            f"<b><u>• Uptime</u> |</b> {uptime}\n\n"
+
+            "📂 <b><u>Database Real-time:</u></b>\n"
+            f"<b><u>• Name</u> |</b> "
+            f"{data.get('database', 'sharingx')}\n"
+            f"<b><u>• Collection</u> |</b> {cols:,}\n"
+            f"<b><u>• Documents</u> |</b> {docs:,}\n\n"
+
+            "<b>© Bot By SharingX</b>"
+        )
+
+        await callback_query.edit_message_text(
+            text,
+            link_preview_options=LinkPreviewOptions(
+                is_disabled=True
+            ),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+
+    except Exception as e:
+        try:
+            await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> {str(e)[:180]}")
+        except Exception:
+            pass
+            
 @app.on_callback_query(filters.regex(r"^config_(.+)$"))
 async def bot_config(client, callback_query):
     bot_id = callback_query.data.split("_", 1)[1]

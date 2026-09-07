@@ -6,6 +6,7 @@ from pyrogram.errors import (
 )
 
 from pyrogram.types import (
+    LinkPreviewOptions,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
@@ -462,7 +463,7 @@ async def forcesub(client, message):
         f"__Anda Harus Bergabung Di Channel/Group Saya Terlebih Dahulu Untuk Menggunakan Bot Ini.__\n\n"
         f"Silahkan Bergabung Channel/Groups:",
         reply_markup=InlineKeyboardMarkup(keyboard),
-        disable_web_page_preview=True
+        link_preview_options=LinkPreviewOptions(is_disabled=True)
     )
 
     await message.stop_propagation()

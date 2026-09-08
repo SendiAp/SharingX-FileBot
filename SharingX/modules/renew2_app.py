@@ -435,11 +435,12 @@ async def check_renew_payment(
                 except Exception:
                     pass
 
-                bot_started = False
-
                 robot = Bot.get_instance(
                     str(bot_id)
                 )
+
+                need_restart = False
+                bot_started = False
 
                 if robot:
 
@@ -521,6 +522,8 @@ async def check_renew_payment(
 
                         bot_started = True
 
+                        need_restart = True
+
                         await set_bot_status(
                             bot_id,
                             "running"
@@ -531,10 +534,6 @@ async def check_renew_payment(
                             f"dibuat ulang dan dinyalakan."
                         )
 
-                        os.execv(
-                            sys.executable,
-                            [sys.executable, "-m", "SharingX"]
-                        )
                     except Exception as e:
 
                         LOGGER("Renew").error(
@@ -591,6 +590,13 @@ async def check_renew_payment(
                     user_id,
                     bot_id
                 )
+
+                if need_restart:
+
+                    os.execv(
+                        sys.executable,
+                        [sys.executable, "-m", "SharingX"]
+                    )
 
                 return
 

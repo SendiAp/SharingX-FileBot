@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 
 from pyrogram import filters
+from pyrogram.errors import FloodWait
 from pyrogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,

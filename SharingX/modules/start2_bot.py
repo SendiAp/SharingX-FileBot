@@ -289,10 +289,74 @@ async def list_admin_cmd(client, message):
 
     await message.reply(text)
 
+@Bot.on_message(
+    filters.command("genlink")
+    & filters.private
+    & owner_admin
+)
+async def gen_link(client, message):
+    try:
+        target_message = await client.ask(
+            message.from_user.id,
+            "<b>Silahkan Kirim Link Postingan dari Channel Database.</b>",
+            filters=filters.text,
+            timeout=60
+        )
+    except BaseException:
+        return
 
+    if target_message.text and target_message.text.startswith("/"):
+        await target_message.delete()
+        return await message.reply(
+            "<b>❌ Proses dibatalkan.</b>"
+        )
+
+    msg_id = await get_message_id(
+        client,
+        target_message
+    )
+
+    if not msg_id:
+        return await target_message.reply(
+            "❌ <b>ERROR</b>\n\n"
+            "<b>Link yang dikirim bukan dari Channel Database saya.</b>"
+        )
+
+    database_channel = await get_database_channel(client)
+
+    if not database_channel:
+        return await message.reply(
+            "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
+        )
+
+    chg = abs(database_channel)
+
+    string = f"get-{msg_id * chg}"
+    token = await encode(string)
+
+    me = client.me or await client.get_me()
+
+    link = f"https://t.me/{me.username}?start={token}"
+
+    reply_markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Copy Link",
+                    copy_text=link
+                )
+            ]
+        ]
+    )
+
+    await target_message.reply_text(
+        f"<b>Link Sharing File Berhasil Di Buat:</b>\n\n{link}",
+        reply_markup=reply_markup
+    )
+    
 @Bot.on_message(
     filters.private
-    & ~filters.command("start", "batch")
+    & ~filters.command("start", "batch", "genlink")
     & owner_admin
     & (
         filters.photo
@@ -364,68 +428,3 @@ async def store_file(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>"
         )
-
-@Bot.on_message(
-    filters.command("genlink")
-    & filters.private
-    & owner_admin
-)
-async def gen_link(client, message):
-    try:
-        target_message = await client.ask(
-            message.from_user.id,
-            "<b>Silahkan Kirim Link Postingan dari Channel Database.</b>",
-            filters=filters.text,
-            timeout=60
-        )
-    except BaseException:
-        return
-
-    if target_message.text and target_message.text.startswith("/"):
-        await target_message.delete()
-        return await message.reply(
-            "<b>❌ Proses dibatalkan.</b>"
-        )
-
-    msg_id = await get_message_id(
-        client,
-        target_message
-    )
-
-    if not msg_id:
-        return await target_message.reply(
-            "❌ <b>ERROR</b>\n\n"
-            "<b>Link yang dikirim bukan dari Channel Database saya.</b>"
-        )
-
-    database_channel = await get_database_channel(client)
-
-    if not database_channel:
-        return await message.reply(
-            "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
-        )
-
-    chg = abs(database_channel)
-
-    string = f"get-{msg_id * chg}"
-    token = await encode(string)
-
-    me = client.me or await client.get_me()
-
-    link = f"https://t.me/{me.username}?start={token}"
-
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    "Copy Link",
-                    copy_text=link
-                )
-            ]
-        ]
-    )
-
-    await target_message.reply_text(
-        f"<b>Link Sharing File Berhasil Di Buat:</b>\n\n{link}",
-        reply_markup=reply_markup
-    )

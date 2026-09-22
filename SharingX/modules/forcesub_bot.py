@@ -70,9 +70,15 @@ async def addforcesub_handler(client, message):
     elif message.reply_to_message:
 
         reply = message.reply_to_message
+        forward_origin = reply.forward_origin
 
-        if reply.forward_from_chat:
-            chat_id = reply.forward_from_chat.id
+        if (
+            forward_origin
+            and hasattr(forward_origin, "chat")
+            and forward_origin.chat
+            and forward_origin.chat.sender_chat
+        ):
+            chat_id = forward_origin.chat.sender_chat.id
 
         elif reply.sender_chat:
             chat_id = reply.sender_chat.id
@@ -92,7 +98,10 @@ async def addforcesub_handler(client, message):
         )
 
     try:
-        await client.send_message(chat_id, "✅ Berhasil disimpan sebagai Force Subscribe.")
+        await client.send_message(
+            chat_id,
+            "✅ Berhasil disimpan sebagai Force Subscribe."
+        )
     except Exception:
         return await message.reply_text(
             "<b>❌ Bot tidak dapat mengirim pesan ke channel/grup.</b>\n\n"

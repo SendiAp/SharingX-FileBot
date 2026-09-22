@@ -406,16 +406,16 @@ async def change_name_warning(client, callback_query):
         ])
     )
 
-
-@app.on_callback_query(filters.regex(r"^chg_name_confirm_(.+)$"))
+@app.on_callback_query(filters.regex(r"^change_name_confirm_(.+)$"))
 async def change_name_confirm(client, callback_query):
-    bot_id = callback_query.data.split("change_name_confirm_", 1)[1]
+    bot_id = callback_query.matches[0].group(1)
 
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.edit_message_text(
-            f"⚠️ Bot Tidak Ditemukan! {bot_id}"
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
         )
 
     current_name = data.get("database", "sharingx")

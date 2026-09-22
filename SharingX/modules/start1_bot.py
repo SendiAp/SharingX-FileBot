@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import base64
 import traceback
@@ -37,6 +38,7 @@ from SharingX.modules.db import (
     add_user
 )
 
+
 async def owner_admin_filter(_, client, message):
     user_id = message.from_user.id
 
@@ -48,12 +50,16 @@ async def owner_admin_filter(_, client, message):
 
     return False
 
+
 owner_admin = filters.create(owner_admin_filter)
+
 
 async def owner_filter(_, client, message):
     return await is_owner(client, message.from_user.id)
 
+
 owner = filters.create(owner_filter)
+
 
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -200,11 +206,11 @@ async def start(client, message):
         data = await decode(token)
 
         cckh = await protect_info(client)
-        
+
         rkhw = strtobool(cckh)
-        
+
         if data.startswith("get-"):
-            
+
             argument = data.split("-")
 
             if len(argument) == 2:
@@ -235,26 +241,26 @@ async def start(client, message):
 
                 start = int(int(argument[1]) / abs(chg))
                 end = int(int(argument[2]) / abs(chg))
-                
+
                 if start <= end:
                     ids = range(start, end + 1)
                 else:
                     ids = []
                     i = start
-                    
+
                     while True:
                         ids.append(i)
                         i -= 1
-                        
+
                         if i < end:
                             break
-                            
+
                 mes = await get_messages(
                     client,
                     list(ids),
                     database_channel
                 )
-                
+
                 for msg in mes:
                     try:
                         await msg.copy(
@@ -262,48 +268,48 @@ async def start(client, message):
                             protect_content=rkhw,
                             reply_markup=None
                         )
-                        
+
                     except FloodWait as e:
                         await asyncio.sleep(e.value)
-                        
+
                         await msg.copy(
                             message.chat.id,
                             protect_content=rkhw,
                             reply_markup=None
                         )
-                        
+
                     except:
                         pass
 
             else:
                 raise Exception("⚠️ Link Tidak Valid!")
-        
+
         elif data.startswith("batch-"):
-            
+
             _, start_id, end_id = data.split("-")
-            
+
             start_id = int(int(start_id) / abs(chg))
             end_id = int(int(end_id) / abs(chg))
-            
+
             if start_id <= end_id:
                 ids = range(start_id, end_id + 1)
             else:
                 ids = []
                 i = start_id
-                
+
                 while True:
                     ids.append(i)
                     i -= 1
-                    
+
                     if i < end_id:
                         break
-                        
+
             mes = await get_messages(
                 client,
                 list(ids),
                 database_channel
             )
-            
+
             for msg in mes:
                 try:
                     await msg.copy(
@@ -313,16 +319,16 @@ async def start(client, message):
                     )
                 except FloodWait as e:
                     await asyncio.sleep(e.value)
-                    
+
                     await msg.copy(
                         message.chat.id,
                         protect_content=rkhw,
                         reply_markup=None
                     )
-                    
+
                 except:
                     pass
-            
+
         else:
             raise Exception("⚠️ Link Tidak Valid!")
 
@@ -330,7 +336,8 @@ async def start(client, message):
         await message.reply_text(
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
-        
+
+
 @Bot.on_message(
     filters.command("stats") & filters.private & owner
 )
@@ -454,7 +461,8 @@ async def stats(client, message):
     await message.reply_text(
         text
     )
-    
+
+
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):
     try:
@@ -462,6 +470,7 @@ async def close_callback(client, callback_query):
         await callback_query.answer()
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+
 
 @Bot.on_message(filters.command("link") & filters.private & owner_admin)
 async def link_mode(client, message):
@@ -497,12 +506,13 @@ async def link_mode(client, message):
         )
 
     else:
-        
+
         return await message.reply_text(
             "<b>Gunakan:</b>\n"
             "<code>/link on</code>\n"
             "<code>/link off</code>"
         )
+
 
 @Bot.on_message(filters.command("protect") & filters.private & owner_admin)
 async def protect_cmd(client, message: Message):
@@ -527,7 +537,8 @@ async def protect_cmd(client, message: Message):
     await message.reply_text(
         f"✅ <b>Protect berhasil {'diaktifkan' if protect else 'dinonaktifkan'}.</b>"
     )
-    
+
+
 @Bot.on_message(filters.command("batch") & filters.private & owner_admin)
 async def batch(client, message):
     while True:
@@ -618,304 +629,4 @@ async def batch(client, message):
     await second_message.reply_text(
         f"<b>Link Sharing File Berhasil Di Buat:</b>\n\n{link}",
         reply_markup=reply_markup
-    )
-        
-@Bot.on_message(filters.command("adddb") & filters.private & owner_admin)
-async def adddb(client, message):
-
-    chat_id = None
-
-    if len(message.command) > 1:
-
-        target = message.command[1]
-
-        if target.startswith("@"):
-
-            try:
-                chat = await client.get_chat(target)
-                chat_id = chat.id
-
-            except Exception as e:
-                return await message.reply_text(
-                    f"<b>⚠️ Channel/Groups Tidak Ditemukan!</b>\n\n`{str(e)}`"
-                )
-
-        else:
-
-            try:
-                chat_id = int(target)
-
-            except ValueError:
-                return await message.reply_text("<b>❌ ID Tidak Valid!</b>")
-
-    elif message.reply_to_message:
-
-        reply = message.reply_to_message
-        forward_origin = reply.forward_origin
-
-        if (
-            forward_origin
-            and hasattr(forward_origin, "chat")
-            and forward_origin.chat
-            and forward_origin.chat.sender_chat
-        ):
-            chat_id = forward_origin.chat.sender_chat.id
-
-        elif reply.sender_chat:
-            chat_id = reply.sender_chat.id
-
-        else:
-            return await message.reply_text(
-                "<b>❌ Reply Ke Pesan Channel/Groups Hasil Forward!</b>"
-            )
-
-    else:
-
-        return await message.reply_text(
-            "<b>Gunakan salah satu cara berikut:</b>\n\n"
-            "• <code>/adddb -100xxxxxxxxxx</code>\n"
-            "• <code>/adddb @username</code>\n"
-            "• Reply pesan hasil forward dari channel/grup dengan <code>/adddb</code>"
-        )
-
-    try:
-        await client.send_message(
-            chat_id,
-            "🔗 Connect, Channel/Groups Ini Berhasil Disimpan Untuk Database!"
-        )
-    except Exception:
-        return await message.reply_text(
-            "<b>⚠️ Bot Perlu Menjadi Admin!</b>"
-        )
-
-    await set_database_channel(client, chat_id)
-
-    try:
-        chat = await client.get_chat(chat_id)
-        title = chat.title
-    except:
-        title = "Unknown"
-
-    await message.reply_text(
-        f"<b>✅ Channel/Groups Database Berhasil Disimpan!</b>\n\n"
-        f"<b>Nama:</b> {title}\n"
-        f"<b>ChatID:</b> <code>{chat_id}</code>"
-    )
-    
-@Bot.on_message(filters.command("deldb") & filters.private & owner)
-async def deldb(client, message):
-
-    chat_id = await get_database_channel(client)
-
-    if not chat_id:
-        return await message.reply_text("<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>")
-
-    try:
-        chat = await client.get_chat(chat_id)
-        name = chat.title
-    except Exception:
-        name = "Unknwon"
-
-    await del_database_channel(client)
-
-    await message.reply_text(
-        f"<b>🗑 Groups/Channel Database Berhasil Dihapus!</b>\n\n"
-        f"<b>Nama:</b> {name}\n"
-        f"<b>ChatID:</b> <code>{chat_id}</code>"
-    )
-
-@Bot.on_message(filters.command(["addadmin", "aadmin"]) & filters.private & owner)
-async def add_admin_cmd(client, message):
-    if message.reply_to_message and message.reply_to_message.from_user:
-        target = message.reply_to_message.from_user
-    elif len(message.command) > 1:
-        query = message.command[1].strip()
-
-        if query.startswith("@"):
-            query = query[1:]
-
-        try:
-            if query.isdigit():
-                target = await client.get_users(int(query))
-            else:
-                target = await client.get_users(query)
-        except Exception:
-            return await message.reply("<b>❌ User tidak ditemukan.</b>")
-    else:
-        return await message.reply(
-            "<b>Gunakan:</b>\n"
-            "• Balas pesan dengan <code>/addadmin</code>\n"
-            "• <code>/addadmin user_id</code>\n"
-            "• <code>/addadmin @username</code>"
-        )
-
-    if target.id == message.from_user.id:
-        return await message.reply("<b>❌ Anda tidak dapat menambahkan diri sendiri sebagai admin.</b>")
-
-    if await is_owner(client, target.id):
-        return await message.reply("<b>❌ Owner tidak dapat ditambahkan sebagai admin.</b>")
-
-    if await is_admin(client, target.id):
-        return await message.reply(
-            f"<b>⚠️ {target.mention} sudah menjadi admin.</b>"
-        )
-
-    await add_admin(client, target.id)
-
-    try:
-        await client.send_message(
-            target.id,
-            "<b>🙌 Selamat! Anda telah ditambahkan sebagai Admin bot ini.</b>\n\n"
-            "Gunakan /help untuk melihat daftar perintah yang tersedia."
-        )
-    except Exception:
-        pass
-
-    await message.reply(
-        f"<b>✅ Berhasil menambahkan {target.mention} <code>({target.id})</code> sebagai admin.</b>"
-    )
-    
-@Bot.on_message(filters.command(["deladmin", "rmadmin", "removeadmin"]) & filters.private & owner)
-async def del_admin_cmd(client, message):
-    if message.reply_to_message and message.reply_to_message.from_user:
-        target = message.reply_to_message.from_user
-    elif len(message.command) > 1:
-        query = message.command[1].strip()
-
-        if query.startswith("@"):
-            query = query[1:]
-
-        try:
-            if query.isdigit():
-                target = await client.get_users(int(query))
-            else:
-                target = await client.get_users(query)
-        except Exception:
-            return await message.reply("<b>❌ User tidak ditemukan.</b>")
-    else:
-        return await message.reply(
-            "<b>Gunakan:</b>\n"
-            "• Balas pesan dengan <code>/deladmin</code>\n"
-            "• <code>/deladmin user_id</code>\n"
-            "• <code>/deladmin @username</code>"
-        )
-
-    if await is_owner(client, target.id):
-        return await message.reply("<b>❌ Owner tidak dapat dihapus dari admin.</b>")
-
-    if not await is_admin(client, target.id):
-        return await message.reply(
-            f"<b>⚠️ {target.mention} bukan admin.</b>"
-        )
-
-    await del_admin(client, target.id)
-
-    await message.reply(
-        f"<b>✅ Berhasil menghapus {target.mention} <code>({target.id})</code> dari admin.</b>"
-    )
-    
-@Bot.on_message(filters.command(["listadmin", "admins"]) & filters.private & owner)
-async def list_admin_cmd(client, message):
-    owners = await get_owners(client)
-    admins = await get_admins(client)
-
-    text = "<b>👥 Daftar Admin Bot</b>\n\n"
-
-    if owners:
-        text += "<b>👑 Owner:</b>\n"
-
-        for i, user_id in enumerate(owners, 1):
-            try:
-                user = await client.get_users(user_id)
-                text += f"{i}. 👑 {user.mention} <code>({user.id})</code>\n"
-            except Exception:
-                text += f"{i}. 👑 <code>{user_id}</code>\n"
-
-    if admins:
-        text += "\n<b>🛡 Admin:</b>\n"
-
-        for i, user_id in enumerate(admins, 1):
-            try:
-                user = await client.get_users(user_id)
-                text += f"{i}. 🛡 {user.mention} <code>({user.id})</code>\n"
-            except Exception:
-                text += f"{i}. 🛡 <code>{user_id}</code>\n"
-    else:
-        text += "\n<i>Belum ada admin.</i>"
-
-    await message.reply(text)
-    
-@Bot.on_message(
-    filters.private
-    & ~filters.command("start", "batch")
-    & owner_admin
-    & (
-        filters.photo
-        | filters.video
-        | filters.document
-        | filters.audio
-        | filters.voice
-        | filters.animation
-        | filters.video_note
-        | filters.sticker
-        | filters.text
-    )
-)
-async def store_file(client, message):
-
-    if not await get_link_status(client):
-        return
-
-    database_channel = await get_database_channel(client)
-
-    if not database_channel:
-        return await message.reply_text(
-            "<b>⚠️ Tidak Ada Channel/Groups Database Yang Terhubung!</b>"
-        )
-
-    try:
-
-        db_msg = await client.copy_message(
-            chat_id=database_channel,
-            from_chat_id=message.chat.id,
-            message_id=message.id
-        )
-
-        fuck = db_msg.id * abs(database_channel)
-        string = f"get-{fuck}"
-        token = await encode(string)
-
-        me = await client.get_me()
-
-        link = (
-            f"https://t.me/{me.username}"
-            f"?start={token}"
-        )
-
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Copy Link",
-                        copy_text=link
-                    )
-                ]
-            ]
-        )
-
-        await client.edit_message_reply_markup(
-            chat_id=database_channel,
-            message_id=db_msg.id,
-            reply_markup=keyboard
-        )
-
-        await message.reply_text(
-            f"<b>✅ Link Sharing Berhasil Dibuat</b>\n\n{link}",
-            reply_markup=keyboard
-        )
-
-    except Exception as e:
-
-        await message.reply_text(
-            f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>"
     )

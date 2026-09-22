@@ -414,9 +414,8 @@ async def change_name_confirm(client, callback_query):
     data = await get_bot_data(bot_id)
 
     if not data:
-        return await callback_query.answer(
-            f"⚠️ Bot Tidak Ditemukan! {bot_id}",
-            show_alert=True
+        return await callback_query.edit_message_text(
+            f"⚠️ Bot Tidak Ditemukan! {bot_id}"
         )
 
     current_name = data.get("database", "sharingx")

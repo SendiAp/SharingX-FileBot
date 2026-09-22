@@ -38,7 +38,6 @@ from SharingX.modules.db import (
     add_user
 )
 
-
 async def owner_admin_filter(_, client, message):
     user_id = message.from_user.id
 
@@ -50,16 +49,12 @@ async def owner_admin_filter(_, client, message):
 
     return False
 
-
 owner_admin = filters.create(owner_admin_filter)
-
 
 async def owner_filter(_, client, message):
     return await is_owner(client, message.from_user.id)
 
-
 owner = filters.create(owner_filter)
-
 
 @Bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -337,7 +332,6 @@ async def start(client, message):
             f"<b>Terjadi Kesalahan:</b>\n<code>{str(e)}</code>"
         )
 
-
 @Bot.on_message(
     filters.command("stats") & filters.private & owner
 )
@@ -462,7 +456,6 @@ async def stats(client, message):
         text
     )
 
-
 @Bot.on_callback_query(filters.regex("^close$"))
 async def close_callback(client, callback_query):
     try:
@@ -470,7 +463,6 @@ async def close_callback(client, callback_query):
         await callback_query.answer()
     except Exception as e:
         return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-
 
 @Bot.on_message(filters.command("link") & filters.private & owner_admin)
 async def link_mode(client, message):
@@ -513,7 +505,6 @@ async def link_mode(client, message):
             "<code>/link off</code>"
         )
 
-
 @Bot.on_message(filters.command("protect") & filters.private & owner_admin)
 async def protect_cmd(client, message: Message):
     if len(message.command) != 2:
@@ -537,7 +528,6 @@ async def protect_cmd(client, message: Message):
     await message.reply_text(
         f"✅ <b>Protect berhasil {'diaktifkan' if protect else 'dinonaktifkan'}.</b>"
     )
-
 
 @Bot.on_message(filters.command("batch") & filters.private & owner_admin)
 async def batch(client, message):

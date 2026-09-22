@@ -373,8 +373,7 @@ async def genlink(client, message):
             target_message = await client.ask(
                 message.from_user.id,
                 "<b>Silahkan Kirim Link Postingan dari Channel Database.</b>",
-                filters=filters.text & ~filters.command,
-                timeout=60,
+                filters=filters.text & ~filters.command
             )
         except BaseException:
             return

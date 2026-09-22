@@ -409,10 +409,7 @@ async def change_name_warning(client, callback_query):
 
 @app.on_callback_query(filters.regex(r"^change_name_confirm_(.+)$"))
 async def change_name_confirm(client, callback_query):
-    bot_id = callback_query.data.split(
-        "change_name_confirm_",
-        1
-    )[1]
+    bot_id = callback_query.data.split("change_name_confirm_", 1)[1]
 
     data = await get_bot_data(bot_id)
 
@@ -422,94 +419,64 @@ async def change_name_confirm(client, callback_query):
             show_alert=True
         )
 
-    await callback_query.edit_message_text(
-        "<b>✏️ Change Name (Database)</b>\n\n"
-        "Silahkan kirim nama database baru.\n\n"
-        "<b>Maksimal:</b> 30 karakter\n"
-        "<b>Catatan:</b> Database lama tidak akan dihapus."
-    )
+    current_name = data.get("database", "sharingx")
 
     try:
-        response = await client.ask(
+        reply = await client.ask(
             callback_query.from_user.id,
-            "<b>✏️ Kirim nama database baru:</b>",
+            "<b>✏️ Silahkan Kirim Nama Database Baru.</b>\n\n"
+            "Maksimal <b>30 karakter</b>.",
             filters=filters.text,
             timeout=60
         )
-    except asyncio.TimeoutError:
-        return await callback_query.message.reply_text(
-            "<b>⏳ Waktu input telah habis.</b>"
-        )
-    except BaseException:
+    except Exception:
         return
 
-    if not response.text:
-        return await response.reply_text(
-            "<b>❌ Nama database tidak valid.</b>"
+    if not reply.text:
+        return await reply.reply(
+            "❌ <b>Nama Database Tidak Boleh Kosong.</b>"
         )
 
-    new_name = response.text.strip()
-
-    if new_name.startswith("/"):
-        await response.delete()
-
-        return await callback_query.message.reply_text(
+    if reply.text.startswith("/"):
+        await reply.delete()
+        return await callback_query.message.reply(
             "<b>❌ Proses dibatalkan.</b>"
         )
 
-    if not new_name:
-        return await response.reply_text(
-            "<b>❌ Nama database tidak boleh kosong.</b>"
-        )
+    new_name = reply.text.strip()
 
     if len(new_name) > 30:
-        return await response.reply_text(
-            "<b>❌ Nama database maksimal 30 karakter.</b>"
+        return await reply.reply(
+            "❌ <b>Nama Database Maksimal 30 Karakter.</b>"
         )
 
     if "\x00" in new_name:
-        return await response.reply_text(
-            "<b>❌ Nama database tidak valid.</b>"
+        return await reply.reply(
+            "❌ <b>Nama Database Tidak Valid.</b>"
         )
 
-    old_name = data.get(
-        "database",
-        "sharingx"
+    if new_name == current_name:
+        return await reply.reply(
+            "⚠️ <b>Nama Database Baru Sama Dengan Nama Database Sekarang.</b>"
+        )
+
+    result = await botdb.update_one(
+        {"bot_id": bot_id},
+        {"$set": {"database": new_name}}
     )
 
-    if new_name == old_name:
-        return await response.reply_text(
-            "<b>⚠️ Nama database masih sama.</b>"
+    if result.modified_count == 0:
+        return await reply.reply(
+            "❌ <b>Gagal Mengubah Nama Database.</b>"
         )
 
-    try:
-        result = await botdb.update_one(
-            {
-                "bot_id": bot_id
-            },
-            {
-                "$set": {
-                    "database": new_name
-                }
-            }
-        )
+    await reply.reply(
+        "<b>✅ Nama Database Berhasil Diubah!</b>\n\n"
+        f"<b>Database Lama:</b> <code>{current_name}</code>\n"
+        f"<b>Database Baru:</b> <code>{new_name}</code>\n\n"
+        "Data pada database lama tidak dihapus. "
+        "Jika kamu menggunakan kembali nama database lama, "
+        "data tersebut akan dapat digunakan kembali."
+    )
 
-        if result.modified_count == 0:
-            return await response.reply_text(
-                "<b>❌ Gagal mengganti nama database.</b>"
-            )
-
-        await response.reply_text(
-            "<b>✅ Nama Database Berhasil Diubah!</b>\n\n"
-            f"<b>Database Lama:</b> <code>{old_name}</code>\n"
-            f"<b>Database Baru:</b> <code>{new_name}</code>\n\n"
-            "Data dari database lama tetap tersimpan. "
-            "Jika nama database lama digunakan kembali, "
-            "data tersebut akan dapat digunakan kembali."
-        )
-
-    except Exception as e:
-        await response.reply_text(
-            f"<b>Terjadi Kesalahan:</b>\n"
-            f"<code>{str(e)}</code>"
-        )
+    await bot_settings(client, callback_query)

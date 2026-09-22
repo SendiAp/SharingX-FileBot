@@ -365,34 +365,35 @@ async def store_file(client, message):
             f"<b>Terjadi Kesalahan:</b> <code>`{str(e)}`</code>"
         )
 
-@Bot.on_message(filters.command("genlink") & filters.private & owner_admin)
-async def genlink(client, message):
+@Bot.on_message(
+    filters.command("genlink")
+    & filters.private
+    & owner_admin
+)
+async def gen_link(client, message):
+    try:
+        target_message = await client.ask(
+            message.from_user.id,
+            "<b>Silahkan Kirim Link Postingan dari Channel Database.</b>",
+            filters=filters.text,
+            timeout=60
+        )
+    except BaseException:
+        return
 
-    while True:
-        try:
-            target_message = await client.ask(
-                message.from_user.id,
-                "<b>Silahkan Kirim Link Postingan dari Channel Database.</b>",
-                filters=filters.text & ~filters.command
-            )
-        except BaseException:
-            return
-
-        if target_message.text and target_message.text.startswith("/"):
-            await target_message.delete()
-            return await message.reply(
-                "<b>❌ Proses dibatalkan.</b>"
-            )
-
-        msg_id = await get_message_id(
-            client,
-            target_message
+    if target_message.text and target_message.text.startswith("/"):
+        await target_message.delete()
+        return await message.reply(
+            "<b>❌ Proses dibatalkan.</b>"
         )
 
-        if msg_id:
-            break
+    msg_id = await get_message_id(
+        client,
+        target_message
+    )
 
-        await target_message.reply(
+    if not msg_id:
+        return await target_message.reply(
             "❌ <b>ERROR</b>\n\n"
             "<b>Link yang dikirim bukan dari Channel Database saya.</b>"
         )

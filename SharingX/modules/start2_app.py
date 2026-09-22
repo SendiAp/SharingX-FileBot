@@ -420,12 +420,16 @@ async def change_name_confirm(client, callback_query):
 
     current_name = data.get("database", "sharingx")
 
+    await callback_query.edit_message_text(
+        "<b>✏️ Silahkan Kirim Nama Database Baru.</b>\n\n"
+        "Maksimal <b>30 karakter</b>."
+    )
+
     try:
-        reply = await callback_query.edit_message_text(
-            callback_query.from_user.id,
-            "<b>✏️ Silahkan Kirim Nama Database Baru.</b>\n\n"
-            "Maksimal <b>30 karakter</b>.",
-            filters=filters.text
+        reply = await client.listen(
+            callback_query.message.chat.id,
+            filters=filters.text,
+            timeout=60
         )
     except Exception:
         return
@@ -458,7 +462,7 @@ async def change_name_confirm(client, callback_query):
             "⚠️ <b>Nama Database Baru Sama Dengan Nama Database Sekarang.</b>"
         )
 
-    result = botdb.update_one(
+    result = await botdb.update_one(
         {"bot_id": bot_id},
         {"$set": {"database": new_name}}
     )
@@ -468,7 +472,7 @@ async def change_name_confirm(client, callback_query):
             "❌ <b>Gagal Mengubah Nama Database.</b>"
         )
 
-    await reply.edit(
+    await reply.reply(
         "<b>✅ Nama Database Berhasil Diubah!</b>\n\n"
         f"<b>Database Lama:</b> <code>{current_name}</code>\n"
         f"<b>Database Baru:</b> <code>{new_name}</code>\n\n"

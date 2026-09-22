@@ -648,6 +648,10 @@ async def bot_settings(client, callback_query):
                 InlineKeyboardButton(
                     "🗄️ Perpanjang",
                     callback_data=f"renew_{bot_id}"
+                ),
+                InlineKeyboardButton(
+                    "⚙️ Settings",
+                    callback_data=f"settings_{bot_id}"
                 )
             ],
             [

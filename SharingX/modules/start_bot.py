@@ -651,9 +651,15 @@ async def adddb(client, message):
     elif message.reply_to_message:
 
         reply = message.reply_to_message
+        forward_origin = reply.forward_origin
 
-        if reply.forward_from_chat:
-            chat_id = reply.forward_from_chat.id
+        if (
+            forward_origin
+            and hasattr(forward_origin, "chat")
+            and forward_origin.chat
+            and forward_origin.chat.sender_chat
+        ):
+            chat_id = forward_origin.chat.sender_chat.id
 
         elif reply.sender_chat:
             chat_id = reply.sender_chat.id
@@ -673,9 +679,14 @@ async def adddb(client, message):
         )
 
     try:
-        await client.send_message(chat_id, "🔗 Connect, Channel/Groups Ini Berhasil Disimpan Untuk Database!")
+        await client.send_message(
+            chat_id,
+            "🔗 Connect, Channel/Groups Ini Berhasil Disimpan Untuk Database!"
+        )
     except Exception:
-        return await message.reply_text("<b>⚠️ Bot Perlu Menjadi Admin!</b>")
+        return await message.reply_text(
+            "<b>⚠️ Bot Perlu Menjadi Admin!</b>"
+        )
 
     await set_database_channel(client, chat_id)
 
@@ -690,7 +701,7 @@ async def adddb(client, message):
         f"<b>Nama:</b> {title}\n"
         f"<b>ChatID:</b> <code>{chat_id}</code>"
     )
-
+    
 @Bot.on_message(filters.command("deldb") & filters.private & owner)
 async def deldb(client, message):
 

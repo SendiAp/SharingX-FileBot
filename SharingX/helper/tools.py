@@ -42,10 +42,21 @@ async def get_message_id(client, message):
     if not db:
         return 0
 
-    if message.forward_from_chat and message.forward_from_chat.id == db:
+    forward_origin = message.forward_origin
+
+    if (
+        forward_origin
+        and hasattr(forward_origin, "chat")
+        and forward_origin.chat
+        and forward_origin.chat.sender_chat
+        and forward_origin.chat.sender_chat.id == db
+    ):
         return message.forward_from_message_id
 
-    elif message.forward_from_chat or message.forward_sender_name or not message.text:
+    elif (
+        forward_origin
+        or not message.text
+    ):
         return 0
 
     else:

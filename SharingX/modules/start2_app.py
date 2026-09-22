@@ -406,7 +406,7 @@ async def change_name_warning(client, callback_query):
         ])
     )
 
-@app.on_callback_query(filters.regex(r"^change_name_confirm_(.+)$"))
+@app.on_callback_query(filters.regex(r"^chg_name_confirm_(.+)$"))
 async def change_name_confirm(client, callback_query):
     bot_id = callback_query.matches[0].group(1)
 

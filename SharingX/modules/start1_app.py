@@ -1,5 +1,6 @@
 import time
-import sys, os
+import sys
+import os
 import asyncio
 import traceback
 import importlib
@@ -9,7 +10,12 @@ from datetime import datetime, timezone, timedelta
 
 from pyrogram import filters
 from pyrogram.enums import ButtonStyle
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions, CallbackQuery
+from pyrogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    LinkPreviewOptions,
+    CallbackQuery
+)
 
 from SharingX import app, Bot
 from SharingX.helper.database import (
@@ -31,6 +37,7 @@ from SharingX.helper.database import (
 )
 from SharingX.modules import loadModule
 
+
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
@@ -41,7 +48,7 @@ async def start(client, message):
             f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
             f"Tekan <b>Bantuan</b> Jika Kalian Belum Mengerti Semua Hal Yang Anda Butuhkan, Jangan Segan Untuk Hubungi <b>Admin</b> Atau <b>Pemilik</b> Jika Butuh Bantuan.\n\n"
             f"<b>📜 Privacy Policy</b>",
-            reply_markup = InlineKeyboardMarkup([
+            reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton("🤖 Space", callback_data="buy_space"),
                     InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
@@ -56,8 +63,11 @@ async def start(client, message):
             ])
         )
     except Exception as e:
-        return await message.reply_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
-        
+        return await message.reply_text(
+            f"<b>Terjadi Kesalahan:</b> `{str(e)}`"
+        )
+
+
 @app.on_callback_query(filters.regex("^back_start$"))
 async def back_start(client, callback_query: CallbackQuery):
     try:
@@ -68,7 +78,7 @@ async def back_start(client, callback_query: CallbackQuery):
             f"<b>📚 KLIK PANDUAN APA SAJA REQUEST YANG DIBUTUHKAN 📚</b>\n"
             f"Tekan <b>Bantuan</b> Jika Kalian Belum Mengerti Semua Hal Yang Anda Butuhkan, Jangan Segan Untuk Hubungi <b>Admin</b> Atau <b>Pemilik</b> Jika Butuh Bantuan.\n\n"
             f"<b>📜 Privacy Policy</b>",
-            reply_markup = InlineKeyboardMarkup([
+            reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton("🤖 Space", callback_data="buy_space"),
                     InlineKeyboardButton("📊 My Bots", callback_data="my_bots")
@@ -83,10 +93,13 @@ async def back_start(client, callback_query: CallbackQuery):
             ])
         )
     except Exception as e:
-        return await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> `{str(e)}`")
+        return await callback_query.edit_message_text(
+            f"<b>Terjadi Kesalahan:</b> `{str(e)}`"
+        )
+
 
 @app.on_callback_query(filters.regex("^my_bots$"))
-async def my_bots(client, callback_query: CallbackQuery):
+async def my_bots(client, callback_query):
     try:
         user_id = callback_query.from_user.id
 
@@ -175,7 +188,7 @@ async def my_bots(client, callback_query: CallbackQuery):
                     callback_data=f"bot_{bot_id}"
                 )
             ])
-            
+
         used_space = len(bots)
 
         if space > used_space:
@@ -228,8 +241,9 @@ async def my_bots(client, callback_query: CallbackQuery):
             f"<code>{str(e)}</code>"
         )
 
+
 @app.on_callback_query(filters.regex(r"^bot_logs_(.+)$"))
-async def bot_logs(client, callback_query: CallbackQuery):
+async def bot_logs(client, callback_query):
     try:
         bot_id = callback_query.data.split(
             "bot_logs_",
@@ -351,10 +365,14 @@ async def bot_logs(client, callback_query: CallbackQuery):
         )
 
     except Exception as e:
-        await callback_query.answer(f"❌ {str(e)[:180]}", show_alert=True)
+        await callback_query.answer(
+            f"❌ {str(e)[:180]}",
+            show_alert=True
+        )
+
 
 @app.on_callback_query(filters.regex(r"^clear_logs_(.+)$"))
-async def clear_logs(client, callback_query: CallbackQuery):
+async def clear_logs(client, callback_query):
     try:
         bot_id = callback_query.data.split(
             "clear_logs_",
@@ -379,12 +397,20 @@ async def clear_logs(client, callback_query: CallbackQuery):
         await bot_logs(client, callback_query)
 
     except Exception as e:
-        await callback_query.answer(f"❌ {str(e)[:180]}", show_alert=True)
+        await callback_query.answer(
+            f"❌ {str(e)[:180]}",
+            show_alert=True
+        )
+
 
 @app.on_callback_query(filters.regex(r"^bot_(?!logs_)(.+)$"))
-async def bot_settings(client, callback_query: CallbackQuery):
+async def bot_settings(client, callback_query):
     try:
-        bot_id = callback_query.data.split("_", 1)[1]
+        bot_id = callback_query.data.split(
+            "_",
+            1
+        )[1]
+
         data = await get_bot_data(bot_id)
 
         if not data:
@@ -393,7 +419,9 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 show_alert=True
             )
 
-        WIB = timezone(timedelta(hours=7))
+        WIB = timezone(
+            timedelta(hours=7)
+        )
 
         status = {
             "running": "🟢 Running",
@@ -402,10 +430,18 @@ async def bot_settings(client, callback_query: CallbackQuery):
             "crash": "⚫ Crash",
             "expired": "⏳ Expired",
             "terminated": "⛔ Terminated"
-        }.get(data.get("status"), "⚫ Unknown")
+        }.get(
+            data.get("status"),
+            "⚫ Unknown"
+        )
 
-        expires_at = data.get("expires_at")
-        grace_until = data.get("grace_until")
+        expires_at = data.get(
+            "expires_at"
+        )
+
+        grace_until = data.get(
+            "grace_until"
+        )
 
         expired_text = "-"
         remaining_text = "-"
@@ -414,18 +450,33 @@ async def bot_settings(client, callback_query: CallbackQuery):
         if expires_at:
             try:
                 if expires_at.tzinfo is None:
-                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+                    expires_at = expires_at.replace(
+                        tzinfo=timezone.utc
+                    )
 
-                expired_text = expires_at.astimezone(WIB).strftime(
+                expired_text = expires_at.astimezone(
+                    WIB
+                ).strftime(
                     "%d-%m-%Y %H:%M:%S WIB"
                 )
 
-                remaining = expires_at - datetime.now(timezone.utc)
+                remaining = (
+                    expires_at
+                    - datetime.now(timezone.utc)
+                )
 
                 if remaining.total_seconds() > 0:
                     days = remaining.days
-                    hours, rem = divmod(remaining.seconds, 3600)
-                    minutes, seconds = divmod(rem, 60)
+
+                    hours, rem = divmod(
+                        remaining.seconds,
+                        3600
+                    )
+
+                    minutes, seconds = divmod(
+                        rem,
+                        60
+                    )
 
                     remaining_text = (
                         f"{days} Hari "
@@ -442,9 +493,13 @@ async def bot_settings(client, callback_query: CallbackQuery):
         if grace_until:
             try:
                 if grace_until.tzinfo is None:
-                    grace_until = grace_until.replace(tzinfo=timezone.utc)
+                    grace_until = grace_until.replace(
+                        tzinfo=timezone.utc
+                    )
 
-                terminate_text = grace_until.astimezone(WIB).strftime(
+                terminate_text = grace_until.astimezone(
+                    WIB
+                ).strftime(
                     "%d-%m-%Y %H:%M:%S WIB"
                 )
 
@@ -464,7 +519,8 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 me = await robot.get_me()
 
                 name = (
-                    f'<a href="https://t.me/{me.username}">{me.first_name}</a>'
+                    f'<a href="https://t.me/{me.username}">'
+                    f'{me.first_name}</a>'
                     if me.username
                     else me.first_name
                 )
@@ -494,7 +550,10 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 else:
                     ping_status = "🔴 Sangat Buruk"
 
-                ping = f"{ping_status} ({ping_value} ms)"
+                ping = (
+                    f"{ping_status} "
+                    f"({ping_value} ms)"
+                )
 
             except Exception:
                 ping = "⚫ Tidak tersedia"
@@ -506,15 +565,18 @@ async def bot_settings(client, callback_query: CallbackQuery):
                     )
 
                     days, total_seconds = divmod(
-                        total_seconds, 86400
+                        total_seconds,
+                        86400
                     )
 
                     hours, total_seconds = divmod(
-                        total_seconds, 3600
+                        total_seconds,
+                        3600
                     )
 
                     minutes, seconds = divmod(
-                        total_seconds, 60
+                        total_seconds,
+                        60
                     )
 
                     if days > 0:
@@ -535,10 +597,19 @@ async def bot_settings(client, callback_query: CallbackQuery):
                 pass
 
             try:
-                stats = await robot.db.command("dbStats")
+                stats = await robot.db.command(
+                    "dbStats"
+                )
 
-                cols = stats.get("collections", 0)
-                docs = stats.get("objects", 0)
+                cols = stats.get(
+                    "collections",
+                    0
+                )
+
+                docs = stats.get(
+                    "objects",
+                    0
+                )
 
             except Exception:
                 pass
@@ -612,7 +683,7 @@ async def bot_settings(client, callback_query: CallbackQuery):
             "<b>© Bot By SharingX</b>"
         )
 
-        await callback_query.edit_message_text(
+       await callback_query.edit_message_text(
             text,
             link_preview_options=LinkPreviewOptions(
                 is_disabled=True
@@ -622,282 +693,6 @@ async def bot_settings(client, callback_query: CallbackQuery):
 
     except Exception as e:
         try:
-            await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> {str(e)[:180]}")
+            await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> "f"{str(e)[:180]}")
         except Exception:
             pass
-            
-@app.on_callback_query(filters.regex(r"^config_(.+)$"))
-async def bot_config(client, callback_query):
-    bot_id = callback_query.data.split("_", 1)[1]
-    
-    data = await get_bot_data(bot_id)
-
-    if not data:
-        return await callback_query.answer(
-            "⚠️ Bot Tidak Ditemukan!",
-            show_alert=True
-        )
-
-    text = (
-        "<b>⚙️ Bot Configuration</b>\n"
-        "––––—––––———––•\n\n"
-        "<pre>"
-        "{\n"
-        f'  "api_id": "{data.get("api_id", "")}",\n'
-        f'  "api_hash": "{data.get("api_hash", "")}",\n'
-        f'  "bot_token": "{data.get("bot_token", "")}",\n'
-        f'  "mongo_url": "{data.get("mongo_url", "")}"\n'
-        "}"
-        "</pre>"
-    )
-
-    await callback_query.edit_message_text(
-        text,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "🔙 Kembali",
-                    callback_data=f"bot_{bot_id}"
-                )
-            ]
-        ])
-    )
-    
-@app.on_callback_query(filters.regex(r"^stopbot_(.+)$"))
-async def stop_bot(client, callback_query: CallbackQuery):
-    bot_id = callback_query.data.split("_", 1)[1]
-
-    data = await get_bot_data(bot_id)
-
-    if not data:
-        return await callback_query.answer(
-            "⚠️ Bot Tidak Ditemukan!",
-            show_alert=True
-        )
-
-    bot = Bot.get_instance(bot_id)
-
-    if bot is None:
-        status = data.get("status", "stopped")
-
-        if status == "expired":
-            return await callback_query.answer(
-                "⚠️ Kamu Memiliki Masa Sewa Yang Jatuh Tempo, Bot Sudah Terhenti Silahkan Melakukan Perpanjangan.",
-                show_alert=True
-            )
-
-        if status == "crash":
-            return await callback_query.answer(
-                "⚫ Bot Anda Sudah Terhenti, Karena Crash Kegagalan Menjalankan Bot, Periksa Log Lalu Lapor Ke Developer.",
-                show_alert=True
-            )
-
-        await set_bot_status(bot_id, "stopped")
-
-        return await callback_query.answer(
-            "🔴 Bot Sudah Berhenti!",
-            show_alert=True
-        )
-
-    try:
-        await bot.stop()
-        await set_bot_status(bot_id, "stopped")
-
-        await callback_query.answer(
-            "🔴 Bot Berhasil Dihentikan!",
-            show_alert=True
-        )
-
-    except Exception as e:
-        return await callback_query.edit_message_text(
-            f"<b>Terjadi Kesalahan:</b>\n"
-            f"<code>{str(e)}</code>"
-        )
-
-    await bot_settings(client, callback_query)
-    
-@app.on_callback_query(filters.regex(r"^startbot_(.+)$"))
-async def start_bot(client, callback_query: CallbackQuery):
-    bot_id = callback_query.data.split("_", 1)[1]
-
-    data = await get_bot_data(bot_id)
-
-    if not data:
-        return await callback_query.answer(
-            "⚠️ Bot Tidak Ditemukan!",
-            show_alert=True
-        )
-
-    status = data.get("status", "stopped")
-
-    if status == "expired":
-        return await callback_query.answer(
-            "⚠️ Kamu Tidak Bisa Menjalankan Bot Ini, Karena Kamu Memiliki Masa Sewa Bot Yang Telah Jatuh Tempo, Silahkan Lakukan Perpanjangan, Sebelum Bot Terminate.",
-            show_alert=True
-        )
-
-    if status == "crash":
-        return await callback_query.answer(
-            "⚫ Kamu Tidak Bisa Menjalankan Bot Ini, Karena Bot Ini Telah Crash Atau Bot Error Tidak Dapat Dijalankan, Silahkan Lihat Log, Lalu Dapat Menghubungi Developer.",
-            show_alert=True
-        )
-
-    if Bot.get_instance(bot_id):
-        return await callback_query.answer(
-            "🟢 Bot Sudah Berjalan!",
-            show_alert=True
-        )
-
-    try:
-        media = Bot(
-            name=str(data["bot_id"]),
-            api_id=data["api_id"],
-            api_hash=data["api_hash"],
-            bot_token=data["bot_token"]
-        )
-
-        mongo = MongoClient(data["mongo_url"])
-
-        media.mongo = mongo
-        media.db = mongo[data.get("database", "sharingx")]
-
-        await media.start()
-
-        for mod in loadModule():
-            importlib.reload(
-                importlib.import_module(
-                    f"SharingX.modules.{mod}"
-                )
-            )
-
-        await set_bot_status(
-            bot_id,
-            "running"
-        )
-
-        await callback_query.answer(
-            "🟢 Bot Berhasil Dijalankan!",
-            show_alert=True
-        )
-
-    except Exception as e:
-        await set_bot_status(
-            bot_id,
-            "crash"
-        )
-
-        return await callback_query.edit_message_text(
-            f"<b>Terjadi Kesalahan:</b>\n"
-            f"<code>{str(e)}</code>"
-        )
-
-    await bot_settings(
-        client,
-        callback_query
-    )
-    
-@app.on_callback_query(filters.regex(r"^restartbot_(.+)$"))
-async def restart_bot(client, callback_query: CallbackQuery):
-    bot_id = callback_query.data.split("_", 1)[1]
-
-    data = await get_bot_data(bot_id)
-
-    if not data:
-        return await callback_query.answer(
-            "⚠️ Bot Tidak Ditemukan!",
-            show_alert=True
-        )
-
-    status = data.get("status", "stopped")
-
-    if status == "expired":
-        return await callback_query.answer(
-            "⚠️ Kamu Tidak Bisa Merestart Bot Ini, Karena Kamu Memiliki Masa Sewa Bot Yang Telah Jatuh Tempo, Silahkan Lakukan Perpanjangan, Sebelum Bot Terminate.",
-            show_alert=True
-        )
-
-    if status == "crash":
-        return await callback_query.answer(
-            "⚫ Kamu Tidak Bisa Merestart Bot Ini, Karena Bot Ini Telah Crash Atau Bot Error Tidak Dapat Dijalankan, Silahkan Lihat Log, Lalu Dapat Menghubungi Developer.",
-            show_alert=True
-        )
-
-    old_bot = Bot.get_instance(bot_id)
-
-    if old_bot is None:
-        return await callback_query.answer(
-            "⚠️ Bot Sedang Tidak Berjalan!",
-            show_alert=True
-        )
-
-    try:
-        await set_bot_status(
-            bot_id,
-            "restart"
-        )
-
-        await callback_query.answer(
-            "🔄 Bot Berhasil Direstart!",
-            show_alert=True
-        )
-
-        await bot_settings(
-            client,
-            callback_query
-        )
-
-        await old_bot.stop()
-
-        await asyncio.sleep(10)
-
-        media = Bot(
-            name=str(data["bot_id"]),
-            api_id=data["api_id"],
-            api_hash=data["api_hash"],
-            bot_token=data["bot_token"]
-        )
-
-        mongo = MongoClient(
-            data["mongo_url"]
-        )
-
-        media.mongo = mongo
-        media.db = mongo[
-            data.get(
-                "database",
-                "sharingx"
-            )
-        ]
-
-        await media.start()
-
-        for mod in loadModule():
-            importlib.reload(
-                importlib.import_module(
-                    f"SharingX.modules.{mod}"
-                )
-            )
-
-        await set_bot_status(
-            bot_id,
-            "running"
-        )
-
-    except Exception as e:
-        await set_bot_status(
-            bot_id,
-            "crash"
-        )
-
-        return await callback_query.edit_message_text(
-            f"<b>Terjadi Kesalahan:</b>\n"
-            f"<code>{str(e)}</code>"
-        )
-
-    try:
-        await bot_settings(
-            client,
-            callback_query
-        )
-    except Exception:
-        pass

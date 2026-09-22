@@ -394,7 +394,7 @@ async def change_name_warning(client, callback_query):
             [
                 InlineKeyboardButton(
                     "✅ Ya, Lanjutkan",
-                    callback_data=f"change_name_confirm_{bot_id}"
+                    callback_data=f"chg_name_confirm_{bot_id}"
                 )
             ],
             [
@@ -407,7 +407,7 @@ async def change_name_warning(client, callback_query):
     )
 
 
-@app.on_callback_query(filters.regex(r"^change_name_confirm_(.+)$"))
+@app.on_callback_query(filters.regex(r"^chg_name_confirm_(.+)$"))
 async def change_name_confirm(client, callback_query):
     bot_id = callback_query.data.split("change_name_confirm_", 1)[1]
 
@@ -415,7 +415,7 @@ async def change_name_confirm(client, callback_query):
 
     if not data:
         return await callback_query.answer(
-            "⚠️ Bot Tidak Ditemukan!",
+            f"⚠️ Bot Tidak Ditemukan! {bot_id}",
             show_alert=True
         )
 

@@ -12,6 +12,7 @@ from pyrogram.types import (
 
 from SharingX import app, Bot
 from SharingX.helper.database import (
+    botdb,
     get_bot_data,
     set_bot_status
 )
@@ -325,3 +326,190 @@ async def restart_bot(client, callback_query: CallbackQuery):
         )
     except Exception:
         pass
+
+@app.on_callback_query(filters.regex(r"^settings_(.+)$"))
+async def bot_settings_menu(client, callback_query):
+    bot_id = callback_query.data.split("_", 1)[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    await callback_query.edit_message_text(
+        "<b>⚙️ Bot Settings</b>\n"
+        "––––—––––———––•\n\n"
+        "Silahkan pilih pengaturan yang ingin kamu ubah.",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "✏️ Change Name (Database)",
+                    callback_data=f"change_name_{bot_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "👤 Transfer Ownership",
+                    callback_data=f"transfer_{bot_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🔙 Kembali",
+                    callback_data=f"bot_{bot_id}"
+                )
+            ]
+        ])
+    )
+
+
+@app.on_callback_query(filters.regex(r"^change_name_(.+)$"))
+async def change_name_warning(client, callback_query):
+    bot_id = callback_query.data.split("_", 2)[2]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    current_name = data.get(
+        "database",
+        "sharingx"
+    )
+
+    await callback_query.edit_message_text(
+        "<b>⚠️ Peringatan</b>\n\n"
+        "Apa Kamu Yakin Ingin Mengganti Nama Database Kamu?\n\n"
+        "Semua Data Sebelum Nya Akan Hilang, Jika Anda "
+        "Pergunakan Name Sekarang Lagi, Data Akan Pulih Kembali.\n\n"
+        f"<b>Database Sekarang:</b> "
+        f"<code>{current_name}</code>",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "✅ Ya, Lanjutkan",
+                    callback_data=f"change_name_confirm_{bot_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "❌ Batal",
+                    callback_data=f"settings_{bot_id}"
+                )
+            ]
+        ])
+    )
+
+
+@app.on_callback_query(filters.regex(r"^change_name_confirm_(.+)$"))
+async def change_name_confirm(client, callback_query):
+    bot_id = callback_query.data.split(
+        "change_name_confirm_",
+        1
+    )[1]
+
+    data = await get_bot_data(bot_id)
+
+    if not data:
+        return await callback_query.answer(
+            "⚠️ Bot Tidak Ditemukan!",
+            show_alert=True
+        )
+
+    await callback_query.edit_message_text(
+        "<b>✏️ Change Name (Database)</b>\n\n"
+        "Silahkan kirim nama database baru.\n\n"
+        "<b>Maksimal:</b> 30 karakter\n"
+        "<b>Catatan:</b> Database lama tidak akan dihapus."
+    )
+
+    try:
+        response = await client.ask(
+            callback_query.from_user.id,
+            "<b>✏️ Kirim nama database baru:</b>",
+            filters=filters.text,
+            timeout=60
+        )
+    except asyncio.TimeoutError:
+        return await callback_query.message.reply_text(
+            "<b>⏳ Waktu input telah habis.</b>"
+        )
+    except BaseException:
+        return
+
+    if not response.text:
+        return await response.reply_text(
+            "<b>❌ Nama database tidak valid.</b>"
+        )
+
+    new_name = response.text.strip()
+
+    if new_name.startswith("/"):
+        await response.delete()
+
+        return await callback_query.message.reply_text(
+            "<b>❌ Proses dibatalkan.</b>"
+        )
+
+    if not new_name:
+        return await response.reply_text(
+            "<b>❌ Nama database tidak boleh kosong.</b>"
+        )
+
+    if len(new_name) > 30:
+        return await response.reply_text(
+            "<b>❌ Nama database maksimal 30 karakter.</b>"
+        )
+
+    if "\x00" in new_name:
+        return await response.reply_text(
+            "<b>❌ Nama database tidak valid.</b>"
+        )
+
+    old_name = data.get(
+        "database",
+        "sharingx"
+    )
+
+    if new_name == old_name:
+        return await response.reply_text(
+            "<b>⚠️ Nama database masih sama.</b>"
+        )
+
+    try:
+        result = await botdb.update_one(
+            {
+                "bot_id": bot_id
+            },
+            {
+                "$set": {
+                    "database": new_name
+                }
+            }
+        )
+
+        if result.modified_count == 0:
+            return await response.reply_text(
+                "<b>❌ Gagal mengganti nama database.</b>"
+            )
+
+        await response.reply_text(
+            "<b>✅ Nama Database Berhasil Diubah!</b>\n\n"
+            f"<b>Database Lama:</b> <code>{old_name}</code>\n"
+            f"<b>Database Baru:</b> <code>{new_name}</code>\n\n"
+            "Data dari database lama tetap tersimpan. "
+            "Jika nama database lama digunakan kembali, "
+            "data tersebut akan dapat digunakan kembali."
+        )
+
+    except Exception as e:
+        await response.reply_text(
+            f"<b>Terjadi Kesalahan:</b>\n"
+            f"<code>{str(e)}</code>"
+        )

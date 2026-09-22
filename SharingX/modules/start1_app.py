@@ -686,15 +686,15 @@ async def bot_settings(client, callback_query):
 
             "<b>© Bot By SharingX</b>"
         )
-
-       await callback_query.edit_message_text(
+        
+        await callback_query.edit_message_text(
             text,
             link_preview_options=LinkPreviewOptions(
                 is_disabled=True
             ),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
-
+    
     except Exception as e:
         try:
             await callback_query.edit_message_text(f"<b>Terjadi Kesalahan:</b> "f"{str(e)[:180]}")
